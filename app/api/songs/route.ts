@@ -1,4 +1,4 @@
-import { readdirSync } from "fs";
+import { readdirSync, existsSync } from "fs";
 import { join } from "path";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
@@ -12,8 +12,13 @@ export async function GET(request: NextRequest) {
   const query = searchParams.get("query");
   
   try {
-    if (source === "local") {
+    if (source === "local" && !query) {
       const songsDir = join(process.cwd(), "public", "songs");
+      
+      if (!existsSync(songsDir)) {
+        return Response.json([]);
+      }
+
       const files = readdirSync(songsDir).filter((file) =>
         file.toLowerCase().endsWith(".mp3")
       );
