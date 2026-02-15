@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Info, Mail, Music, Moon, Sun, Menu, X, Search, Github } from "lucide-react";
+import { Home, Info, Mail, Moon, Sun, Menu, X, Search, Github } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
@@ -77,7 +77,7 @@ export const Navbar = () => {
             <Link href="/" className="flex items-center gap-3 group">
               <motion.div 
                 whileHover={{ rotate: 360, scale: 1.1 }}
-                className="relative w-8 h-8"
+                className="relative w-10 h-10"
               >
                 <img 
                   src={isDark ? "/icons/logo-dark.png" : "/icons/logo-light.png"} 
@@ -208,7 +208,7 @@ export const Navbar = () => {
               <div className="flex flex-col h-full px-8 py-20 gap-12">
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                     <div className="w-8 h-8">
+                     <div className="w-12 h-12">
                        <img 
                          src={isDark ? "/icons/logo-dark.png" : "/icons/logo-light.png"} 
                          alt="Grovy" 
