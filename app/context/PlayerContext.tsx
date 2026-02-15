@@ -151,9 +151,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // Load songs from API
   const loadSongs = useCallback(async (query?: string, source?: string): Promise<Song[]> => {
     try {
-      let url = "/api/songs";
-      if (source === "local") url = "/api/songs?source=local";
-      else if (query) url = `/api/songs?query=${encodeURIComponent(query)}`;
+      const params = new URLSearchParams();
+      if (source) params.append("source", source);
+      if (query) params.append("query", query);
+      
+      const url = `/api/songs?${params.toString()}`;
       
       const response = await fetch(url);
       const data = await response.json();
