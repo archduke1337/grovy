@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Analytics } from "@vercel/analytics/next"
 import { PlayerProvider } from "@/app/context/PlayerContext";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
@@ -78,6 +79,7 @@ export default function RootLayout({
             </main>
             <BottomPlayer />
           </SmoothScroll>
+          <Analytics />
         </PlayerProvider>
       </body>
     </html>
