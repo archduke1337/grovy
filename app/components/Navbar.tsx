@@ -35,8 +35,10 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Theme Logic with Persistence
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const savedTheme = localStorage.getItem("theme");
     const dark = savedTheme ? savedTheme === "dark" : prefersDark;
@@ -161,7 +163,7 @@ export const Navbar = () => {
                 className="p-3 rounded-full text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-white/10 transition-all group"
                 aria-label="Toggle theme"
               >
-                {isDark ? <Sun size={18} className="group-hover:rotate-45 transition-transform" /> : <Moon size={18} className="group-hover:-rotate-12 transition-transform" />}
+                {mounted && (isDark ? <Sun size={18} className="group-hover:rotate-45 transition-transform" /> : <Moon size={18} className="group-hover:-rotate-12 transition-transform" />)}
               </button>
               <Link
                 href="https://github.com/archduke/grovy"
