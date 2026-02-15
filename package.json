@@ -1,0 +1,57 @@
+{
+  "name": "grovy",
+  "version": "1.0.0",
+  "description": "Premium open-source web music player crafted with Next.js and Tailwind CSS",
+  "private": false,
+  "author": "Gaurav Ram Yadav <archduke1337>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/archduke1337/grovy.git"
+  },
+  "keywords": [
+    "music-player",
+    "nextjs",
+    "react",
+    "tailwindcss",
+    "open-source",
+    "framer-motion",
+    "audio-visualizer",
+    "pwa"
+  ],
+  "homepage": "https://grovy.archduke1337.is-a.dev",
+  "bugs": {
+    "url": "https://github.com/archduke1337/grovy/issues"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
+    "@tailwindcss/postcss": "^4.1.18",
+    "autoprefixer": "^10.4.0",
+    "colorthief": "^2.6.0",
+    "framer-motion": "^11.5.6",
+    "lenis": "^1.3.17",
+    "lucide-react": "^0.263.1",
+    "next": "^16.0.0",
+    "next-pwa": "^5.6.0",
+    "postcss": "^8.4.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.3.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "eslint": "^8.50.0",
+    "eslint-config-next": "^16.0.0"
+  }
+}
