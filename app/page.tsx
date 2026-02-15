@@ -128,7 +128,7 @@ export default function Home() {
     return () => clearTimeout(handler);
   }, [searchQuery, searchType, isLocal, handleManualSearch]); // Removed loadSongs dependency to avoid loop
 
-  const filteredSongs = useMemo(() => searchResults, [searchResults]);
+  const filteredSongs = searchResults;
 
   const toggleLocal = () => {
      setIsLocal(!isLocal);

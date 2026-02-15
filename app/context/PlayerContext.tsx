@@ -191,6 +191,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     img.onload = async () => {
       if (!isMounted) return;
       try {
+        // @ts-ignore
         const ColorThief = (await import("colorthief")).default;
         const colorThief = new ColorThief();
         const palette = colorThief.getPalette(img, 3);
