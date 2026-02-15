@@ -6,58 +6,71 @@ import { motion } from "framer-motion";
 import { Music } from "lucide-react";
 
 export const Playlist: React.FC = () => {
-  const { songs, currentSongIndex, setCurrentSongIndex, isPlaying } =
-    usePlayer();
+  const { songs, currentSongIndex, setCurrentSongIndex, isPlaying, colors } = usePlayer();
 
   if (songs.length === 0) {
     return (
       <div className="text-center py-8">
         <Music size={32} className="mx-auto mb-2 text-gray-400" />
-        <p className="text-gray-600 dark:text-gray-400">No songs found</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-gray-500">Queue Empty</p>
       </div>
     );
   }
 
   return (
-    <div className="max-h-96 md:max-h-none md:h-full overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-      {songs.map((song, index) => (
-        <motion.button
-          key={song.id}
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          onClick={() => setCurrentSongIndex(index)}
-          className={`w-full px-4 py-3 rounded-lg text-left transition-all duration-200 ${
-            index === currentSongIndex
-              ? "bg-blue-500/20 dark:bg-blue-500/20 border-l-4 border-blue-500"
-              : "hover:bg-black/5 dark:hover:bg-white/5"
-          }`}
-        >
-          <div className="flex items-center gap-3">
-            {index === currentSongIndex && isPlaying && (
-              <motion.div
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 0.8 }}
-                className="w-2 h-2 bg-blue-500 rounded-full"
-              />
-            )}
-            {index !== currentSongIndex && (
-              <span className="text-sm text-gray-400 w-2 text-right">
-                {index + 1}
-              </span>
-            )}
-            <span
-              className={`text-sm font-medium truncate ${
-                index === currentSongIndex
-                  ? "text-blue-600 dark:text-blue-400"
-                  : "text-gray-700 dark:text-gray-300"
-              }`}
-            >
-              {song.title}
-            </span>
-          </div>
-        </motion.button>
-      ))}
+    <div className="space-y-2">
+      {songs.map((song, index) => {
+        const isCurrent = index === currentSongIndex;
+        return (
+          <motion.button
+            key={`${song.id}-${index}`}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: index * 0.05 }}
+            onClick={() => setCurrentSongIndex(index)}
+            className={`w-full group flex items-center gap-3 p-2 rounded-xl transition-all ${
+              isCurrent 
+                ? "bg-white/10 dark:bg-white/5 shadow-sm" 
+                : "hover:bg-white/5 dark:hover:bg-white/5 opacity-60 hover:opacity-100"
+            }`}
+          >
+            {/* Cover Art or Number */}
+            <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-gray-800">
+               {song.cover ? (
+                 <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
+               ) : (
+                 <div className="w-full h-full flex items-center justify-center bg-gray-700">
+                    <Music size={14} className="text-gray-400" />
+                 </div>
+               )}
+               {isCurrent && isPlaying && (
+                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="flex gap-0.5 items-end h-3">
+                      {[...Array(3)].map((_, i) => (
+                        <motion.div 
+                          key={i}
+                          animate={{ height: [4, 12, 4] }}
+                          transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.1 }}
+                          className="w-1 bg-white rounded-full"
+                        />
+                      ))}
+                    </div>
+                 </div>
+               )}
+            </div>
+
+            <div className="text-left min-w-0 flex-1">
+              <h4 
+                style={{ color: isCurrent ? colors.primary : undefined }}
+                className={`text-xs font-bold truncate ${isCurrent ? "" : "text-gray-900 dark:text-white"}`}
+              >
+                {song.title}
+              </h4>
+              <p className="text-[10px] font-medium text-gray-500 truncate">{song.artist}</p>
+            </div>
+          </motion.button>
+        );
+      })}
     </div>
   );
 };
