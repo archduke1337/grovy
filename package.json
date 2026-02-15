@@ -24,8 +24,8 @@
     "url": "https://github.com/archduke1337/grovy/issues"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/generate-manifest.js && next dev",
+    "build": "node scripts/generate-manifest.js && next build",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit"

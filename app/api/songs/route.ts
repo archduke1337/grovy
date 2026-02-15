@@ -72,46 +72,60 @@ export async function GET(request: NextRequest) {
       return Response.json(rawSongs);
     }
     if (source === "local" && !query) {
-      // 1. Try Vercel Blob Storage first
+      const fs = require('fs');
+      const path = require('path');
+      
+      // 1. Try Local Manifest (Production-safe, works with LFS/Git)
       try {
-        if (!process.env.BLOB_READ_WRITE_TOKEN) {
-           console.warn("BLOB_READ_WRITE_TOKEN is missing in .env");
-           // throw new Error("Missing Blob Token"); // Optional: throw to catch below if you want stricter flow
+        const manifestPath = path.join(process.cwd(), 'public', 'songs.json');
+        if (fs.existsSync(manifestPath)) {
+          console.log("Reading local songs from manifest...");
+          const content = fs.readFileSync(manifestPath, 'utf-8');
+          const localSongs = JSON.parse(content);
+          if (localSongs.length > 0) {
+            return Response.json(localSongs);
+          }
         }
-
-        // List files specifically in the 'songs/' folder as seen in your screenshot
-        const { blobs } = await list({ prefix: 'songs/', limit: 50 });
-        
-        console.log(`Found ${blobs.length} blobs in songs/`); // Debug log
-
-        const audioBlobs = blobs.filter(blob => 
-          blob.pathname.endsWith('.mp3') || 
-          blob.pathname.endsWith('.wav') ||
-          blob.pathname.endsWith('.m4a') ||
-          blob.pathname.endsWith('.ogg')
-        );
-
-        if (audioBlobs.length > 0) {
-          const songs = audioBlobs.map((blob, index) => ({
-            id: blob.url,
-            title: blob.pathname.split('/').pop()?.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Unknown Title",
-            url: blob.url,
-            artist: "My Cloud Library",
-            cover: undefined, 
-            genre: "Personal",
-            duration: 0
-          }));
-          return Response.json(songs);
-        }
-      } catch (error) {
-        console.warn("Vercel Blob list failed (CHECK YOUR .env FILE for BLOB_READ_WRITE_TOKEN):", error);
-        // Continue to filesystem fallback
+      } catch (e) {
+        console.warn("Manifest read failed (skipping):", e);
       }
 
-      // 2. Fallback to Local Filesystem (public/songs)
+      // 2. Try Vercel Blob Storage (Cloud-hosted)
       try {
-        const fs = require('fs');
-        const path = require('path');
+        if (process.env.BLOB_READ_WRITE_TOKEN) {
+          // List files specifically in the 'songs/' folder as seen in your screenshot
+          const { blobs } = await list({ prefix: 'songs/', limit: 50 });
+          
+          console.log(`Found ${blobs.length} blobs in songs/`);
+
+          const audioBlobs = blobs.filter(blob => 
+            blob.pathname.endsWith('.mp3') || 
+            blob.pathname.endsWith('.wav') ||
+            blob.pathname.endsWith('.m4a') ||
+            blob.pathname.endsWith('.ogg')
+          );
+
+          if (audioBlobs.length > 0) {
+            const songs = audioBlobs.map((blob, index) => ({
+              id: blob.url,
+              title: blob.pathname.split('/').pop()?.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Unknown Title",
+              url: blob.url,
+              artist: "My Cloud Library",
+              cover: undefined, 
+              genre: "Personal",
+              duration: 0
+            }));
+            return Response.json(songs);
+          }
+        } else {
+           console.warn("BLOB_READ_WRITE_TOKEN is missing, skipping cloud fetch.");
+        }
+      } catch (error) {
+        console.warn("Vercel Blob list failed:", error);
+      }
+
+      // 3. Last Resort: Direct FS (Only works locally if manifest failed)
+      try {
         const songsDir = path.join(process.cwd(), 'public', 'songs');
 
         if (!fs.existsSync(songsDir)) {
