@@ -74,7 +74,16 @@ export async function GET(request: NextRequest) {
     if (source === "local" && !query) {
       // 1. Try Vercel Blob Storage first
       try {
-        const { blobs } = await list();
+        if (!process.env.BLOB_READ_WRITE_TOKEN) {
+           console.warn("BLOB_READ_WRITE_TOKEN is missing in .env");
+           // throw new Error("Missing Blob Token"); // Optional: throw to catch below if you want stricter flow
+        }
+
+        // List files specifically in the 'songs/' folder as seen in your screenshot
+        const { blobs } = await list({ prefix: 'songs/', limit: 50 });
+        
+        console.log(`Found ${blobs.length} blobs in songs/`); // Debug log
+
         const audioBlobs = blobs.filter(blob => 
           blob.pathname.endsWith('.mp3') || 
           blob.pathname.endsWith('.wav') ||
@@ -95,7 +104,7 @@ export async function GET(request: NextRequest) {
           return Response.json(songs);
         }
       } catch (error) {
-        console.warn("Vercel Blob list failed (token missing?):", error);
+        console.warn("Vercel Blob list failed (CHECK YOUR .env FILE for BLOB_READ_WRITE_TOKEN):", error);
         // Continue to filesystem fallback
       }
 
@@ -134,6 +143,7 @@ export async function GET(request: NextRequest) {
 
     // Remote Logic
     // Fallback to "Latest Indian Hits" if no query or "trending" is requested
+    const effectiveQuery = (!query || query === "trending") ? "Latest Indian Hits" : query;
     const apiUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(effectiveQuery)}&limit=20`;
 
     const response = await fetch(apiUrl);
