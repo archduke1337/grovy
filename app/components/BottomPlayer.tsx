@@ -125,15 +125,16 @@ export const BottomPlayer = () => {
                         exit={{ opacity: 0, width: 0 }}
                         className="overflow-hidden"
                      >
-                        <input 
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.01"
-                          value={volume}
-                          onChange={(e) => setVolume(parseFloat(e.target.value))}
-                          className="w-24 accent-blue-600"
-                        />
+                         <input 
+                           type="range"
+                           min="0"
+                           max="1"
+                           step="0.01"
+                           value={volume}
+                           onChange={(e) => setVolume(parseFloat(e.target.value))}
+                           style={{ accentColor: colors.primary }}
+                           className="w-24"
+                         />
                      </motion.div>
                    )}
                  </AnimatePresence>

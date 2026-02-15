@@ -186,17 +186,22 @@ export default function Home() {
            {!isLocal && mounted && (
              <div className="flex flex-wrap justify-center xl:justify-start gap-2 md:gap-0 bg-white/50 dark:bg-white/5 p-1 rounded-[2rem] backdrop-blur-md w-full md:w-fit mx-auto xl:mx-0">
                {(["song", "artist", "album", "playlist"] as const).map((type) => (
-                 <button
-                   key={type}
-                   onClick={() => setSearchType(type)}
-                   className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none ${
-                     searchType === type 
-                       ? "bg-blue-600 text-white shadow-lg" 
-                       : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
-                   }`}
-                 >
-                   {type}
-                 </button>
+                  <button
+                    key={type}
+                    onClick={() => setSearchType(type)}
+                    style={{ 
+                      backgroundColor: searchType === type ? colors.primary : "transparent",
+                      color: searchType === type ? "white" : undefined,
+                      boxShadow: searchType === type ? `0 10px 20px ${colors.primary}40` : "none"
+                    }}
+                    className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none ${
+                      searchType !== type 
+                        ? "text-gray-500 hover:text-gray-900 dark:hover:text-white" 
+                        : ""
+                    }`}
+                  >
+                    {type}
+                  </button>
                ))}
              </div>
            )}
@@ -204,7 +209,9 @@ export default function Home() {
           <div className="relative w-full">
             <button 
               onClick={handleManualSearch}
-              className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors z-10"
+              onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+              onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
+              className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 transition-colors z-10"
             >
               <Search size={20} />
             </button>
@@ -214,14 +221,19 @@ export default function Home() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-              className="w-full pl-14 pr-12 py-5 md:py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:border-blue-500 outline-none transition-all backdrop-blur-3xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] focus:shadow-blue-500/10 text-sm md:text-base"
+              style={{ 
+                borderColor: "rgba(0,0,0,0.05)",
+                // We'll handle focus via className or just leave it for now if complex
+              }}
+              className="w-full pl-14 pr-12 py-5 md:py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:ring-2 focus:ring-offset-2 outline-none transition-all backdrop-blur-3xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] text-sm md:text-base"
             />
             {isSearching && (
               <div className="absolute right-6 top-1/2 -translate-y-1/2">
                 <motion.div 
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"
+                  style={{ borderTopColor: colors.primary }}
+                  className="w-5 h-5 border-2 border-gray-200 rounded-full"
                 />
               </div>
             )}
@@ -233,19 +245,24 @@ export default function Home() {
       <section className="space-y-6 md:space-y-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
            <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 text-center md:text-left">Explore by Mood</h2>
-           <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={toggleLocal}
-              className={`flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-full font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all ${
-                isLocal 
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
-                  : "bg-white/50 dark:bg-white/5 text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              }`}
-           >
-              <Folder size={14} />
-              {isLocal ? "Close Local Files" : "Play from your machine"}
-           </motion.button>
+            <motion.button
+               whileHover={{ scale: 1.05 }}
+               whileTap={{ scale: 0.95 }}
+               onClick={toggleLocal}
+               style={{ 
+                 backgroundColor: isLocal ? colors.primary : undefined,
+                 color: isLocal ? "white" : undefined,
+                 boxShadow: isLocal ? `0 10px 20px ${colors.primary}40` : "none"
+               }}
+               className={`flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-full font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all ${
+                 !isLocal 
+                   ? "bg-white/50 dark:bg-white/5 text-gray-400 hover:text-gray-900 dark:hover:text-white" 
+                   : ""
+               }`}
+            >
+               <Folder size={14} />
+               {isLocal ? "Close Local Files" : "Play from your machine"}
+            </motion.button>
         </div>
         {!isLocal ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -259,10 +276,14 @@ export default function Home() {
                    setSelectedGenre(name);
                    loadSongs(`${name} hits`).then(setSearchResults);
                 }}
+                style={{ 
+                  borderColor: selectedGenre === name ? colors.primary : "transparent",
+                  boxShadow: selectedGenre === name ? `0 20px 40px ${colors.primary}20` : "none"
+                }}
                 className={`p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] relative overflow-hidden transition-all border-2 ${
-                  selectedGenre === name 
-                    ? "border-blue-500 shadow-2xl shadow-blue-500/20" 
-                    : "border-transparent bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10"
+                  selectedGenre !== name 
+                    ? "bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10" 
+                    : ""
                 }`}
               >
                  <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} opacity-40`} />
@@ -276,8 +297,14 @@ export default function Home() {
             ))}
           </div>
         ) : (
-          <div className="p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] bg-blue-600/5 border border-blue-500/20 flex flex-col items-center text-center gap-4">
-             <div className="p-4 bg-blue-600/10 rounded-full text-blue-500">
+          <div 
+            style={{ backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}20` }}
+            className="p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] border flex flex-col items-center text-center gap-4"
+          >
+             <div 
+                style={{ backgroundColor: `${colors.primary}20`, color: colors.primary }}
+                className="p-4 rounded-full"
+             >
                <Folder size={32} />
              </div>
              <div>
@@ -368,7 +395,7 @@ export default function Home() {
             <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-2 md:gap-3">
-                    <History size={20} className="text-blue-500 md:w-6 md:h-6" />
+                    <History size={20} style={{ color: colors.primary }} className="md:w-6 md:h-6" />
                     <h2 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Jump Back In</h2>
                   </div>
                   <div className="flex items-center gap-3 md:gap-4">
@@ -430,8 +457,11 @@ export default function Home() {
                       <div
                         key={song.id}
                         onClick={() => handlePlaySong(song.id)}
+                        style={{ 
+                          backgroundColor: isCurrent ? `${colors.primary}20` : undefined,
+                        }}
                         className={`group flex items-center gap-4 md:gap-8 px-4 py-4 md:px-10 md:py-6 cursor-pointer transition-all border-b border-gray-100 dark:border-white/5 last:border-0 ${
-                          isCurrent ? "bg-blue-600/10 dark:bg-blue-500/10" : "hover:bg-white/60 dark:hover:bg-white/10"
+                          !isCurrent ? "hover:bg-white/60 dark:hover:bg-white/10" : ""
                         }`}
                       >
                          <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-[1.5rem] overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0 shadow-lg">
@@ -442,26 +472,32 @@ export default function Home() {
                             )}
                          </div>
   
-                         <div className="flex-1 min-w-0">
-                            <div className={`font-black truncate text-sm md:text-lg tracking-tight ${isCurrent ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"}`}>{song.title}</div>
+                          <div className="flex-1 min-w-0">
+                             <div 
+                               style={{ color: isCurrent ? colors.primary : undefined }}
+                               className={`font-black truncate text-sm md:text-lg tracking-tight ${!isCurrent ? "text-gray-900 dark:text-white" : ""}`}
+                             >
+                               {song.title}
+                             </div>
                             <div className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2 mt-0.5 md:mt-1">
                               {song.artist || "Unknown artist"}
                             </div>
                          </div>
   
                          <div className="flex items-center gap-2 md:gap-6">
-                            {isCurrent && isPlaying && (
-                              <div className="flex items-center gap-1 h-3 md:gap-1.5 md:h-4 mr-2 md:mr-6">
-                                 {[...Array(3)].map((_, j) => (
-                                   <motion.div 
-                                     key={j}
-                                     className="w-1 md:w-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
-                                     animate={{ height: [4, 12, 4] }}
-                                     transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.2 }}
-                                   />
-                                 ))}
-                              </div>
-                            )}
+                             {isCurrent && isPlaying && (
+                               <div className="flex items-center gap-1 h-3 md:gap-1.5 md:h-4 mr-2 md:mr-6">
+                                  {[...Array(3)].map((_, j) => (
+                                    <motion.div 
+                                      key={j}
+                                      style={{ backgroundColor: colors.primary }}
+                                      className="w-1 md:w-1.5 rounded-full"
+                                      animate={{ height: [4, 12, 4] }}
+                                      transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.2 }}
+                                    />
+                                  ))}
+                               </div>
+                             )}
                             <button 
                                onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
                                className={`p-2 md:p-3 rounded-full transition-all ${favorite ? "text-red-500" : "text-gray-300 opacity-100 md:opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"}`}
@@ -486,13 +522,17 @@ export default function Home() {
                 Grovy is an open-source web music player.<br />
                 Crafted for premium audio experiences.
              </p>
-             <Link 
-                href="https://github.com/archduke1337/grovy" 
-                target="_blank"
-                className="px-8 py-3 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-xl dark:shadow-white/10"
-             >
-                Star on GitHub
-             </Link>
+              <Link 
+                 href="https://github.com/archduke1337/grovy" 
+                 target="_blank"
+                 style={{ 
+                   backgroundColor: colors.primary,
+                   boxShadow: `0 20px 40px ${colors.primary}40`
+                 }}
+                 className="px-8 py-3 rounded-full text-white font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all"
+              >
+                 Star on GitHub
+              </Link>
           </footer>
         </motion.div>
       </AnimatePresence>

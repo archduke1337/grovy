@@ -160,7 +160,10 @@ export const Navbar = () => {
 
               <button
                 onClick={toggleTheme}
-                className="p-3 rounded-full text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-white/10 transition-all group"
+                style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
+                onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+                onMouseLeave={(e) => e.currentTarget.style.color = isDark ? "#9ca3af" : "#6b7280"}
+                className="p-3 rounded-full hover:bg-white dark:hover:bg-white/10 transition-all group"
                 aria-label="Toggle theme"
               >
                 {mounted && (isDark ? <Sun size={18} className="group-hover:rotate-45 transition-transform" /> : <Moon size={18} className="group-hover:-rotate-12 transition-transform" />)}
@@ -168,7 +171,10 @@ export const Navbar = () => {
               <Link
                 href="https://github.com/archduke/grovy"
                 target="_blank"
-                className="p-3 rounded-full text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-center group"
+                style={{ color: "#9ca3af" }}
+                onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
+                onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
+                className="p-3 rounded-full hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-center group"
               >
                 <Github size={18} className="group-hover:scale-110 transition-transform" />
               </Link>
@@ -180,7 +186,11 @@ export const Navbar = () => {
 
             <button
                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-               className={`p-2.5 rounded-full transition-all ${isMobileMenuOpen ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"}`}
+               style={{ 
+                 backgroundColor: isMobileMenuOpen ? colors.primary : "transparent",
+                 color: isMobileMenuOpen ? "white" : undefined 
+               }}
+               className={`p-2.5 rounded-full transition-all ${!isMobileMenuOpen ? "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10" : ""}`}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -224,10 +234,14 @@ export const Navbar = () => {
                       <Link
                         href={item.path}
                         onClick={() => setIsMobileMenuOpen(false)}
+                        style={{ 
+                          backgroundColor: pathname === item.path ? colors.primary : undefined,
+                          color: pathname === item.path ? "white" : undefined
+                        }}
                         className={`flex items-center justify-between group p-6 rounded-[2rem] transition-all ${
-                          pathname === item.path 
-                            ? "bg-blue-600 text-white" 
-                            : "bg-gray-50 dark:bg-white/5 dark:text-white"
+                          pathname !== item.path 
+                            ? "bg-gray-50 dark:bg-white/5 dark:text-white" 
+                            : ""
                         }`}
                       >
                         <div className="flex items-center gap-4">
@@ -246,10 +260,10 @@ export const Navbar = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <button 
                       onClick={toggleTheme}
-                      className="p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 flex flex-col items-center gap-3 transition-all active:scale-95"
+                      className="p-6 rounded-[2rem] bg-gray-50 dark:bg-white/5 flex flex-col items-center gap-3 transition-all active:scale-95 text-gray-600 dark:text-white"
                     >
-                       {isDark ? <Sun className="text-orange-400" /> : <Moon className="text-blue-500" />}
-                       <span className="text-[10px] font-black uppercase tracking-widest dark:text-white">{isDark ? "Light Mode" : "Dark Mode"}</span>
+                       {isDark ? <Sun className="text-orange-400" /> : <Moon style={{ color: colors.primary }} />}
+                       <span className="text-[10px] font-black uppercase tracking-widest">{isDark ? "Light Mode" : "Dark Mode"}</span>
                     </button>
                     <button 
                       onClick={() => { setCommandPaletteOpen(true); setIsMobileMenuOpen(false); }}
