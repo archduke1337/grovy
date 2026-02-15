@@ -74,20 +74,21 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo & Now Playing Chip */}
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-2 md:gap-3 group">
               <motion.div 
                 whileHover={{ rotate: 10, scale: 1.1 }}
                 className="relative"
               >
                 <Music 
-                  size={32} 
+                  size={24} 
+                  className="md:w-8 md:h-8"
                   strokeWidth={2.5}
                   style={{ color: colors.primary, filter: `drop-shadow(0 0 8px ${colors.primary}40)` }} 
                 />
               </motion.div>
               <span 
                 style={{ backgroundImage: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}
-                className="text-2xl font-black bg-clip-text text-transparent tracking-tighter"
+                className="text-xl md:text-2xl font-black bg-clip-text text-transparent tracking-tighter hidden md:block"
               >
                 Grovy
               </span>
@@ -177,9 +178,9 @@ export const Navbar = () => {
 
             <button
                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-               className={`p-3 rounded-full transition-all ${isMobileMenuOpen ? "bg-blue-600 text-white" : "text-gray-500"}`}
+               className={`p-2.5 rounded-full transition-all ${isMobileMenuOpen ? "bg-blue-600 text-white" : "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"}`}
             >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>

@@ -55,14 +55,14 @@ export const MusicPlayer: React.FC = () => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8 }}
         style={{ willChange: "transform, opacity" }}
-        className="w-full max-w-7xl flex flex-col lg:row lg:flex-row items-center gap-12 lg:gap-24 z-10 px-6 py-12"
+        className="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-24 z-10 px-4 py-8 lg:px-6 lg:py-12"
       >
         {/* Left: Cinematic Art & Visualizer */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center gap-12">
+        <div className="w-full lg:w-1/2 flex flex-col items-center gap-8 lg:gap-12">
            <motion.div
             layoutId={`art-${currentSong?.id}`}
             style={{ willChange: "transform" }}
-            className="w-72 h-72 md:w-[500px] md:h-[500px] relative group"
+            className="w-64 h-64 md:w-[500px] md:h-[500px] relative group"
            >
               {/* Art Glow */}
               <motion.div 
@@ -70,7 +70,7 @@ export const MusicPlayer: React.FC = () => {
                 className="absolute inset-8 bg-black/10 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" 
               />
               
-              <div className="relative w-full h-full rounded-[4rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/20 dark:border-white/5 isolate">
+              <div className="relative w-full h-full rounded-[2rem] md:rounded-[4rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/20 dark:border-white/5 isolate">
                  {currentSong?.cover ? (
                    <motion.img
                      key={currentSong.cover}
@@ -83,7 +83,7 @@ export const MusicPlayer: React.FC = () => {
                    />
                  ) : (
                    <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-                     <Music className="w-32 h-32 text-gray-400/20" />
+                     <Music className="w-20 h-20 md:w-32 md:h-32 text-gray-400/20" />
                    </div>
                  )}
               </div>
@@ -94,7 +94,7 @@ export const MusicPlayer: React.FC = () => {
                   {[...Array(2)].map((_, i) => (
                     <motion.div
                       key={i}
-                      className="absolute inset-0 border-2 rounded-[4.5rem]"
+                      className="absolute inset-0 border-2 rounded-[2.5rem] md:rounded-[4.5rem]"
                       style={{ borderColor: `${colors.primary}20` }}
                       initial={{ scale: 1, opacity: 0.5 }}
                       animate={{ scale: 1.25 + i * 0.1, opacity: 0 }}
@@ -105,18 +105,18 @@ export const MusicPlayer: React.FC = () => {
               )}
            </motion.div>
 
-           {/* Audio Visualizer */}
-           <div className="w-full max-w-sm">
+           {/* Audio Visualizer (Desktop Only) */}
+           <div className="w-full max-w-sm hidden lg:block">
               <AudioVisualizer />
            </div>
         </div>
 
         {/* Right: Controls & Info */}
-        <div className="w-full lg:w-1/2 space-y-12">
-           <div className="space-y-8">
-              <div className="flex items-start justify-between gap-6">
+        <div className="w-full lg:w-1/2 space-y-8 lg:space-y-12">
+           <div className="space-y-6 lg:space-y-8">
+              <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-6 text-center lg:text-left">
                 <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: colors.primary }}>
+                  <div className="flex items-center justify-center lg:justify-start gap-2 text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: colors.primary }}>
                     <Sparkles size={12} />
                     <span>Now Playing</span>
                   </div>
@@ -124,7 +124,7 @@ export const MusicPlayer: React.FC = () => {
                     key={currentSong?.title}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-4xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter truncate leading-tight"
+                    className="text-3xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter truncate leading-tight px-4 lg:px-0"
                   >
                     {currentSong?.title || "Grovy Music"}
                   </motion.h2>
@@ -133,20 +133,20 @@ export const MusicPlayer: React.FC = () => {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="text-xl md:text-2xl text-gray-500 font-bold tracking-tight"
+                    className="text-lg md:text-2xl text-gray-500 font-bold tracking-tight"
                   >
                     {currentSong?.artist || "Start the vibe"}
                   </motion.p>
                 </div>
                 
-                <div className="flex flex-col items-center gap-4">
+                <div className="flex flex-row lg:flex-col items-center gap-4">
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => currentSong && toggleFavorite(currentSong.id)}
-                    className={`p-5 rounded-full shadow-lg transition-all ${favorite ? "text-red-500 bg-red-50 dark:bg-red-500/10" : "text-gray-400 bg-white/5 dark:bg-white/5 hover:text-white"}`}
+                    className={`p-4 lg:p-5 rounded-full shadow-lg transition-all ${favorite ? "text-red-500 bg-red-50 dark:bg-red-500/10" : "text-gray-400 bg-white/5 dark:bg-white/5 hover:text-white"}`}
                   >
-                    <Heart size={28} fill={favorite ? "currentColor" : "none"} />
+                    <Heart size={24} className="lg:w-7 lg:h-7" fill={favorite ? "currentColor" : "none"} />
                   </motion.button>
 
                   <motion.button
@@ -161,9 +161,9 @@ export const MusicPlayer: React.FC = () => {
                         }).catch(() => {});
                       }
                     }}
-                    className="p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-[var(--player-primary)] hover:bg-[var(--player-primary)]/10"
+                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-[var(--player-primary)] hover:bg-[var(--player-primary)]/10"
                   >
-                    <Share2 size={24} />
+                    <Share2 size={20} className="lg:w-6 lg:h-6" />
                   </motion.button>
                   
                   <AudioProPanel />

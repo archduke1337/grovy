@@ -152,18 +152,18 @@ export default function Home() {
       className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 py-12 space-y-24 pb-48"
     >
       {/* 1. Dynamic Tint Header */}
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-16 relative">
+      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10 xl:gap-16 relative">
         <div 
-          className="absolute -top-32 -left-20 w-[500px] h-[500px] blur-[150px] rounded-full mix-blend-screen opacity-20 pointer-events-none transition-colors duration-1000" 
+          className="absolute -top-32 -left-20 w-[300px] h-[300px] md:w-[500px] md:h-[500px] blur-[120px] md:blur-[150px] rounded-full mix-blend-screen opacity-20 pointer-events-none transition-colors duration-1000" 
           style={{ backgroundColor: colors.primary }} 
         />
         
-        <div className="space-y-6 relative z-10">
-          <div className="flex items-center gap-3 font-black uppercase text-[11px] tracking-[0.5em]" style={{ color: colors.primary }}>
+        <div className="space-y-4 md:space-y-6 relative z-10 text-center xl:text-left">
+          <div className="flex items-center justify-center xl:justify-start gap-3 font-black uppercase text-[10px] md:text-[11px] tracking-[0.3em] md:tracking-[0.5em]" style={{ color: colors.primary }}>
             <div className="w-8 h-[2px]" style={{ backgroundColor: colors.primary }} />
             <span>Curated Collection</span>
           </div>
-          <h1 className="text-7xl md:text-[120px] font-black text-gray-900 dark:text-white tracking-tighter leading-[0.85]">
+          <h1 className="text-5xl md:text-7xl xl:text-[120px] font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9]">
             {greeting}
             <motion.span 
               animate={{ opacity: [1, 0.4, 1] }}
@@ -175,15 +175,15 @@ export default function Home() {
           </h1>
         </div>
 
-        <div className="relative group w-full md:w-[450px] shrink-0 space-y-4">
+        <div className="relative group w-full xl:w-[450px] shrink-0 space-y-4">
            {/* Search Type Tabs */}
            {!isLocal && mounted && (
-             <div className="flex bg-white/50 dark:bg-white/5 p-1 rounded-full backdrop-blur-md w-fit">
+             <div className="flex flex-wrap justify-center xl:justify-start gap-2 md:gap-0 bg-white/50 dark:bg-white/5 p-1 rounded-[2rem] backdrop-blur-md w-full md:w-fit mx-auto xl:mx-0">
                {(["song", "artist", "album", "playlist"] as const).map((type) => (
                  <button
                    key={type}
                    onClick={() => setSearchType(type)}
-                   className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                   className={`px-3 py-2 md:px-4 md:py-2 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap flex-1 md:flex-none ${
                      searchType === type 
                        ? "bg-blue-600 text-white shadow-lg" 
                        : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
@@ -195,12 +195,12 @@ export default function Home() {
              </div>
            )}
 
-          <div className="relative">
+          <div className="relative w-full">
             <button 
               onClick={handleManualSearch}
               className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors z-10"
             >
-              <Search size={22} />
+              <Search size={20} />
             </button>
             <input 
               type="text"
@@ -208,14 +208,14 @@ export default function Home() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-              className="w-full pl-16 pr-12 py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:border-blue-500 outline-none transition-all backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] focus:shadow-blue-500/10"
+              className="w-full pl-14 pr-12 py-5 md:py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:border-blue-500 outline-none transition-all backdrop-blur-3xl shadow-[0_20px_40px_-10px_rgba(0,0,0,0.1)] focus:shadow-blue-500/10 text-sm md:text-base"
             />
             {isSearching && (
               <div className="absolute right-6 top-1/2 -translate-y-1/2">
                 <motion.div 
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
+                  className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"
                 />
               </div>
             )}
@@ -224,14 +224,14 @@ export default function Home() {
       </header>
 
       {/* 4. Genre Selectors */}
-      <section className="space-y-8">
-        <div className="flex items-center justify-between">
-           <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Select Your Genre</h2>
+      <section className="space-y-6 md:space-y-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+           <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 text-center md:text-left">Select Your Genre</h2>
            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleLocal}
-              className={`flex items-center gap-2 px-6 py-3 rounded-full font-black uppercase text-[10px] tracking-widest transition-all ${
+              className={`flex items-center gap-2 px-5 py-2.5 md:px-6 md:py-3 rounded-full font-black uppercase text-[9px] md:text-[10px] tracking-widest transition-all ${
                 isLocal 
                   ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20" 
                   : "bg-white/50 dark:bg-white/5 text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -242,7 +242,7 @@ export default function Home() {
            </motion.button>
         </div>
         {!isLocal ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {Object.entries(GENRE_CONFIG).map(([name, conf]) => (
               <motion.button
                 key={name}
@@ -253,47 +253,47 @@ export default function Home() {
                    setSelectedGenre(name);
                    loadSongs(`${name} hits`).then(setSearchResults);
                 }}
-                className={`p-8 rounded-[3rem] relative overflow-hidden transition-all border-2 ${
+                className={`p-6 md:p-8 rounded-[2rem] md:rounded-[3rem] relative overflow-hidden transition-all border-2 ${
                   selectedGenre === name 
                     ? "border-blue-500 shadow-2xl shadow-blue-500/20" 
                     : "border-transparent bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10"
                 }`}
               >
                  <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} opacity-40`} />
-                 <div className="relative z-10 flex flex-col gap-4">
-                    <div className="p-3 bg-white dark:bg-black/20 rounded-2xl w-fit shadow-sm">
+                 <div className="relative z-10 flex flex-col gap-3 md:gap-4 items-center md:items-start text-center md:text-left">
+                    <div className="p-2.5 md:p-3 bg-white dark:bg-black/20 rounded-2xl w-fit shadow-sm">
                       {conf.icon}
                     </div>
-                    <span className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">{name}</span>
+                    <span className="text-lg md:text-2xl font-black tracking-tighter text-gray-900 dark:text-white">{name}</span>
                  </div>
               </motion.button>
             ))}
           </div>
         ) : (
-          <div className="p-12 rounded-[3.5rem] bg-blue-600/5 border border-blue-500/20 flex flex-col items-center text-center gap-4">
+          <div className="p-8 md:p-12 rounded-[2.5rem] md:rounded-[3.5rem] bg-blue-600/5 border border-blue-500/20 flex flex-col items-center text-center gap-4">
              <div className="p-4 bg-blue-600/10 rounded-full text-blue-500">
                <Folder size={32} />
              </div>
              <div>
-               <h3 className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Local Library Mode</h3>
-               <p className="text-gray-500 font-medium">Viewing files from your <code>public/songs</code> directory.</p>
+               <h3 className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Local Library Mode</h3>
+               <p className="text-sm md:text-base text-gray-500 font-medium max-w-xs mx-auto">Viewing files from your <code>public/songs</code> directory.</p>
              </div>
           </div>
         )}
       </section>
 
       <AnimatePresence mode="wait">
-        <motion.div key={selectedGenre || "default"} variants={containerVariants} className="space-y-24">
+        <motion.div key={selectedGenre || "default"} variants={containerVariants} className="space-y-16 md:space-y-24">
           
           {/* Results Section */}
-          <section className="space-y-10">
+          <section className="space-y-6 md:space-y-10">
             <div className="flex items-end justify-between px-2">
-              <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
+              <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
                 {selectedGenre ? selectedGenre : (searchQuery ? `Results for "${searchQuery}"` : "Trending Now")}
               </h2>
             </div>
             
-            <div className="grid grid-cols-2 lg:grid-cols-6 gap-8">
+            <div className="grid grid-cols-2 lg:grid-cols-6 gap-4 md:gap-8">
               {searchResults.map((item, i) => {
                  // Render Logic based on searchType (or item.type if available)
                  
@@ -304,24 +304,24 @@ export default function Home() {
                       key={item.id}
                       variants={itemVariants}
                       whileHover={{ scale: 1.05, y: -10 }}
-                      className="group cursor-pointer space-y-5"
+                      className="group cursor-pointer space-y-3 md:space-y-5"
                       onClick={() => handlePlaySong(item.id)}
                     >
-                      <div className="aspect-square relative rounded-[3.5rem] overflow-hidden shadow-2xl transition-all duration-700 group-hover:shadow-blue-500/25">
+                      <div className="aspect-square relative rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-xl md:shadow-2xl transition-all duration-700 group-hover:shadow-blue-500/25">
                          {item.cover ? (
                           <img src={item.cover} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
                         ) : (
                           <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-                            <Music className="text-gray-400 w-16 h-16" />
+                            <Music className="text-gray-400 w-12 h-12 md:w-16 md:h-16" />
                           </div>
                         )}
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
-                           <PlayCircle size={64} className="text-white fill-white/10 backdrop-blur-md rounded-full" />
+                           <PlayCircle size={48} className="text-white fill-white/10 backdrop-blur-md rounded-full md:w-16 md:h-16" />
                         </div>
                       </div>
-                      <div className="px-3">
-                        <h3 className="font-black text-gray-900 dark:text-white truncate text-lg tracking-tight leading-tight">{item.title}</h3>
-                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{item.artist || "Artist"}</p>
+                      <div className="px-1 md:px-3">
+                        <h3 className="font-black text-gray-900 dark:text-white truncate text-sm md:text-lg tracking-tight leading-tight">{item.title}</h3>
+                        <p className="text-gray-400 text-[9px] md:text-[10px] font-black uppercase tracking-widest truncate">{item.artist || "Artist"}</p>
                       </div>
                     </motion.div>
                    );
@@ -333,23 +333,23 @@ export default function Home() {
                       key={item.id}
                       variants={itemVariants}
                       whileHover={{ scale: 1.05, y: -5 }}
-                      className="group cursor-pointer space-y-4"
+                      className="group cursor-pointer space-y-2 md:space-y-4"
                       onClick={() => handleEntityClick(item)}
                     >
-                      <div className={`aspect-square relative overflow-hidden shadow-xl transition-all ${
+                      <div className={`aspect-square relative overflow-hidden shadow-lg md:shadow-xl transition-all ${
                           item.type === 'artist' ? 'rounded-full' : 'rounded-3xl'
                       }`}>
                          {item.image ? (
                           <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                         ) : (
                           <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                            <Library className="text-gray-500 w-12 h-12" />
+                            <Library className="text-gray-500 w-10 h-10 md:w-12 md:h-12" />
                           </div>
                         )}
                       </div>
-                      <div className="text-center px-2">
-                        <h3 className="font-bold text-gray-900 dark:text-white truncate text-base">{item.name}</h3>
-                        <p className="text-gray-400 text-[10px] uppercase tracking-wider">{item.type}</p>
+                      <div className="text-center px-1 md:px-2">
+                        <h3 className="font-bold text-gray-900 dark:text-white truncate text-xs md:text-base">{item.name}</h3>
+                        <p className="text-gray-400 text-[8px] md:text-[10px] uppercase tracking-wider">{item.type}</p>
                       </div>
                     </motion.div>
                  );
@@ -359,14 +359,14 @@ export default function Home() {
 
           {/* Recently Played */}
           {recentlyPlayed.length > 0 && searchType === "song" && (
-            <section className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
+            <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-3">
-                    <History size={24} className="text-blue-500" />
-                    <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Recently Played</h2>
+                  <div className="flex items-center gap-2 md:gap-3">
+                    <History size={20} className="text-blue-500 md:w-6 md:h-6" />
+                    <h2 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Recently Played</h2>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs font-black uppercase tracking-widest text-gray-400">Your History</span>
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 hidden md:inline">Your History</span>
                     <button 
                       onClick={() => {
                         if (typeof window !== "undefined") {
@@ -374,33 +374,33 @@ export default function Home() {
                           window.location.reload(); 
                         }
                       }}
-                      className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/60 hover:text-red-500 transition-colors"
+                      className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-red-500/60 hover:text-red-500 transition-colors"
                     >
                       Clear
                     </button>
                   </div>
                </div>
                
-               <div className="flex gap-6 overflow-x-auto pb-8 custom-scrollbar scroll-smooth snap-x">
+               <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 md:pb-8 custom-scrollbar scroll-smooth snap-x">
                   {recentlyPlayed.map((song, i) => (
                     <motion.div
                       key={`recent-${song.id}`}
                       whileHover={{ y: -5 }}
                       onClick={() => setQueue([song, ...songs], 0)}
-                      className="min-w-[200px] md:min-w-[240px] group cursor-pointer snap-start"
+                      className="min-w-[140px] md:min-w-[200px] group cursor-pointer snap-start"
                     >
-                       <div className="aspect-square relative rounded-3xl overflow-hidden mb-4 shadow-lg group-hover:shadow-xl transition-all">
+                       <div className="aspect-square relative rounded-2xl md:rounded-3xl overflow-hidden mb-3 md:mb-4 shadow-lg group-hover:shadow-xl transition-all">
                           {song.cover ? (
                             <img src={song.cover} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
                           ) : (
                             <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center"><Music /></div>
                           )}
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                             <Play size={32} className="text-white fill-white" />
+                             <Play size={24} className="text-white fill-white md:w-8 md:h-8" />
                           </div>
                        </div>
-                       <h4 className="font-bold text-gray-900 dark:text-white truncate px-1">{song.title}</h4>
-                       <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 px-1 mt-1">{song.artist}</p>
+                       <h4 className="font-bold text-gray-900 dark:text-white truncate px-1 text-sm md:text-base">{song.title}</h4>
+                       <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 px-1 mt-0.5 md:mt-1">{song.artist}</p>
                     </motion.div>
                   ))}
                </div>
@@ -409,13 +409,13 @@ export default function Home() {
 
           {/* Library List (Only visible if search type is SONG or after clicking an entity) */}
           {searchType === "song" && (
-            <section className="space-y-10">
+            <section className="space-y-6 md:space-y-10">
                <div className="flex items-center justify-between px-2">
-                  <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Library</h2>
-                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">{filteredSongs.length} Tracks</span>
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Library</h2>
+                  <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400">{filteredSongs.length} Tracks</span>
                </div>
                
-               <div className="bg-white/40 dark:bg-white/5 rounded-[4rem] border border-gray-100 dark:border-white/10 overflow-hidden backdrop-blur-3xl shadow-xl">
+               <div className="bg-white/40 dark:bg-white/5 rounded-[2rem] md:rounded-[4rem] border border-gray-100 dark:border-white/10 overflow-hidden backdrop-blur-3xl shadow-xl">
                   {filteredSongs.map((song, i) => {
                     const isCurrent = songs[currentSongIndex]?.id === song.id;
                     const favorite = isFavorite(song.id);
@@ -424,33 +424,33 @@ export default function Home() {
                       <div
                         key={song.id}
                         onClick={() => handlePlaySong(song.id)}
-                        className={`group flex items-center gap-8 px-10 py-6 cursor-pointer transition-all border-b border-gray-100 dark:border-white/5 last:border-0 ${
+                        className={`group flex items-center gap-4 md:gap-8 px-4 py-4 md:px-10 md:py-6 cursor-pointer transition-all border-b border-gray-100 dark:border-white/5 last:border-0 ${
                           isCurrent ? "bg-blue-600/10 dark:bg-blue-500/10" : "hover:bg-white/60 dark:hover:bg-white/10"
                         }`}
                       >
-                         <div className="w-14 h-14 rounded-[1.5rem] overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0 shadow-lg">
+                         <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-[1.5rem] overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0 shadow-lg">
                             {song.cover ? (
                               <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center"><Music size={20} /></div>
+                              <div className="w-full h-full flex items-center justify-center"><Music size={16} className="md:w-5 md:h-5" /></div>
                             )}
                          </div>
   
                          <div className="flex-1 min-w-0">
-                            <div className={`font-black truncate text-lg tracking-tight ${isCurrent ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"}`}>{song.title}</div>
-                            <div className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
+                            <div className={`font-black truncate text-sm md:text-lg tracking-tight ${isCurrent ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"}`}>{song.title}</div>
+                            <div className="text-[10px] md:text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2 mt-0.5 md:mt-1">
                               {song.artist || "Unknown artist"}
                             </div>
                          </div>
   
-                         <div className="flex items-center gap-6">
+                         <div className="flex items-center gap-2 md:gap-6">
                             {isCurrent && isPlaying && (
-                              <div className="flex items-center gap-1.5 h-4 mr-6">
+                              <div className="flex items-center gap-1 h-3 md:gap-1.5 md:h-4 mr-2 md:mr-6">
                                  {[...Array(3)].map((_, j) => (
                                    <motion.div 
                                      key={j}
-                                     className="w-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
-                                     animate={{ height: [4, 16, 4] }}
+                                     className="w-1 md:w-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                                     animate={{ height: [4, 12, 4] }}
                                      transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.2 }}
                                    />
                                  ))}
@@ -458,9 +458,9 @@ export default function Home() {
                             )}
                             <button 
                                onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                               className={`p-3 rounded-full transition-all ${favorite ? "text-red-500" : "text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"}`}
+                               className={`p-2 md:p-3 rounded-full transition-all ${favorite ? "text-red-500" : "text-gray-300 opacity-100 md:opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"}`}
                             >
-                               <Heart size={22} fill={favorite ? "currentColor" : "none"} />
+                               <Heart size={18} fill={favorite ? "currentColor" : "none"} className="md:w-5 md:h-5" />
                             </button>
                          </div>
                       </div>
