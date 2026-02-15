@@ -71,88 +71,82 @@ export async function GET(request: NextRequest) {
 
       return Response.json(rawSongs);
     }
-    if (source === "local" && !query) {
+    if (source === "local") {
       const fs = require('fs');
       const path = require('path');
-      
+      let localSongs: any[] = [];
+
       // 1. Try Local Manifest (Production-safe, works with LFS/Git)
       try {
         const manifestPath = path.join(process.cwd(), 'public', 'songs.json');
         if (fs.existsSync(manifestPath)) {
           console.log("Reading local songs from manifest...");
           const content = fs.readFileSync(manifestPath, 'utf-8');
-          const localSongs = JSON.parse(content);
-          if (localSongs.length > 0) {
-            return Response.json(localSongs);
-          }
+          localSongs = JSON.parse(content);
         }
       } catch (e) {
         console.warn("Manifest read failed (skipping):", e);
       }
 
-      // 2. Try Vercel Blob Storage (Cloud-hosted)
-      try {
-        if (process.env.BLOB_READ_WRITE_TOKEN) {
-          // List files specifically in the 'songs/' folder as seen in your screenshot
-          const { blobs } = await list({ prefix: 'songs/', limit: 50 });
-          
-          console.log(`Found ${blobs.length} blobs in songs/`);
+      // 2. Try Vercel Blob Storage if manifest empty or not found
+      if (localSongs.length === 0) {
+        try {
+          if (process.env.BLOB_READ_WRITE_TOKEN) {
+            const { blobs } = await list({ prefix: 'songs/', limit: 100 });
+            const audioBlobs = blobs.filter(blob => 
+              /\.(mp3|wav|m4a|ogg)$/i.test(blob.pathname)
+            );
 
-          const audioBlobs = blobs.filter(blob => 
-            blob.pathname.endsWith('.mp3') || 
-            blob.pathname.endsWith('.wav') ||
-            blob.pathname.endsWith('.m4a') ||
-            blob.pathname.endsWith('.ogg')
-          );
-
-          if (audioBlobs.length > 0) {
-            const songs = audioBlobs.map((blob, index) => ({
-              id: blob.url,
-              title: blob.pathname.split('/').pop()?.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Unknown Title",
-              url: blob.url,
-              artist: "My Cloud Library",
-              cover: undefined, 
-              genre: "Personal",
-              duration: 0
-            }));
-            return Response.json(songs);
+            if (audioBlobs.length > 0) {
+              localSongs = audioBlobs.map((blob, index) => ({
+                id: blob.url,
+                title: blob.pathname.split('/').pop()?.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Unknown Title",
+                url: blob.url,
+                artist: "My Cloud Library",
+                cover: undefined, 
+                genre: "Personal",
+                duration: 0
+              }));
+            }
           }
-        } else {
-           console.warn("BLOB_READ_WRITE_TOKEN is missing, skipping cloud fetch.");
+        } catch (error) {
+          console.warn("Vercel Blob list failed:", error);
         }
-      } catch (error) {
-        console.warn("Vercel Blob list failed:", error);
       }
 
-      // 3. Last Resort: Direct FS (Only works locally if manifest failed)
-      try {
-        const songsDir = path.join(process.cwd(), 'public', 'songs');
-
-        if (!fs.existsSync(songsDir)) {
-          return Response.json([]);
+      // 3. Last Resort: Direct FS
+      if (localSongs.length === 0) {
+        try {
+          const songsDir = path.join(process.cwd(), 'public', 'songs');
+          if (fs.existsSync(songsDir)) {
+            const files = fs.readdirSync(songsDir);
+            localSongs = files
+              .filter((file: string) => /\.(mp3|wav|ogg|m4a)$/i.test(file))
+              .map((file: string, index: number) => ({
+                 id: `local-${index}`,
+                 title: file.replace(/\.(mp3|wav|ogg|m4a)$/i, "").replace(/[-_]/g, " "),
+                 url: `/songs/${file}`,
+                 artist: "Local Track",
+                 cover: undefined,
+                 genre: "Local",
+                 duration: 0
+              }));
+          }
+        } catch (e) {
+          console.error("Local file read error:", e);
         }
-
-        const files = fs.readdirSync(songsDir);
-        const localSongs = files
-          .filter((file: string) => /\.(mp3|wav|ogg|m4a)$/i.test(file))
-          .map((file: string, index: number) => {
-             const title = file.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
-             return {
-               id: `local-${index}`,
-               title: title,
-               url: `/songs/${file}`,
-               artist: "Local Track",
-               cover: undefined, // Or a default local icon
-               genre: "Local",
-               duration: 0
-             };
-          });
-
-        return Response.json(localSongs);
-      } catch (e) {
-        console.error("Local file read error:", e);
-        return Response.json([]);
       }
+
+      // Filter by query if provided
+      if (query && query.toLowerCase() !== "trending") {
+        const q = query.toLowerCase();
+        localSongs = localSongs.filter(s => 
+          s.title.toLowerCase().includes(q) || 
+          s.artist.toLowerCase().includes(q)
+        );
+      }
+
+      return Response.json(localSongs);
     }
 
     // Remote Logic
