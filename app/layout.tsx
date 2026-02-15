@@ -48,6 +48,7 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#007AFF" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
         <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+        <link rel="shortcut icon" href="/icons/icon.svg" />
         <link
           rel="apple-touch-icon"
           href="/icons/icon.svg"

@@ -1,10 +1,22 @@
-import { readdirSync, existsSync } from "fs";
-import { join } from "path";
+import { list } from "@vercel/blob";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
 import { NextRequest } from "next/server";
 
-const GENRES = ["Bollywood", "Punjabi", "Indipop", "Devotional"];
+const GENRES = [
+  "Bollywood",
+  "Punjabi Pop",
+  "Indipop",
+  "Indian Hip-Hop",
+  "Sufi / Ghazal",
+  "Classical (Hindustani/Carnatic)",
+  "Devotional",
+  "Regional Folk (Rajasthani/Baul)",
+  "Electronic / EDM",
+  "Fusion",
+  "Indie / Alternative",
+  "Tollywood / Regional Film"
+];
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -13,27 +25,25 @@ export async function GET(request: NextRequest) {
   
   try {
     if (source === "local" && !query) {
-      const songsDir = join(process.cwd(), "public", "songs");
+      // Fetch songs from Vercel Blob storage
+      const { blobs } = await list({ prefix: 'songs/', limit: 50 });
       
-      if (!existsSync(songsDir)) {
-        return Response.json([]);
-      }
-
-      const files = readdirSync(songsDir).filter((file) =>
-        file.toLowerCase().endsWith(".mp3")
-      );
-
-      const rawSongs = files.map((file, index) => {
-        const title = file.replace(".mp3", "").replace(/[-_]/g, " ");
-        
-        return {
-          id: `local-${index}`,
-          title,
-          url: `/songs/${file}`,
-          artist: "Local Artist",
-          genre: GENRES[index % GENRES.length],
-        };
-      });
+      const rawSongs = blobs
+        .filter(blob => blob.pathname.endsWith('.mp3'))
+        .map((blob, index) => {
+          // Extract title from pathname (e.g., "songs/My Song.mp3" -> "My Song")
+          const fileName = blob.pathname.split('/').pop() || "";
+          const title = fileName.replace(".mp3", "").replace(/[-_]/g, " ");
+          
+          return {
+            id: `blob-${index}`,
+            title: decodeURIComponent(title),
+            url: blob.url,
+            artist: "Grovy Collection",
+            genre: GENRES[index % GENRES.length],
+            duration: 0
+          };
+        });
 
       const result = z.array(SongSchema).safeParse(rawSongs);
       return Response.json(result.success ? result.data : []);

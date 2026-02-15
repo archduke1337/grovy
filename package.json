@@ -33,6 +33,7 @@
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
     "@tailwindcss/postcss": "^4.1.18",
+    "@vercel/blob": "^2.2.0",
     "autoprefixer": "^10.4.0",
     "colorthief": "^2.6.0",
     "framer-motion": "^11.5.6",
