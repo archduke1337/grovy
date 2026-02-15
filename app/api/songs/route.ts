@@ -72,45 +72,68 @@ export async function GET(request: NextRequest) {
       return Response.json(rawSongs);
     }
     if (source === "local" && !query) {
-      // Check if Blob token is configured (prevents crash in local/unconfigured envs)
-      if (!process.env.BLOB_READ_WRITE_TOKEN) {
-        console.warn("Vercel Blob token not found. Skipping local song fetch.");
+      // 1. Try Vercel Blob Storage first
+      try {
+        const { blobs } = await list();
+        const audioBlobs = blobs.filter(blob => 
+          blob.pathname.endsWith('.mp3') || 
+          blob.pathname.endsWith('.wav') ||
+          blob.pathname.endsWith('.m4a') ||
+          blob.pathname.endsWith('.ogg')
+        );
+
+        if (audioBlobs.length > 0) {
+          const songs = audioBlobs.map((blob, index) => ({
+            id: blob.url,
+            title: blob.pathname.split('/').pop()?.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Unknown Title",
+            url: blob.url,
+            artist: "My Cloud Library",
+            cover: undefined, 
+            genre: "Personal",
+            duration: 0
+          }));
+          return Response.json(songs);
+        }
+      } catch (error) {
+        console.warn("Vercel Blob list failed (token missing?):", error);
+        // Continue to filesystem fallback
+      }
+
+      // 2. Fallback to Local Filesystem (public/songs)
+      try {
+        const fs = require('fs');
+        const path = require('path');
+        const songsDir = path.join(process.cwd(), 'public', 'songs');
+
+        if (!fs.existsSync(songsDir)) {
+          return Response.json([]);
+        }
+
+        const files = fs.readdirSync(songsDir);
+        const localSongs = files
+          .filter((file: string) => file.toLowerCase().endsWith('.mp3'))
+          .map((file: string, index: number) => {
+             const title = file.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
+             return {
+               id: `local-${index}`,
+               title: title,
+               url: `/songs/${file}`,
+               artist: "Local Track",
+               cover: undefined, // Or a default local icon
+               genre: "Local",
+               duration: 0
+             };
+          });
+
+        return Response.json(localSongs);
+      } catch (e) {
+        console.error("Local file read error:", e);
         return Response.json([]);
       }
-
-      // Fetch songs from Vercel Blob storage
-      const { blobs } = await list({ prefix: 'songs/', limit: 50 });
-      
-      const rawSongs = blobs
-        .filter(blob => blob.pathname.toLowerCase().endsWith('.mp3'))
-        .map((blob, index) => {
-          // Extract title from pathname (e.g., "songs/My Song.mp3" -> "My Song")
-          const fileName = blob.pathname.split('/').pop() || "";
-          const title = fileName.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
-          
-          return {
-            id: `blob-${index}`,
-            title: decodeURIComponent(title),
-            url: blob.url,
-            artist: "Grovy Collection",
-            genre: GENRES[index % GENRES.length],
-            duration: 0
-          };
-        });
-
-      const result = z.array(SongSchema).safeParse(rawSongs);
-      
-      if (!result.success) {
-         console.error("Local/Blob Song Validation Error:", result.error);
-         // Return rawSongs anyway as fallback if minor schema mismatch, or empty
-         return Response.json(rawSongs); 
-      }
-      return Response.json(result.data);
     }
 
     // Remote Logic
     // Fallback to "Latest Indian Hits" if no query or "trending" is requested
-    const effectiveQuery = (!query || query === "trending") ? "Latest Indian Hits" : query;
     const apiUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(effectiveQuery)}&limit=20`;
 
     const response = await fetch(apiUrl);
