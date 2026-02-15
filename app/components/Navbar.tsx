@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Info, Mail, Moon, Sun, Menu, X, Search, Github } from "lucide-react";
+import { Home, Info, Mail, Music, Moon, Sun, Menu, X, Search, Github } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
@@ -76,13 +76,13 @@ export const Navbar = () => {
           <div className="flex items-center gap-4">
             <Link href="/" className="flex items-center gap-3 group">
               <motion.div 
-                whileHover={{ rotate: 360, scale: 1.1 }}
-                className="relative w-10 h-10"
+                whileHover={{ rotate: 10, scale: 1.1 }}
+                className="relative"
               >
-                <img 
-                  src={isDark ? "/icons/logo-dark.png" : "/icons/logo-light.png"} 
-                  alt="Grovy Logo" 
-                  className="w-full h-full object-contain"
+                <Music 
+                  size={32} 
+                  strokeWidth={2.5}
+                  style={{ color: colors.primary, filter: `drop-shadow(0 0 8px ${colors.primary}40)` }} 
                 />
               </motion.div>
               <span 
@@ -208,13 +208,11 @@ export const Navbar = () => {
               <div className="flex flex-col h-full px-8 py-20 gap-12">
                 <div className="flex items-center justify-between">
                    <div className="flex items-center gap-3">
-                     <div className="w-12 h-12">
-                       <img 
-                         src={isDark ? "/icons/logo-dark.png" : "/icons/logo-light.png"} 
-                         alt="Grovy" 
-                         className="w-full h-full object-contain"
-                       />
-                     </div>
+                     <Music 
+                       size={32} 
+                       strokeWidth={2.5}
+                       style={{ color: colors.primary, filter: `drop-shadow(0 0 8px ${colors.primary}40)` }} 
+                     />
                      <span className="text-2xl font-black dark:text-white">Grovy</span>
                    </div>
                    <button onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-gray-100 dark:bg-white/10 rounded-full dark:text-white">
