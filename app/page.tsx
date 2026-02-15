@@ -158,21 +158,27 @@ export default function Home() {
           style={{ backgroundColor: colors.primary }} 
         />
         
-        <div className="space-y-4 md:space-y-6 relative z-10 text-center xl:text-left">
+        <div className="space-y-6 relative z-10 text-center xl:text-left max-w-2xl">
           <div className="flex items-center justify-center xl:justify-start gap-3 font-black uppercase text-[10px] md:text-[11px] tracking-[0.3em] md:tracking-[0.5em]" style={{ color: colors.primary }}>
             <div className="w-8 h-[2px]" style={{ backgroundColor: colors.primary }} />
-            <span>Curated Collection</span>
+            <span>Your Daily Mix</span>
           </div>
-          <h1 className="text-5xl md:text-7xl xl:text-[120px] font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9]">
-            {greeting}
-            <motion.span 
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              style={{ color: colors.secondary }}
-            >
-              .
-            </motion.span>
-          </h1>
+          
+          <div className="space-y-4">
+            <h1 className="text-5xl md:text-7xl xl:text-[120px] font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9]">
+              {greeting}
+              <motion.span 
+                animate={{ opacity: [1, 0.4, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+                style={{ color: colors.secondary }}
+              >
+                .
+              </motion.span>
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 font-medium text-sm md:text-lg max-w-lg mx-auto xl:mx-0 leading-relaxed">
+              Music is more than just sound—it's a feeling. Dive into your favorite tracks or discover something entirely new today.
+            </p>
+          </div>
         </div>
 
         <div className="relative group w-full xl:w-[450px] shrink-0 space-y-4">
@@ -204,7 +210,7 @@ export default function Home() {
             </button>
             <input 
               type="text"
-              placeholder={isLocal ? "Search local files..." : `Search ${searchType}s...`}
+              placeholder={isLocal ? "Search your local files..." : "What do you want to play?"}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
@@ -226,7 +232,7 @@ export default function Home() {
       {/* 4. Genre Selectors */}
       <section className="space-y-6 md:space-y-8">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-           <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 text-center md:text-left">Select Your Genre</h2>
+           <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 text-center md:text-left">Explore by Mood</h2>
            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -238,7 +244,7 @@ export default function Home() {
               }`}
            >
               <Folder size={14} />
-              {isLocal ? "Local Files Active" : "View Local Files"}
+              {isLocal ? "Close Local Files" : "Play from your machine"}
            </motion.button>
         </div>
         {!isLocal ? (
@@ -276,7 +282,7 @@ export default function Home() {
              </div>
              <div>
                <h3 className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Local Library Mode</h3>
-               <p className="text-sm md:text-base text-gray-500 font-medium max-w-xs mx-auto">Viewing files from your <code>public/songs</code> directory.</p>
+               <p className="text-sm md:text-base text-gray-500 font-medium max-w-xs mx-auto">Accessing songs from your <code>public/songs</code> folder.</p>
              </div>
           </div>
         )}
@@ -289,7 +295,7 @@ export default function Home() {
           <section className="space-y-6 md:space-y-10">
             <div className="flex items-end justify-between px-2">
               <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                {selectedGenre ? selectedGenre : (searchQuery ? `Results for "${searchQuery}"` : "Trending Now")}
+                {selectedGenre ? selectedGenre : (searchQuery ? `Checking out "${searchQuery}"` : "Made for You")}
               </h2>
             </div>
             
@@ -363,10 +369,10 @@ export default function Home() {
                <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-2 md:gap-3">
                     <History size={20} className="text-blue-500 md:w-6 md:h-6" />
-                    <h2 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Recently Played</h2>
+                    <h2 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Jump Back In</h2>
                   </div>
                   <div className="flex items-center gap-3 md:gap-4">
-                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 hidden md:inline">Your History</span>
+                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 hidden md:inline">Where you left off</span>
                     <button 
                       onClick={() => {
                         if (typeof window !== "undefined") {
@@ -411,7 +417,7 @@ export default function Home() {
           {searchType === "song" && (
             <section className="space-y-6 md:space-y-10">
                <div className="flex items-center justify-between px-2">
-                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Library</h2>
+                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Collection</h2>
                   <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400">{filteredSongs.length} Tracks</span>
                </div>
                

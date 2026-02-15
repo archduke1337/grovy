@@ -32,9 +32,17 @@ export const PlayerControls: React.FC = () => {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Ignore if typing in an input or textarea
+      // Ignore if typing in a text input or textarea
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      if (
+        (target.tagName === 'INPUT' && (
+          (target as HTMLInputElement).type === 'text' || 
+          (target as HTMLInputElement).type === 'search' || 
+          (target as HTMLInputElement).type === 'password' || 
+          (target as HTMLInputElement).type === 'email'
+        )) || 
+        target.tagName === 'TEXTAREA'
+      ) return;
 
       if (e.code === "Space") {
         e.preventDefault();
@@ -61,12 +69,11 @@ export const PlayerControls: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Main controls */}
-      {/* Main controls */}
       <div className="flex items-center justify-center gap-4 md:gap-8">
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          onClick={previousTrack}
+          onClick={(e) => { e.stopPropagation(); previousTrack(); }}
           className="p-3 md:p-4 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
           aria-label="Previous track"
         >
@@ -76,7 +83,7 @@ export const PlayerControls: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={togglePlayPause}
+          onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
           className="flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-shadow"
           aria-label={isPlaying ? "Pause" : "Play"}
         >
@@ -90,7 +97,7 @@ export const PlayerControls: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          onClick={nextTrack}
+          onClick={(e) => { e.stopPropagation(); nextTrack(); }}
           className="p-3 md:p-4 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
           aria-label="Next track"
         >
@@ -103,7 +110,7 @@ export const PlayerControls: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          onClick={toggleShuffle}
+          onClick={(e) => { e.stopPropagation(); toggleShuffle(); }}
           className={`p-2 rounded-full transition-colors ${
             isShuffle
               ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
@@ -127,6 +134,7 @@ export const PlayerControls: React.FC = () => {
             step="0.01"
             value={volume}
             onChange={(e) => setVolume(parseFloat(e.target.value))}
+            onClick={(e) => e.stopPropagation()}
             className="w-24 h-1 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-blue-500"
             aria-label="Volume"
           />
@@ -135,7 +143,7 @@ export const PlayerControls: React.FC = () => {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
-          onClick={toggleLoop}
+          onClick={(e) => { e.stopPropagation(); toggleLoop(); }}
           className={`p-2 rounded-full transition-colors ${
             isLoop
               ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"

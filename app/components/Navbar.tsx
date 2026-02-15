@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Info, Mail, Music, Moon, Sun, Menu, X, Search, Github } from "lucide-react";
+import { Home, Info, Mail, Music, Moon, Sun, Menu, X, Search, Github, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
@@ -232,7 +232,9 @@ export const Navbar = () => {
                            <item.icon size={22} />
                            <span className="text-xl font-black">{item.name}</span>
                         </div>
-                        <div className="w-8 h-8 rounded-full border border-current flex items-center justify-center opacity-20">→</div>
+                        <div className="w-8 h-8 rounded-full border border-current flex items-center justify-center opacity-20">
+                          <ChevronRight size={16} />
+                        </div>
                       </Link>
                     </motion.div>
                   ))}
