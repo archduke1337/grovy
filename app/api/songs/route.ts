@@ -151,7 +151,6 @@ export async function GET(request: NextRequest) {
 
     // Remote Logic
     // Fallback to "Latest Indian Hits" if no query or "trending" is requested
-    const effectiveQuery = (!query || query === "trending") ? "Latest Indian Hits" : query;
     const apiUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(effectiveQuery)}&limit=20`;
 
     const response = await fetch(apiUrl);
