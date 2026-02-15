@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
 
         const files = fs.readdirSync(songsDir);
         const localSongs = files
-          .filter((file: string) => file.toLowerCase().endsWith('.mp3'))
+          .filter((file: string) => /\.(mp3|wav|ogg|m4a)$/i.test(file))
           .map((file: string, index: number) => {
              const title = file.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
              return {

@@ -9,21 +9,34 @@ export const AudioVisualizer: React.FC = () => {
   const particlesRef = useRef<any[]>([]);
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    
-    // Initialize particles
-    const particles = [];
-    for (let i = 0; i < 50; i++) {
-      particles.push({
-        x: Math.random() * 400,
-        y: Math.random() * 100,
-        size: Math.random() * 3 + 1,
-        speedX: Math.random() * 0.5 - 0.25,
-        speedY: Math.random() * 0.5 - 0.25,
-        opacity: Math.random() * 0.5 + 0.2,
-      });
-    }
-    particlesRef.current = particles;
+    const handleResize = () => {
+      if (!canvasRef.current) return;
+      const canvas = canvasRef.current;
+      const parent = canvas.parentElement;
+      if (parent) {
+        // Sync internal resolution with display size
+        canvas.width = parent.clientWidth;
+        canvas.height = 100;
+        
+        // Re-initialize particles for new width
+        const particles = [];
+        for (let i = 0; i < 50; i++) {
+          particles.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            size: Math.random() * 3 + 1,
+            speedX: Math.random() * 0.5 - 0.25,
+            speedY: Math.random() * 0.5 - 0.25,
+            opacity: Math.random() * 0.5 + 0.2,
+          });
+        }
+        particlesRef.current = particles;
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {

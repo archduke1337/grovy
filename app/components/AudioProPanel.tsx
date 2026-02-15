@@ -8,8 +8,16 @@ import { Sliders, X, Radio } from "lucide-react";
 export const AudioProPanel: React.FC = () => {
   const { eqEnabled, toggleEQ, spatialEnabled, toggleSpatial, setEqGain, colors } = usePlayer();
   const [isOpen, setIsOpen] = useState(false);
+  const [gains, setGains] = useState<number[]>([0, 0, 0, 0, 0]);
 
   const bands = ["Bass", "Low-Mid", "Mid", "High-Mid", "Treble"];
+
+  const handleGainChange = (index: number, value: number) => {
+    const newGains = [...gains];
+    newGains[index] = value;
+    setGains(newGains);
+    setEqGain(index, value);
+  };
 
   return (
     <div className="relative">
@@ -77,31 +85,37 @@ export const AudioProPanel: React.FC = () => {
                 </div>
                 
                 <div className="flex justify-between items-end h-32 gap-3 px-2">
-                  {bands.map((band, i) => (
-                    <div key={band} className="flex-1 flex flex-col items-center gap-2 group">
-                      <div className="flex-1 w-1.5 bg-gray-100 dark:bg-white/5 rounded-full relative overflow-hidden">
-                        <input
-                          type="range"
-                          min="-12"
-                          max="12"
-                          step="0.1"
-                          defaultValue="0"
-                          disabled={!eqEnabled}
-                          onChange={(e) => setEqGain(i, parseFloat(e.target.value))}
-                          className="absolute inset-0 w-32 h-1.5 origin-bottom-left -rotate-90 translate-y-[124px] opacity-0 cursor-pointer z-10"
-                        />
-                        <motion.div 
-                          className={`absolute bottom-0 left-0 right-0 rounded-full ${eqEnabled ? "shadow-sm" : "bg-gray-400/20"}`}
-                          style={{ 
-                            height: '50%',
-                            backgroundColor: eqEnabled ? colors.primary : undefined,
-                            boxShadow: eqEnabled ? `0 0 10px ${colors.primary}80` : undefined
-                          }}
-                        />
+                  {bands.map((band, i) => {
+                    const gain = gains[i];
+                    const percent = ((gain + 12) / 24) * 100;
+
+                    return (
+                      <div key={band} className="flex-1 flex flex-col items-center gap-2 group">
+                        <div className="flex-1 w-1.5 bg-gray-100 dark:bg-white/5 rounded-full relative overflow-hidden">
+                          <input
+                            type="range"
+                            min="-12"
+                            max="12"
+                            step="0.1"
+                            value={gain}
+                            disabled={!eqEnabled}
+                            onChange={(e) => handleGainChange(i, parseFloat(e.target.value))}
+                            className="absolute inset-0 w-32 h-1.5 origin-bottom-left -rotate-90 translate-y-[124px] opacity-0 cursor-pointer z-10"
+                          />
+                          <motion.div 
+                            className={`absolute bottom-0 left-0 right-0 rounded-full ${eqEnabled ? "shadow-sm" : "bg-gray-400/20"}`}
+                            initial={false}
+                            animate={{ 
+                              height: `${percent}%`,
+                              backgroundColor: eqEnabled ? colors.primary : undefined,
+                              boxShadow: eqEnabled ? `0 0 10px ${colors.primary}80` : "none"
+                            }}
+                          />
+                        </div>
+                        <span className="text-[8px] font-black uppercase text-gray-400 group-hover:text-white transition-colors">{band}</span>
                       </div>
-                      <span className="text-[8px] font-black uppercase text-gray-400 group-hover:text-white transition-colors">{band}</span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>
