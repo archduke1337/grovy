@@ -30,7 +30,9 @@ export const BottomPlayer = () => {
                onClick={(e) => {
                  const rect = e.currentTarget.getBoundingClientRect();
                  const x = e.clientX - rect.left;
-                 seek((x / rect.width) * duration);
+                 if (rect.width > 0) {
+                   seek((x / rect.width) * duration);
+                 }
                }}>
             <motion.div 
               className="h-full relative"

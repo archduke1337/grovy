@@ -79,6 +79,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const eqNodesRef = useRef<BiquadFilterNode[]>([]);
   const pannerNodeRef = useRef<StereoPannerNode | null>(null);
 
+  const currentTimeRef = useRef(0);
+
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -99,6 +101,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (audioRef.current) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
+      currentTimeRef.current = time;
     }
   }, []);
 
@@ -107,9 +110,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [songs.length, isShuffle]);
 
   const previousTrack = useCallback(() => {
-    if (currentTime > 3) seek(0);
-    else setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
-  }, [currentTime, songs.length, seek]);
+    // Use ref to avoid dependency on constantly changing currentTime state
+    if (currentTimeRef.current > 3 || songs.length === 0) {
+       seek(0);
+    } else {
+       setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+    }
+  }, [songs.length, seek]);
 
   // Sync Media Session
   useEffect(() => {
@@ -386,6 +393,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const audio = audioRef.current;
     const updateTime = () => {
       setCurrentTime(audio.currentTime);
+      currentTimeRef.current = audio.currentTime;
       if ("mediaSession" in navigator) {
         navigator.mediaSession.setPositionState({
           duration: audio.duration || 0,

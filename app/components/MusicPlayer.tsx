@@ -184,7 +184,7 @@ export const MusicPlayer: React.FC = () => {
                   <motion.div 
                     className="absolute inset-0 rounded-full"
                     style={{ 
-                      width: `${(currentTime / duration) * 100}%`,
+                      width: `${duration ? (currentTime / duration) * 100 : 0}%`,
                       background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
                     }}
                   />

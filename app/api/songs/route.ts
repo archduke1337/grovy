@@ -82,11 +82,11 @@ export async function GET(request: NextRequest) {
       const { blobs } = await list({ prefix: 'songs/', limit: 50 });
       
       const rawSongs = blobs
-        .filter(blob => blob.pathname.endsWith('.mp3'))
+        .filter(blob => blob.pathname.toLowerCase().endsWith('.mp3'))
         .map((blob, index) => {
           // Extract title from pathname (e.g., "songs/My Song.mp3" -> "My Song")
           const fileName = blob.pathname.split('/').pop() || "";
-          const title = fileName.replace(".mp3", "").replace(/[-_]/g, " ");
+          const title = fileName.replace(/\.mp3$/i, "").replace(/[-_]/g, " ");
           
           return {
             id: `blob-${index}`,
@@ -99,7 +99,13 @@ export async function GET(request: NextRequest) {
         });
 
       const result = z.array(SongSchema).safeParse(rawSongs);
-      return Response.json(result.success ? result.data : []);
+      
+      if (!result.success) {
+         console.error("Local/Blob Song Validation Error:", result.error);
+         // Return rawSongs anyway as fallback if minor schema mismatch, or empty
+         return Response.json(rawSongs); 
+      }
+      return Response.json(result.data);
     }
 
     // Remote Logic
