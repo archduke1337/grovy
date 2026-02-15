@@ -108,32 +108,92 @@ export default function Home() {
 
   useEffect(() => {
     const hour = new Date().getHours();
-    if (hour < 5) setGreeting("Late Night Vibes");
-    else if (hour < 12) setGreeting("Rise & Shine");
-    else if (hour < 17) setGreeting("Keep the Vibe");
-    else setGreeting("Evening Flow");
+    if (hour < 12) setGreeting("Good Morning");
+    else if (hour < 18) setGreeting("Good Afternoon");
+    else setGreeting("Good Evening");
   }, []);
 
-  // ... (existing code)
+  // Debounced Auto-Search (Only for songs or if query is typed)
+  useEffect(() => {
+    const handler = setTimeout(async () => {
+      if (searchQuery.length > 2) {
+         handleManualSearch();
+      } else if (!searchQuery && searchType === "song" && !isLocal) {
+         // Load default trending songs if empty
+         const results = await loadSongs("trending");
+         setSearchResults(results);
+      }
+    }, 800);
+
+    return () => clearTimeout(handler);
+  }, [searchQuery, searchType, isLocal, handleManualSearch]); // Removed loadSongs dependency to avoid loop
+
+  const filteredSongs = useMemo(() => searchResults, [searchResults]);
+
+  const toggleLocal = () => {
+     setIsLocal(!isLocal);
+     setSelectedGenre(null);
+     setSearchQuery("");
+     setSearchType("song");
+  };
+
+  const handlePlaySong = (songId: string) => {
+    const index = searchResults.findIndex(s => s.id === songId);
+    if (index !== -1) {
+      setQueue(searchResults, index);
+    }
+  };
 
   return (
     <motion.div 
-      // ...
+      initial="hidden"
+      animate="visible"
+      variants={containerVariants}
+      className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 py-12 space-y-24 pb-48"
     >
       {/* 1. Dynamic Tint Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-16 relative">
-        {/* ... */}
+        <div 
+          className="absolute -top-32 -left-20 w-[500px] h-[500px] blur-[150px] rounded-full mix-blend-screen opacity-20 pointer-events-none transition-colors duration-1000" 
+          style={{ backgroundColor: colors.primary }} 
+        />
         
         <div className="space-y-6 relative z-10">
           <div className="flex items-center gap-3 font-black uppercase text-[11px] tracking-[0.5em]" style={{ color: colors.primary }}>
             <div className="w-8 h-[2px]" style={{ backgroundColor: colors.primary }} />
-            <span>Handpicked for You</span>
+            <span>Curated Collection</span>
           </div>
           <h1 className="text-7xl md:text-[120px] font-black text-gray-900 dark:text-white tracking-tighter leading-[0.85]">
             {greeting}
-{/* ... */}
+            <motion.span 
+              animate={{ opacity: [1, 0.4, 1] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+              style={{ color: colors.secondary }}
+            >
+              .
+            </motion.span>
+          </h1>
+        </div>
+
         <div className="relative group w-full md:w-[450px] shrink-0 space-y-4">
-           {/* ... tabs ... */}
+           {/* Search Type Tabs */}
+           {!isLocal && mounted && (
+             <div className="flex bg-white/50 dark:bg-white/5 p-1 rounded-full backdrop-blur-md w-fit">
+               {(["song", "artist", "album", "playlist"] as const).map((type) => (
+                 <button
+                   key={type}
+                   onClick={() => setSearchType(type)}
+                   className={`px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                     searchType === type 
+                       ? "bg-blue-600 text-white shadow-lg" 
+                       : "text-gray-500 hover:text-gray-900 dark:hover:text-white"
+                   }`}
+                 >
+                   {type}
+                 </button>
+               ))}
+             </div>
+           )}
 
           <div className="relative">
             <button 
@@ -144,13 +204,21 @@ export default function Home() {
             </button>
             <input 
               type="text"
-              placeholder={isLocal ? "Digging through local files..." : "Find your rhythm..."}
+              placeholder={isLocal ? "Search local files..." : `Search ${searchType}s...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
               className="w-full pl-16 pr-12 py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:border-blue-500 outline-none transition-all backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] focus:shadow-blue-500/10"
             />
-            {/* ... spinner ... */}
+            {isSearching && (
+              <div className="absolute right-6 top-1/2 -translate-y-1/2">
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                  className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
+                />
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -158,7 +226,7 @@ export default function Home() {
       {/* 4. Genre Selectors */}
       <section className="space-y-8">
         <div className="flex items-center justify-between">
-           <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Pick Your Vibe</h2>
+           <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Select Your Genre</h2>
            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -170,16 +238,34 @@ export default function Home() {
               }`}
            >
               <Folder size={14} />
-              {isLocal ? "Local Mode On" : "Switch to Local"}
+              {isLocal ? "Local Files Active" : "View Local Files"}
            </motion.button>
         </div>
         {!isLocal ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {Object.entries(GENRE_CONFIG).map(([name, conf]) => (
               <motion.button
-                // ... props
+                key={name}
+                whileHover={{ scale: 1.02, y: -5 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                   setSearchType("song");
+                   setSelectedGenre(name);
+                   loadSongs(`${name} hits`).then(setSearchResults);
+                }}
+                className={`p-8 rounded-[3rem] relative overflow-hidden transition-all border-2 ${
+                  selectedGenre === name 
+                    ? "border-blue-500 shadow-2xl shadow-blue-500/20" 
+                    : "border-transparent bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10"
+                }`}
               >
-                 {/* ... content ... */}
+                 <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} opacity-40`} />
+                 <div className="relative z-10 flex flex-col gap-4">
+                    <div className="p-3 bg-white dark:bg-black/20 rounded-2xl w-fit shadow-sm">
+                      {conf.icon}
+                    </div>
+                    <span className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">{name}</span>
+                 </div>
               </motion.button>
             ))}
           </div>
@@ -189,8 +275,8 @@ export default function Home() {
                <Folder size={32} />
              </div>
              <div>
-               <h3 className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Your Offline Stash</h3>
-               <p className="text-gray-500 font-medium">Jamming to tracks from <code>public/songs</code>.</p>
+               <h3 className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Local Library Mode</h3>
+               <p className="text-gray-500 font-medium">Viewing files from your <code>public/songs</code> directory.</p>
              </div>
           </div>
         )}
@@ -203,7 +289,7 @@ export default function Home() {
           <section className="space-y-10">
             <div className="flex items-end justify-between px-2">
               <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                {selectedGenre ? selectedGenre : (searchQuery ? `Found these for "${searchQuery}"` : "Everyone's Jamming To")}
+                {selectedGenre ? selectedGenre : (searchQuery ? `Results for "${searchQuery}"` : "Trending Now")}
               </h2>
             </div>
             
