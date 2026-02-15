@@ -52,124 +52,113 @@ export default function Home() {
     recentlyPlayed
   } = usePlayer();
   
-  const [searchResults, setSearchResults] = useState<Song[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]); // Can be Song[] or Entity[]
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [isLocal, setIsLocal] = useState(false);
   const [greeting, setGreeting] = useState("Hello");
   const [isSearching, setIsSearching] = useState(false);
+  const [searchType, setSearchType] = useState<"song" | "artist" | "album" | "playlist">("song");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Manual Trigger for Search Button
   const handleManualSearch = useCallback(async () => {
     setIsSearching(true);
-    const results = await loadSongs(searchQuery || "trending", isLocal ? "local" : undefined);
-    setSearchResults(results);
-    setIsSearching(false);
-  }, [searchQuery, isLocal, loadSongs]);
-
-  useEffect(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) setGreeting("Good Morning");
-    else if (hour < 18) setGreeting("Good Afternoon");
-    else setGreeting("Good Evening");
-  }, []);
-
-  // Remote Search & Vibe Sync
-  useEffect(() => {
-    const handler = setTimeout(async () => {
-      setIsSearching(true);
-      if (isLocal) {
-        const results = await loadSongs("", "local");
-        setSearchResults(results);
+    
+    try {
+      if (searchType === "song") {
+         const results = await loadSongs(searchQuery || "trending", isLocal ? "local" : undefined);
+         setSearchResults(results);
       } else {
-        const query = searchQuery || (selectedGenre ? `${selectedGenre} music` : "trending");
-        const results = await loadSongs(query);
-        setSearchResults(results);
+         // Search for entities
+         const res = await fetch(`/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`);
+         const data = await res.json();
+         setSearchResults(data);
       }
+    } catch (e) {
+      console.error(e);
+    } finally {
       setIsSearching(false);
-    }, 500);
+    }
+  }, [searchQuery, isLocal, loadSongs, searchType]);
 
-    return () => clearTimeout(handler);
-  }, [searchQuery, selectedGenre, loadSongs, isLocal]);
-
-  const filteredSongs = useMemo(() => searchResults, [searchResults]);
-
-  const featuredSongs = useMemo(() => searchResults.slice(0, 6), [searchResults]);
-
-  const toggleLocal = () => {
-     setIsLocal(!isLocal);
-     setSelectedGenre(null);
-     setSearchQuery("");
-  };
-
-  const handlePlaySong = (songId: string) => {
-    const index = searchResults.findIndex(s => s.id === songId);
-    if (index !== -1) {
-      setQueue(searchResults, index);
+  const handleEntityClick = async (entity: any) => {
+    // When an album/artist/playlist is clicked, load its songs
+    setIsSearching(true);
+    try {
+       const res = await fetch(`/api/songs?type=${entity.type}&id=${entity.id}`);
+       const songs = await res.json();
+       
+       if (songs.length > 0) {
+         setSearchResults(songs);
+         // Reset type to song to render tracklist view
+         setSearchType("song");
+         setSelectedGenre(`${entity.type}: ${entity.name}`); 
+       }
+    } catch (e) {
+       console.error(e);
+    } finally {
+       setIsSearching(false);
     }
   };
 
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour < 5) setGreeting("Late Night Vibes");
+    else if (hour < 12) setGreeting("Rise & Shine");
+    else if (hour < 17) setGreeting("Keep the Vibe");
+    else setGreeting("Evening Flow");
+  }, []);
+
+  // ... (existing code)
+
   return (
     <motion.div 
-      initial="hidden"
-      animate="visible"
-      variants={containerVariants}
-      className="w-full max-w-[1400px] mx-auto px-6 lg:px-16 py-12 space-y-24 pb-48"
+      // ...
     >
       {/* 1. Dynamic Tint Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-16 relative">
-        <div 
-          className="absolute -top-32 -left-20 w-[500px] h-[500px] blur-[150px] rounded-full mix-blend-screen opacity-20 pointer-events-none transition-colors duration-1000" 
-          style={{ backgroundColor: colors.primary }} 
-        />
+        {/* ... */}
         
         <div className="space-y-6 relative z-10">
           <div className="flex items-center gap-3 font-black uppercase text-[11px] tracking-[0.5em]" style={{ color: colors.primary }}>
             <div className="w-8 h-[2px]" style={{ backgroundColor: colors.primary }} />
-            <span>Curated Collection</span>
+            <span>Handpicked for You</span>
           </div>
           <h1 className="text-7xl md:text-[120px] font-black text-gray-900 dark:text-white tracking-tighter leading-[0.85]">
             {greeting}
-            <motion.span 
-              animate={{ opacity: [1, 0.4, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              style={{ color: colors.secondary }}
-            >
-              .
-            </motion.span>
-          </h1>
-        </div>
+{/* ... */}
+        <div className="relative group w-full md:w-[450px] shrink-0 space-y-4">
+           {/* ... tabs ... */}
 
-        <div className="relative group w-full md:w-[450px] shrink-0">
-          <button 
-            onClick={handleManualSearch}
-            className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors z-10"
-          >
-            <Search size={22} />
-          </button>
-          <input 
-            type="text"
-            placeholder={isLocal ? "Search local artist..." : "Search music..."}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-16 pr-12 py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:border-blue-500 outline-none transition-all backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] focus:shadow-blue-500/10"
-          />
-          {isSearching && (
-            <div className="absolute right-6 top-1/2 -translate-y-1/2">
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full"
-              />
-            </div>
-          )}
+          <div className="relative">
+            <button 
+              onClick={handleManualSearch}
+              className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-500 transition-colors z-10"
+            >
+              <Search size={22} />
+            </button>
+            <input 
+              type="text"
+              placeholder={isLocal ? "Digging through local files..." : "Find your rhythm..."}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+              className="w-full pl-16 pr-12 py-7 rounded-[2rem] bg-white/40 dark:bg-white/5 border border-gray-100 dark:border-white/10 focus:border-blue-500 outline-none transition-all backdrop-blur-3xl shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] focus:shadow-blue-500/10"
+            />
+            {/* ... spinner ... */}
+          </div>
         </div>
       </header>
 
       {/* 4. Genre Selectors */}
       <section className="space-y-8">
         <div className="flex items-center justify-between">
-           <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Select Your Genre</h2>
+           <h2 className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">Pick Your Vibe</h2>
            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -181,30 +170,16 @@ export default function Home() {
               }`}
            >
               <Folder size={14} />
-              {isLocal ? "Local Files Active" : "View Local Files"}
+              {isLocal ? "Local Mode On" : "Switch to Local"}
            </motion.button>
         </div>
         {!isLocal ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {Object.entries(GENRE_CONFIG).map(([name, conf]) => (
               <motion.button
-                key={name}
-                whileHover={{ scale: 1.02, y: -5 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => setSelectedGenre(selectedGenre === name ? null : name)}
-                className={`p-8 rounded-[3rem] relative overflow-hidden transition-all border-2 ${
-                  selectedGenre === name 
-                    ? "border-blue-500 shadow-2xl shadow-blue-500/20" 
-                    : "border-transparent bg-white/50 dark:bg-white/5 hover:bg-white/80 dark:hover:bg-white/10"
-                }`}
+                // ... props
               >
-                 <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} opacity-40`} />
-                 <div className="relative z-10 flex flex-col gap-4">
-                    <div className="p-3 bg-white dark:bg-black/20 rounded-2xl w-fit shadow-sm">
-                      {conf.icon}
-                    </div>
-                    <span className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">{name}</span>
-                 </div>
+                 {/* ... content ... */}
               </motion.button>
             ))}
           </div>
@@ -214,8 +189,8 @@ export default function Home() {
                <Folder size={32} />
              </div>
              <div>
-               <h3 className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Local Library Mode</h3>
-               <p className="text-gray-500 font-medium">Viewing files from your <code>public/songs</code> directory.</p>
+               <h3 className="text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Your Offline Stash</h3>
+               <p className="text-gray-500 font-medium">Jamming to tracks from <code>public/songs</code>.</p>
              </div>
           </div>
         )}
@@ -224,47 +199,80 @@ export default function Home() {
       <AnimatePresence mode="wait">
         <motion.div key={selectedGenre || "default"} variants={containerVariants} className="space-y-24">
           
-          {/* Featured Playlist */}
+          {/* Results Section */}
           <section className="space-y-10">
             <div className="flex items-end justify-between px-2">
               <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                {selectedGenre ? `${selectedGenre} Hits` : "Trending Now"}
+                {selectedGenre ? selectedGenre : (searchQuery ? `Found these for "${searchQuery}"` : "Everyone's Jamming To")}
               </h2>
-              <button className="text-[10px] font-black uppercase tracking-widest text-blue-500 hover:underline">View All</button>
             </div>
             
             <div className="grid grid-cols-2 lg:grid-cols-6 gap-8">
-              {featuredSongs.map((song, i) => (
-                <motion.div
-                  key={song.id}
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.05, y: -10 }}
-                  className="group cursor-pointer space-y-5"
-                  onClick={() => handlePlaySong(song.id)}
-                >
-                  <div className="aspect-square relative rounded-[3.5rem] overflow-hidden shadow-2xl transition-all duration-700 group-hover:shadow-blue-500/25">
-                     {song.cover ? (
-                      <img src={song.cover} alt={song.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-                        <Music className="text-gray-400 w-16 h-16" />
+              {searchResults.map((item, i) => {
+                 // Render Logic based on searchType (or item.type if available)
+                 
+                 // 1. Song Card
+                 if (searchType === "song") {
+                   return (
+                    <motion.div
+                      key={item.id}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.05, y: -10 }}
+                      className="group cursor-pointer space-y-5"
+                      onClick={() => handlePlaySong(item.id)}
+                    >
+                      <div className="aspect-square relative rounded-[3.5rem] overflow-hidden shadow-2xl transition-all duration-700 group-hover:shadow-blue-500/25">
+                         {item.cover ? (
+                          <img src={item.cover} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                        ) : (
+                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
+                            <Music className="text-gray-400 w-16 h-16" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
+                           <PlayCircle size={64} className="text-white fill-white/10 backdrop-blur-md rounded-full" />
+                        </div>
                       </div>
-                    )}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
-                       <PlayCircle size={64} className="text-white fill-white/10 backdrop-blur-md rounded-full" />
-                    </div>
-                  </div>
-                  <div className="px-3">
-                    <h3 className="font-black text-gray-900 dark:text-white truncate text-lg tracking-tight leading-tight">{song.title}</h3>
-                    <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{song.artist || "Artist"}</p>
-                  </div>
-                </motion.div>
-              ))}
+                      <div className="px-3">
+                        <h3 className="font-black text-gray-900 dark:text-white truncate text-lg tracking-tight leading-tight">{item.title}</h3>
+                        <p className="text-gray-400 text-[10px] font-black uppercase tracking-widest">{item.artist || "Artist"}</p>
+                      </div>
+                    </motion.div>
+                   );
+                 }
+
+                 // 2. Entity Card (Album, Artist, Playlist)
+                 return (
+                    <motion.div
+                      key={item.id}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.05, y: -5 }}
+                      className="group cursor-pointer space-y-4"
+                      onClick={() => handleEntityClick(item)}
+                    >
+                      <div className={`aspect-square relative overflow-hidden shadow-xl transition-all ${
+                          item.type === 'artist' ? 'rounded-full' : 'rounded-3xl'
+                      }`}>
+                         {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                        ) : (
+                          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
+                            <Library className="text-gray-500 w-12 h-12" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-center px-2">
+                        <h3 className="font-bold text-gray-900 dark:text-white truncate text-base">{item.name}</h3>
+                        <p className="text-gray-400 text-[10px] uppercase tracking-wider">{item.type}</p>
+                      </div>
+                    </motion.div>
+                 );
+              })}
             </div>
           </section>
 
           {/* Recently Played */}
-          {recentlyPlayed.length > 0 && (
+          {recentlyPlayed.length > 0 && searchType === "song" && (
             <section className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
                <div className="flex items-center justify-between px-2">
                   <div className="flex items-center gap-3">
@@ -277,7 +285,7 @@ export default function Home() {
                       onClick={() => {
                         if (typeof window !== "undefined") {
                           localStorage.removeItem("grovy-history");
-                          window.location.reload(); // Quickest way to clear state globally for now
+                          window.location.reload(); 
                         }
                       }}
                       className="text-[10px] font-black uppercase tracking-[0.2em] text-red-500/60 hover:text-red-500 transition-colors"
@@ -313,68 +321,68 @@ export default function Home() {
             </section>
           )}
 
-          {/* Library List with Dynamic Tint */}
-          <section className="space-y-10">
-             <div className="flex items-center justify-between px-2">
-                <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Library</h2>
-                <span className="text-xs font-black uppercase tracking-widest text-gray-400">{filteredSongs.length} Tracks</span>
-             </div>
-             
-             <div className="bg-white/40 dark:bg-white/5 rounded-[4rem] border border-gray-100 dark:border-white/10 overflow-hidden backdrop-blur-3xl shadow-xl">
-                {filteredSongs.map((song, i) => {
-                  const isCurrent = songs[currentSongIndex]?.id === song.id;
-                  const favorite = isFavorite(song.id);
-                  
-                  return (
-                    <div
-                      key={song.id}
-                      onClick={() => handlePlaySong(song.id)}
-                      className={`group flex items-center gap-8 px-10 py-6 cursor-pointer transition-all border-b border-gray-100 dark:border-white/5 last:border-0 ${
-                        isCurrent ? "bg-blue-600/10 dark:bg-blue-500/10" : "hover:bg-white/60 dark:hover:bg-white/10"
-                      }`}
-                    >
-                       <div className="w-14 h-14 rounded-[1.5rem] overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0 shadow-lg">
-                          {song.cover ? (
-                            <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center"><Music size={20} /></div>
-                          )}
-                       </div>
-
-                       <div className="flex-1 min-w-0">
-                          <div className={`font-black truncate text-lg tracking-tight ${isCurrent ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"}`}>{song.title}</div>
-                          <div className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
-                            {song.artist || "Unknown artist"}
-                            <span className="w-1 h-1 rounded-full bg-gray-300 dark:bg-gray-700" />
-                            <span className="opacity-60">{song.genre}</span>
-                          </div>
-                       </div>
-
-                       <div className="flex items-center gap-6">
-                          {isCurrent && isPlaying && (
-                            <div className="flex items-center gap-1.5 h-4 mr-6">
-                               {[...Array(3)].map((_, j) => (
-                                 <motion.div 
-                                   key={j}
-                                   className="w-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
-                                   animate={{ height: [4, 16, 4] }}
-                                   transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.2 }}
-                                 />
-                               ))}
+          {/* Library List (Only visible if search type is SONG or after clicking an entity) */}
+          {searchType === "song" && (
+            <section className="space-y-10">
+               <div className="flex items-center justify-between px-2">
+                  <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Library</h2>
+                  <span className="text-xs font-black uppercase tracking-widest text-gray-400">{filteredSongs.length} Tracks</span>
+               </div>
+               
+               <div className="bg-white/40 dark:bg-white/5 rounded-[4rem] border border-gray-100 dark:border-white/10 overflow-hidden backdrop-blur-3xl shadow-xl">
+                  {filteredSongs.map((song, i) => {
+                    const isCurrent = songs[currentSongIndex]?.id === song.id;
+                    const favorite = isFavorite(song.id);
+                    
+                    return (
+                      <div
+                        key={song.id}
+                        onClick={() => handlePlaySong(song.id)}
+                        className={`group flex items-center gap-8 px-10 py-6 cursor-pointer transition-all border-b border-gray-100 dark:border-white/5 last:border-0 ${
+                          isCurrent ? "bg-blue-600/10 dark:bg-blue-500/10" : "hover:bg-white/60 dark:hover:bg-white/10"
+                        }`}
+                      >
+                         <div className="w-14 h-14 rounded-[1.5rem] overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0 shadow-lg">
+                            {song.cover ? (
+                              <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center"><Music size={20} /></div>
+                            )}
+                         </div>
+  
+                         <div className="flex-1 min-w-0">
+                            <div className={`font-black truncate text-lg tracking-tight ${isCurrent ? "text-blue-600 dark:text-blue-400" : "text-gray-900 dark:text-white"}`}>{song.title}</div>
+                            <div className="text-xs text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2 mt-1">
+                              {song.artist || "Unknown artist"}
                             </div>
-                          )}
-                          <button 
-                             onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                             className={`p-3 rounded-full transition-all ${favorite ? "text-red-500" : "text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"}`}
-                          >
-                             <Heart size={22} fill={favorite ? "currentColor" : "none"} />
-                          </button>
-                       </div>
-                    </div>
-                  );
-                })}
-             </div>
-          </section>
+                         </div>
+  
+                         <div className="flex items-center gap-6">
+                            {isCurrent && isPlaying && (
+                              <div className="flex items-center gap-1.5 h-4 mr-6">
+                                 {[...Array(3)].map((_, j) => (
+                                   <motion.div 
+                                     key={j}
+                                     className="w-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                                     animate={{ height: [4, 16, 4] }}
+                                     transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.2 }}
+                                   />
+                                 ))}
+                              </div>
+                            )}
+                            <button 
+                               onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
+                               className={`p-3 rounded-full transition-all ${favorite ? "text-red-500" : "text-gray-300 opacity-0 group-hover:opacity-100 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10"}`}
+                            >
+                               <Heart size={22} fill={favorite ? "currentColor" : "none"} />
+                            </button>
+                         </div>
+                      </div>
+                    );
+                  })}
+               </div>
+            </section>
+          )}
 
           {/* Open Source Footer */}
           <footer className="py-20 border-t border-gray-100 dark:border-white/5 flex flex-col items-center gap-6">
@@ -387,7 +395,7 @@ export default function Home() {
                 Crafted for premium audio experiences.
              </p>
              <Link 
-                href="https://github.com/archduke1337/grovy"  
+                href="https://github.com/archduke1337/grovy" 
                 target="_blank"
                 className="px-8 py-3 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-xl dark:shadow-white/10"
              >

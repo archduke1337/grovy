@@ -154,13 +154,7 @@ export const Navbar = () => {
             </div>
             
             <div className="flex items-center gap-1.5 px-2 border-l border-gray-200 dark:border-white/10 ml-2">
-              <button 
-                onClick={() => setCommandPaletteOpen(true)}
-                className="p-3 rounded-full text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-white/10 transition-all group"
-                aria-label="Search"
-              >
-                <Search size={18} className="group-hover:scale-110 transition-transform" />
-              </button>
+
               <button
                 onClick={toggleTheme}
                 className="p-3 rounded-full text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-white dark:hover:bg-white/10 transition-all group"
@@ -180,12 +174,7 @@ export const Navbar = () => {
 
           {/* Mobile Actions */}
           <div className="flex items-center gap-1 md:hidden">
-            <button
-               onClick={() => setCommandPaletteOpen(true)}
-               className="p-3 rounded-full text-gray-500 transition-all"
-            >
-              <Search size={20} />
-            </button>
+
             <button
                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                className={`p-3 rounded-full transition-all ${isMobileMenuOpen ? "bg-blue-600 text-white" : "text-gray-500"}`}

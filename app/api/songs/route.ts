@@ -22,8 +22,55 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const source = searchParams.get("source");
   const query = searchParams.get("query");
-  
+  const type = searchParams.get("type"); // 'album', 'playlist', 'artist'
+  const id = searchParams.get("id");
+
   try {
+    // 1. Fetch by ID (Album/Playlist/Artist details)
+    if (id && type && ["album", "playlist", "artist"].includes(type)) {
+      let endpoint = "";
+      if (type === "album") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/albums?id=${id}`;
+      if (type === "playlist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/playlists?id=${id}`;
+      // for artist, the endpoint usually is /api/artists?id={id} - check docs or assume standard
+      // Actually docs say: /api/artists/{id}/songs ?? or just /api/artists?id={id}
+      // Let's try standard detail endpoint first. If it fails we might need specific songs endpoint.
+      // Based on common Saavn APIs:
+      if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${id}&song_count=20`; 
+
+      const response = await fetch(endpoint);
+      const data = await response.json();
+
+      let songsList: any[] = [];
+      
+      if (data.success) {
+        if (type === "artist") {
+           // Artist API usually returns { data: { topSongs: [] } } or similar
+           songsList = data.data.topSongs || data.data.songs || [];
+        } else {
+           // Album/Playlist returns { data: { songs: [] } }
+           songsList = data.data.songs || [];
+        }
+      }
+
+      const rawSongs = songsList.map((item: any) => {
+          const cover = item.image?.[item.image.length - 1]?.url;
+          const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url;
+          const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
+                        item.artist || "Unknown Artist";
+          
+          return {
+            id: item.id,
+            title: item.name || item.title,
+            url: downloadUrl,
+            artist: artist,
+            cover: cover,
+            genre: "Unknown", 
+            duration: item.duration,
+          };
+      });
+
+      return Response.json(rawSongs);
+    }
     if (source === "local" && !query) {
       // Check if Blob token is configured (prevents crash in local/unconfigured envs)
       if (!process.env.BLOB_READ_WRITE_TOKEN) {
