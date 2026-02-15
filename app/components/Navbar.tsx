@@ -10,7 +10,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 
 const navItems = [
   { name: "Home", path: "/", icon: Home },
-  { name: "About", path: "https://github.com/archduke/grovy/blob/main/README.md", icon: Info },
+  { name: "About", path: "https://archduke.is-a.dev/about", icon: Info },
   { name: "Contact", path: "https://archduke.is-a.dev/contact", icon: Mail },
 ];
 
@@ -74,13 +74,16 @@ export const Navbar = () => {
         <div className="flex items-center justify-between">
           {/* Logo & Now Playing Chip */}
           <div className="flex items-center gap-4">
-            <Link href="/" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <motion.div 
                 whileHover={{ rotate: 360, scale: 1.1 }}
-                style={{ background: `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})` }}
-                className="rounded-xl p-2 shadow-lg shadow-blue-500/20"
+                className="relative w-8 h-8"
               >
-                <Music className="w-5 h-5 text-white" />
+                <img 
+                  src={isDark ? "/icons/logo-dark.png" : "/icons/logo-light.png"} 
+                  alt="Grovy Logo" 
+                  className="w-full h-full object-contain"
+                />
               </motion.div>
               <span 
                 style={{ backgroundImage: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}
@@ -204,8 +207,14 @@ export const Navbar = () => {
             >
               <div className="flex flex-col h-full px-8 py-20 gap-12">
                 <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-2">
-                     <div className="bg-blue-600 rounded-lg p-1.5"><Music size={20} className="text-white" /></div>
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8">
+                       <img 
+                         src={isDark ? "/icons/logo-dark.png" : "/icons/logo-light.png"} 
+                         alt="Grovy" 
+                         className="w-full h-full object-contain"
+                       />
+                     </div>
                      <span className="text-2xl font-black dark:text-white">Grovy</span>
                    </div>
                    <button onClick={() => setIsMobileMenuOpen(false)} className="p-3 bg-gray-100 dark:bg-white/10 rounded-full dark:text-white">
