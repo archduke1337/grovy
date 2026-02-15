@@ -45,6 +45,7 @@ export const AmbientBackground: React.FC = () => {
         }}
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         className="absolute top-0 left-0 w-[60vw] h-[60vw] rounded-full blur-[150px]"
+        style={{ willChange: "transform, opacity, background-color" }}
       />
 
       

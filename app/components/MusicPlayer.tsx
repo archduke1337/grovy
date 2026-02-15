@@ -54,12 +54,14 @@ export const MusicPlayer: React.FC = () => {
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8 }}
+        style={{ willChange: "transform, opacity" }}
         className="w-full max-w-7xl flex flex-col lg:row lg:flex-row items-center gap-12 lg:gap-24 z-10 px-6 py-12"
       >
         {/* Left: Cinematic Art & Visualizer */}
         <div className="w-full lg:w-1/2 flex flex-col items-center gap-12">
            <motion.div
             layoutId={`art-${currentSong?.id}`}
+            style={{ willChange: "transform" }}
             className="w-72 h-72 md:w-[500px] md:h-[500px] relative group"
            >
               {/* Art Glow */}
