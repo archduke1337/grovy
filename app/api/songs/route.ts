@@ -150,8 +150,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Remote Logic
-    // Fallback to "Latest Indian Hits" if no query or "trending" is requested
-    const apiUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(effectiveQuery)}&limit=20`;
+    if (!query) {
+      return Response.json([]);
+    }
+
+    const apiUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=20`;
 
     const response = await fetch(apiUrl);
     const data = await response.json();
