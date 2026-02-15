@@ -36,7 +36,11 @@ export const BottomPlayer = () => {
                }}>
             <motion.div 
               className="h-full relative"
-              style={{ width: `${progress}%`, background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}
+              style={{ 
+                width: `${progress}%`,
+                background: `linear-gradient(to right, var(--player-primary), var(--player-secondary))`,
+                transition: "width 0.1s linear, background 2s ease"
+              }}
             >
               <div 
                 className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity"

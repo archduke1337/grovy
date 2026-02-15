@@ -40,23 +40,13 @@ export const MusicPlayer: React.FC = () => {
       
       {/* 1. Ambient Dynamic Glows (Now using extraction) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
-        <motion.div 
-          animate={{
-            scale: isPlaying ? [1, 1.2, 1] : 1,
-            opacity: isPlaying ? [0.3, 0.5, 0.3] : 0.3,
-            backgroundColor: colors.primary,
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -top-[10%] -left-[5%] w-[70%] h-[70%] blur-[180px] rounded-full"
+        <div 
+          style={{ backgroundColor: colors.primary }}
+          className="absolute -top-[10%] -left-[5%] w-[70%] h-[70%] blur-[180px] rounded-full transition-colors duration-[2000ms]"
         />
-        <motion.div 
-          animate={{
-            scale: isPlaying ? [1.2, 1, 1.2] : 1,
-            opacity: isPlaying ? [0.3, 0.5, 0.3] : 0.3,
-            backgroundColor: colors.secondary,
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute -bottom-[10%] -right-[5%] w-[70%] h-[70%] blur-[180px] rounded-full"
+        <div 
+          style={{ backgroundColor: colors.secondary }}
+          className="absolute -bottom-[10%] -right-[5%] w-[70%] h-[70%] blur-[180px] rounded-full transition-colors duration-[2000ms]"
         />
       </div>
 
@@ -185,7 +175,9 @@ export const MusicPlayer: React.FC = () => {
                     className="absolute inset-0 rounded-full"
                     style={{ 
                       width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                      background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`
+                      // Use CSS variables for color transition to avoid heavy JS reclac
+                      background: `linear-gradient(to right, var(--player-primary), var(--player-secondary))`,
+                      transition: "width 0.1s linear, background 2s ease"
                     }}
                   />
                   <input

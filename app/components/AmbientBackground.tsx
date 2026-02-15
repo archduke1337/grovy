@@ -30,10 +30,7 @@ export const AmbientBackground: React.FC = () => {
       blobRef1.current.style.transform = `scale(${scale}) translate(-20%, -20%)`;
       blobRef1.current.style.opacity = opacity.toString();
     }
-    if (blobRef2.current) {
-      blobRef2.current.style.transform = `scale(${scale * 1.2}) translate(20%, 20%)`;
-      blobRef2.current.style.opacity = opacity.toString();
-    }
+
   });
 
   return (
@@ -49,16 +46,7 @@ export const AmbientBackground: React.FC = () => {
         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         className="absolute top-0 left-0 w-[60vw] h-[60vw] rounded-full blur-[150px]"
       />
-      <motion.div
-        ref={blobRef2}
-        animate={{
-          x: [0, -50, 50, 0],
-          y: [0, 50, -50, 0],
-          backgroundColor: colors.secondary,
-        }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-0 right-0 w-[60vw] h-[60vw] rounded-full blur-[150px]"
-      />
+
       
       {/* Noise Overlay */}
       <div className="absolute inset-0 bg-noise opacity-[0.03] dark:opacity-[0.05] pointer-events-none" />
