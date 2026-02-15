@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
       if (localSongs.length === 0) {
         try {
           if (process.env.BLOB_READ_WRITE_TOKEN) {
-            const { blobs } = await list({ prefix: 'songs/', limit: 100 });
+            const { blobs } = await list({ prefix: 'songs/', limit: 1000 });
             const audioBlobs = blobs.filter(blob => 
               /\.(mp3|wav|m4a|ogg)$/i.test(blob.pathname)
             );
