@@ -12,10 +12,7 @@ import React, {
 import { Song, SongSchema } from "@/app/types/song";
 import { z } from "zod";
 
-let ColorThief: any;
-if (typeof window !== "undefined") {
-  ColorThief = require("colorthief").default || require("colorthief");
-}
+
 
 interface Colors {
   primary: string;
@@ -187,26 +184,35 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       return;
     }
 
+    let isMounted = true;
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.src = song.cover;
-    img.onload = () => {
+    img.onload = async () => {
+      if (!isMounted) return;
       try {
+        const ColorThief = (await import("colorthief")).default;
         const colorThief = new ColorThief();
         const palette = colorThief.getPalette(img, 3);
         const rgbToHex = (r: number, g: number, b: number) => 
           "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
         
-        setColors({
-          primary: rgbToHex(palette[0][0], palette[0][1], palette[0][2]),
-          secondary: rgbToHex(palette[1][0], palette[1][1], palette[1][2]),
-          accent: rgbToHex(palette[2][0], palette[2][1], palette[2][2]),
-        });
+        if (isMounted) {
+          setColors({
+            primary: rgbToHex(palette[0][0], palette[0][1], palette[0][2]),
+            secondary: rgbToHex(palette[1][0], palette[1][1], palette[1][2]),
+            accent: rgbToHex(palette[2][0], palette[2][1], palette[2][2]),
+          });
+        }
       } catch (e) {
-        setColors(DEFAULT_COLORS);
+        if (isMounted) setColors(DEFAULT_COLORS);
       }
     };
-    img.onerror = () => setColors(DEFAULT_COLORS);
+    img.onerror = () => {
+      if (isMounted) setColors(DEFAULT_COLORS);
+    };
+
+    return () => { isMounted = false; };
   }, [currentSongIndex, songs]);
 
   // Audio Graph initialization
@@ -257,64 +263,29 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      const initialSongs = await loadSongs();
-      if (initialSongs.length > 0) setSongs(initialSongs);
-    };
-    init();
-    if (typeof window !== "undefined") {
-      const savedFavs = localStorage.getItem("grovy-favorites");
-      if (savedFavs) setFavorites(JSON.parse(savedFavs));
-      
-      const savedVol = localStorage.getItem("grovy-volume");
-      if (savedVol) {
-        const v = parseFloat(savedVol);
-        setVolumeState(v);
-        if (audioRef.current) audioRef.current.volume = v;
-      }
-
-      const savedSettings = localStorage.getItem("grovy-settings");
-      if (savedSettings) {
-        const { loop, shuffle } = JSON.parse(savedSettings);
-        setIsLoop(loop);
-        setIsShuffle(shuffle);
-      }
-
-      const savedHistory = localStorage.getItem("grovy-history");
-      if (savedHistory) setRecentlyPlayed(JSON.parse(savedHistory));
-    }
-  }, [loadSongs]);
-
-  // Update history when song changes
-  useEffect(() => {
-    if (songs.length > 0 && isPlaying) {
-      const current = songs[currentSongIndex];
-      setRecentlyPlayed(prev => {
-        const filtered = prev.filter(s => s.id !== current.id);
-        const next = [current, ...filtered].slice(0, 20);
-        if (typeof window !== "undefined") {
-          localStorage.setItem("grovy-history", JSON.stringify(next));
-        }
-        return next;
-      });
-    }
-  }, [currentSongIndex, songs, isPlaying]);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("grovy-favorites", JSON.stringify(favorites));
-    }
-  }, [favorites]);
-
+  // Audio Source Management
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || songs.length === 0) return;
+    
     const song = songs[currentSongIndex];
     if (!song) return;
-    audio.src = song.url;
-    if (isPlaying) audio.play().catch(() => {});
-  }, [currentSongIndex, songs]);
+
+    // Only update src if it changed. 
+    // We check if current src ends with the new url to handle absolute vs relative paths confusion
+    // or simply if they don't match. 
+    // Using decodeURIComponent to handle potential encoding discrepancies.
+    const currentSrc = decodeURIComponent(audio.src).split(window.location.origin).pop(); 
+    const newSrc = song.url; // song.url is usually relative e.g. /songs/...
+
+    // Simple check: if audio.src includes the song url? 
+    // Better: Maintain a currentSongIdRef to track logic?
+    // Easiest robust check:
+    if (audio.src !== new URL(song.url, window.location.href).href) {
+       audio.src = song.url;
+       if (isPlaying) audio.play().catch(() => {});
+    }
+  }, [currentSongIndex, songs, isPlaying]);
 
   useEffect(() => {
     const audio = audioRef.current;
