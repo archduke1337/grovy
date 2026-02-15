@@ -25,6 +25,12 @@ export async function GET(request: NextRequest) {
   
   try {
     if (source === "local" && !query) {
+      // Check if Blob token is configured (prevents crash in local/unconfigured envs)
+      if (!process.env.BLOB_READ_WRITE_TOKEN) {
+        console.warn("Vercel Blob token not found. Skipping local song fetch.");
+        return Response.json([]);
+      }
+
       // Fetch songs from Vercel Blob storage
       const { blobs } = await list({ prefix: 'songs/', limit: 50 });
       

@@ -387,7 +387,7 @@ export default function Home() {
                 Crafted for premium audio experiences.
              </p>
              <Link 
-                href="https://github.com/archduke/grovy" 
+                href="https://github.com/archduke1337/grovy"  
                 target="_blank"
                 className="px-8 py-3 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all shadow-xl dark:shadow-white/10"
              >
