@@ -1,22 +1,18 @@
 "use client";
 
-import React, { useMemo, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, 
   Music, 
-  Heart, 
   Search, 
-  PlayCircle,
-  Library,
   Github,
   Folder,
-  History,
-  ListPlus
+  ChevronLeft,
+  TrendingUp,
+  BarChart3
 } from "lucide-react";
-import { Song } from "./types/song";
-import Link from "next/link";
 
 const TRENDING_REGIONS = [
   { code: "IN", name: "India" },
@@ -27,29 +23,44 @@ const TRENDING_REGIONS = [
   { code: "BR", name: "Brazil" },
 ];
 
-const GENRE_CONFIG: Record<string, { color: string }> = {
-  "Bollywood": { color: "from-pink-500/20 to-rose-500/20" },
-  "Punjabi": { color: "from-amber-500/20 to-orange-500/20" },
-  "Indipop": { color: "from-violet-500/20 to-purple-500/20" },
-  "Devotional": { color: "from-orange-600/20 to-yellow-600/20" },
-  "Pop": { color: "from-blue-400/20 to-cyan-400/20" },
-  "Hip Hop": { color: "from-red-500/20 to-pink-600/20" },
-  "Rock": { color: "from-gray-600/20 to-slate-600/20" },
-  "Jazz": { color: "from-yellow-500/20 to-amber-600/20" },
-  "Electronic": { color: "from-green-400/20 to-emerald-500/20" },
-  "Classical": { color: "from-indigo-400/20 to-blue-500/20" },
-  "Chill": { color: "from-teal-400/20 to-cyan-500/20" },
-  "Party": { color: "from-fuchsia-500/20 to-purple-600/20" }
+const GENRE_CONFIG: Record<string, { color: string; accent: string }> = {
+  "Bollywood":  { color: "from-rose-500/40 to-pink-600/30",    accent: "#f43f5e" },
+  "Punjabi":    { color: "from-amber-400/40 to-orange-500/30",  accent: "#f59e0b" },
+  "Indipop":    { color: "from-violet-500/40 to-purple-600/30", accent: "#8b5cf6" },
+  "Devotional": { color: "from-orange-500/40 to-amber-600/30",  accent: "#f97316" },
+  "Pop":        { color: "from-sky-400/40 to-blue-500/30",      accent: "#0ea5e9" },
+  "Hip Hop":    { color: "from-red-500/40 to-rose-600/30",      accent: "#ef4444" },
+  "Rock":       { color: "from-zinc-500/40 to-stone-600/30",    accent: "#71717a" },
+  "Jazz":       { color: "from-yellow-400/40 to-amber-500/30",  accent: "#eab308" },
+  "Electronic": { color: "from-emerald-400/40 to-teal-500/30",  accent: "#10b981" },
+  "Classical":  { color: "from-indigo-400/40 to-blue-500/30",   accent: "#6366f1" },
+  "Chill":      { color: "from-cyan-400/40 to-teal-400/30",     accent: "#06b6d4" },
+  "Party":      { color: "from-fuchsia-500/40 to-pink-500/30",  accent: "#d946ef" },
 };
 
+/* Apple-like spring-based stagger */
 const containerVariants = {
   hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+  visible: { 
+    opacity: 1, 
+    transition: { staggerChildren: 0.04, delayChildren: 0.1 } 
+  }
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 15 },
-  visible: { opacity: 1, y: 0 }
+  hidden: { opacity: 0, y: 20, scale: 0.96 },
+  visible: { 
+    opacity: 1, y: 0, scale: 1,
+    transition: { type: "spring", stiffness: 260, damping: 24 }
+  }
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { 
+    opacity: 1, y: 0,
+    transition: { type: "spring", stiffness: 200, damping: 28 }
+  }
 };
 
 export default function Home() {
@@ -57,17 +68,14 @@ export default function Home() {
     songs, 
     currentSongIndex, 
     isPlaying,
-    toggleFavorite, 
-    isFavorite,
     colors,
     loadSongs,
     setQueue,
     recentlyPlayed,
-    clearHistory,
-    openPlaylistModal
+    clearHistory
   } = usePlayer();
   
-  const [searchResults, setSearchResults] = useState<any[]>([]); // Can be Song[] or Entity[]
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState("IN");
@@ -75,11 +83,6 @@ export default function Home() {
   const [greeting, setGreeting] = useState("Hello");
   const [isSearching, setIsSearching] = useState(false);
   const [searchType, setSearchType] = useState<"song" | "artist" | "album" | "playlist">("song");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const fetchTrending = useCallback(async (region = selectedRegion) => {
     setIsSearching(true);
@@ -97,7 +100,6 @@ export default function Home() {
     setIsSearching(false);
   }, [loadSongs, selectedRegion]);
 
-  // Manual Trigger for Search Button
   const handleManualSearch = useCallback(async () => {
     setIsSearching(true);
     
@@ -106,7 +108,6 @@ export default function Home() {
          const results = await loadSongs(searchQuery || "trending", isLocal ? "local" : undefined);
          setSearchResults(results);
       } else {
-         // Search for entities
          const res = await fetch(`/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`);
          const data = await res.json();
          setSearchResults(data);
@@ -119,7 +120,6 @@ export default function Home() {
   }, [searchQuery, isLocal, loadSongs, searchType]);
 
   const handleEntityClick = async (entity: any) => {
-    // When an album/artist/playlist is clicked, load its songs
     setIsSearching(true);
     try {
        const res = await fetch(`/api/songs?type=${entity.type}&id=${entity.id}`);
@@ -127,7 +127,6 @@ export default function Home() {
        
        if (songs.length > 0) {
          setSearchResults(songs);
-         // Reset type to song to render tracklist view
          setSearchType("song");
          setSelectedGenre(`${entity.type}: ${entity.name}`); 
        }
@@ -145,22 +144,21 @@ export default function Home() {
     else setGreeting("Good Evening");
   }, []);
 
-  // Debounced Auto-Search (Only for songs or if query is typed)
+  // Debounced Auto-Search
   useEffect(() => {
     const handler = setTimeout(async () => {
       if (searchQuery.length > 2) {
          handleManualSearch();
       } else if (!searchQuery && searchType === "song" && !isLocal) {
-         // Load default trending songs if empty
          const results = await loadSongs("trending");
          setSearchResults(results);
       }
     }, 800);
 
     return () => clearTimeout(handler);
-  }, [searchQuery, searchType, isLocal, handleManualSearch]); // Removed loadSongs dependency to avoid loop
+  }, [searchQuery, searchType, isLocal, handleManualSearch, loadSongs]);
 
-  const filteredSongs = searchResults;
+
 
   const toggleLocal = () => {
      setIsLocal(!isLocal);
@@ -176,493 +174,432 @@ export default function Home() {
     }
   };
 
+  const clearGenre = () => {
+    setSelectedGenre(null);
+    setSearchQuery("");
+  };
+
   return (
     <motion.div 
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="w-full max-w-[1400px] mx-auto px-4 md:px-8 py-6 space-y-10 pb-36"
+      className="w-full max-w-[1400px] mx-auto px-5 md:px-10 lg:px-16 py-8 space-y-14 pb-40 min-h-screen relative"
     >
-      {/* 1. Dynamic Tint Header */}
-      <header className="flex flex-col xl:flex-row xl:items-end justify-between gap-10 relative">
+      {/* ═══════════════════════════════════════════════
+          SECTION 1 — Hero Header  
+          Apple Music-style greeting with glassmorphic search
+          ═══════════════════════════════════════════════ */}
+      <header className="relative z-10 pt-4 md:pt-8">
+        {/* Ambient haze behind header */}
         <div 
-          className="absolute -top-40 -left-20 w-[300px] h-[300px] blur-[120px] rounded-full mix-blend-screen opacity-30 pointer-events-none transition-colors duration-1000" 
-          style={{ backgroundColor: colors.primary }} 
+          className="absolute -top-[200px] left-1/2 -translate-x-1/2 w-[800px] h-[600px] rounded-full blur-[160px] opacity-[0.07] pointer-events-none transition-colors duration-[2s]"
+          style={{ backgroundColor: colors.primary }}
         />
-        
-        <div className="space-y-4 relative z-10 text-center xl:text-left max-w-2xl">
-          <div className="flex items-center justify-center xl:justify-start gap-2 font-black uppercase text-[10px] tracking-[0.3em]" style={{ color: colors.primary }}>
-             <span>Daily Mix</span>
-          </div>
-          
-          <div className="space-y-1">
-            <h1 className="text-4xl md:text-6xl xl:text-7xl font-black text-gray-900 dark:text-white tracking-tighter leading-none">
-              {greeting}
-              <span style={{ color: colors.primary }}>.</span>
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400 font-medium text-sm md:text-base max-w-md mx-auto xl:mx-0 leading-relaxed opacity-80">
-              Listen to the moments that matter.
-            </p>
-          </div>
-        </div>
 
-        <div className="relative group w-full xl:w-[480px] shrink-0 space-y-6">
-           {/* Search Type Tabs */}
-           {!isLocal && mounted && (
-             <div className="flex flex-wrap justify-center xl:justify-end gap-2">
-               {(["song", "artist", "album", "playlist"] as const).map((type) => (
+        <div className="relative space-y-8">
+          {/* Greeting + Subtitle */}
+          <div className="space-y-2">
+            <motion.h1 
+              variants={fadeUp}
+              suppressHydrationWarning
+              className="text-[clamp(2.5rem,8vw,5.5rem)] font-bold text-gray-900 dark:text-white leading-[0.95] tracking-[-0.025em]"
+            >
+              {greeting}
+              <span className="text-white/20 dark:text-white/15">.</span>
+            </motion.h1>
+            <motion.p 
+              variants={fadeUp}
+              className="text-lg md:text-xl text-gray-400 dark:text-white/35 font-medium tracking-[-0.01em]"
+            >
+              {isLocal ? "Your local library" : "Discover something new today"}
+            </motion.p>
+          </div>
+
+          {/* Search Bar — Floating Glass Capsule */}
+          <motion.div variants={fadeUp} className="flex flex-col gap-4">
+            <div className="relative max-w-2xl group/search">
+              <div className="relative flex items-center bg-gray-100/80 dark:bg-white/[0.06] backdrop-blur-2xl border border-gray-200/60 dark:border-white/[0.08] rounded-2xl px-5 py-3.5 transition-all duration-300 hover:border-gray-300/80 dark:hover:border-white/[0.15] focus-within:border-gray-400 dark:focus-within:border-white/20 focus-within:bg-white dark:focus-within:bg-white/[0.1] focus-within:shadow-lg dark:focus-within:shadow-[0_8px_40px_-12px_rgba(255,255,255,0.06)]">
+                <Search size={18} className="text-gray-400 dark:text-white/30 shrink-0" />
+                <input 
+                  type="text"
+                  placeholder={isLocal ? "Search your library..." : "Search songs, artists, albums..."}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+                  className="w-full bg-transparent border-none outline-none text-[15px] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/25 px-3 font-medium tracking-[-0.01em]"
+                />
+                {isSearching && (
+                  <motion.div 
+                    animate={{ rotate: 360 }}
+                    transition={{ repeat: Infinity, duration: 0.8, ease: "linear" }}
+                    className="w-4 h-4 border-2 border-gray-200 dark:border-white/15 border-t-gray-600 dark:border-t-white/70 rounded-full shrink-0"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Search Type Pills */}
+            {!isLocal && (
+              <div className="flex items-center gap-2 flex-wrap">
+                {(["song", "artist", "album", "playlist"] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setSearchType(type)}
-                    className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`px-4 py-1.5 rounded-full text-[12px] font-semibold capitalize transition-all duration-200 ${
                       searchType === type 
-                        ? "text-white shadow-lg scale-105" 
-                        : "text-gray-400 hover:text-gray-900 dark:hover:text-white bg-white/5 hover:bg-white/10"
+                        ? "bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm" 
+                        : "bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-white/[0.1] hover:text-gray-700 dark:hover:text-white/60"
                     }`}
-                    style={{ 
-                      backgroundColor: searchType === type ? colors.primary : undefined,
-                    }}
                   >
-                    {type}
+                    {type === "song" ? "Songs" : type === "artist" ? "Artists" : type === "album" ? "Albums" : "Playlists"}
                   </button>
-               ))}
-             </div>
-           )}
-
-          <div className="relative w-full group/search">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover/search:opacity-100 transition-opacity blur-xl rounded-full" style={{ background: `linear-gradient(to right, transparent, ${colors.primary}40, transparent)` }} />
-            <button 
-              onClick={handleManualSearch}
-              className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within/search:text-[var(--color-primary)] transition-colors z-20"
-            >
-              <Search size={20} />
-            </button>
-            <input 
-              type="text"
-              placeholder={isLocal ? "Search local files..." : "What do you want to play?"}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
-              className="w-full pl-12 pr-12 py-4 rounded-full bg-white/60 dark:bg-white/5 border border-white/20 dark:border-white/5 focus:border-[var(--color-primary)]/50 focus:bg-white dark:focus:bg-black/40 outline-none transition-all backdrop-blur-3xl shadow-xl text-sm font-medium placeholder:text-gray-400 relative z-10"
-            />
-            {isSearching && (
-              <div className="absolute right-5 top-1/2 -translate-y-1/2 z-20">
-                <motion.div 
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-                  style={{ borderTopColor: colors.primary }}
-                  className="w-4 h-4 border-2 border-gray-200 rounded-full"
-                />
+                ))}
+                <div className="w-px h-5 bg-gray-200 dark:bg-white/10 mx-1" />
+                <button
+                  onClick={toggleLocal}
+                  className={`px-4 py-1.5 rounded-full text-[12px] font-semibold transition-all duration-200 flex items-center gap-1.5 ${
+                    isLocal 
+                      ? "bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm" 
+                      : "bg-gray-100 dark:bg-white/[0.06] text-gray-500 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-white/[0.1]"
+                  }`}
+                >
+                  <Folder size={12} />
+                  Local
+                </button>
               </div>
             )}
-          </div>
+          </motion.div>
         </div>
       </header>
 
-      {/* Discovery Section */}
+      {/* ═══════════════════════════════════════════════
+          SECTION 2 — Quick Filters (Region + Trending/Charts)
+          ═══════════════════════════════════════════════ */}
       {!isLocal && (
-          <section className="space-y-6 pt-6">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6 px-1">
-               <div className="flex flex-col md:flex-row items-center gap-6 w-full md:w-auto">
-                 <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight hidden md:block">Discovery Hub</h2>
-                 
-                 <div className="flex items-center gap-2 overflow-x-scroll md:overflow-visible pb-2 md:pb-0 w-full md:w-auto custom-scrollbar">
-                    {TRENDING_REGIONS.map(r => (
-                      <button
-                        key={r.code}
-                        onClick={() => {
-                          setSelectedRegion(r.code);
-                          if (searchQuery === "trending") fetchTrending(r.code);
-                          else if (searchQuery === "charts") fetchCharts(r.code);
-                        }}
-                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${
-                          selectedRegion === r.code 
-                            ? "bg-white dark:bg-white/10 text-gray-900 dark:text-white shadow-lg scale-105" 
-                            : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-                        }`}
-                      >
-                        {r.name}
-                      </button>
-                    ))}
-                 </div>
-               </div>
-               
-               {/* Quick Filters */}
-               <div className="flex gap-3 w-full md:w-auto justify-center md:justify-end">
-                 <button 
-                  onClick={() => {setSearchQuery("trending"); fetchTrending();}}
-                  className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-full transition-all ${
-                    searchQuery === "trending" 
-                      ? "bg-amber-500 text-white shadow-lg shadow-amber-500/30" 
-                      : "text-gray-500 bg-white/5 hover:bg-amber-500/10 hover:text-amber-500"
+        <motion.section variants={fadeUp} className="relative z-10">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            {/* Region Pills */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 custom-scrollbar w-full sm:w-auto">
+              {TRENDING_REGIONS.map(r => (
+                <button
+                  key={r.code}
+                  onClick={() => {
+                    setSelectedRegion(r.code);
+                    if (searchQuery === "trending") fetchTrending(r.code);
+                    else if (searchQuery === "charts") fetchCharts(r.code);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-[12px] font-semibold transition-all whitespace-nowrap ${
+                    selectedRegion === r.code 
+                      ? "bg-gray-900 dark:bg-white/[0.12] text-white dark:text-white shadow-sm ring-1 ring-gray-900/10 dark:ring-white/10" 
+                      : "text-gray-500 dark:text-white/35 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:text-gray-700 dark:hover:text-white/60"
                   }`}
-                 >
-                   Trends
-                 </button>
-                 <button 
-                  onClick={() => {setSearchQuery("charts"); fetchCharts();}}
-                  className={`flex items-center gap-2 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-full transition-all ${
-                    searchQuery === "charts" 
-                      ? "bg-blue-500 text-white shadow-lg shadow-blue-500/30" 
-                      : "text-gray-500 bg-white/5 hover:bg-blue-500/10 hover:text-blue-500"
-                  }`}
-                 >
-                   Charts
-                 </button>
-               </div>
+                  suppressHydrationWarning
+                >
+                  {r.name}
+                </button>
+              ))}
             </div>
-          </section>
+
+            {/* Action Pills */}
+            <div className="flex gap-2 shrink-0">
+              <button 
+                onClick={() => { setSearchQuery("trending"); fetchTrending(); }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all ${
+                  searchQuery === "trending" 
+                    ? "bg-orange-500/10 text-orange-500 dark:text-orange-400 ring-1 ring-orange-500/20" 
+                    : "text-gray-500 dark:text-white/35 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                <TrendingUp size={14} />
+                Trending
+              </button>
+              <button 
+                onClick={() => { setSearchQuery("charts"); fetchCharts(); }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-[12px] font-semibold transition-all ${
+                  searchQuery === "charts" 
+                    ? "bg-blue-500/10 text-blue-500 dark:text-blue-400 ring-1 ring-blue-500/20" 
+                    : "text-gray-500 dark:text-white/35 hover:bg-gray-100 dark:hover:bg-white/[0.06]"
+                }`}
+              >
+                <BarChart3 size={14} />
+                Charts
+              </button>
+            </div>
+          </div>
+        </motion.section>
       )}
 
+      {/* ═══════════════════════════════════════════════
+          MAIN CONTENT AREA (Animated)
+          ═══════════════════════════════════════════════ */}
       <AnimatePresence mode="wait">
-        <motion.div key={selectedGenre || "default"} variants={containerVariants} className="space-y-16 md:space-y-24">
+        <motion.div 
+          key={selectedGenre || searchQuery || "default"} 
+          initial="hidden"
+          animate="visible"
+          exit={{ opacity: 0, y: -10 }}
+          variants={containerVariants} 
+          className="space-y-16 relative z-10"
+        >
           
-          {/* Results Section */}
-          <section className="space-y-6 md:space-y-10">
-            <div className="flex items-end justify-between px-2">
-              <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">
-                {selectedGenre ? selectedGenre : (searchQuery ? `Checking out "${searchQuery}"` : "Made for You")}
-              </h2>
+          {/* ═══════════════════════════════════════════════
+              SECTION 3 — Results Grid
+              ═══════════════════════════════════════════════ */}
+          <section className="space-y-6">
+            {/* Section Header with Back Nav */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {selectedGenre && (
+                  <button 
+                    onClick={clearGenre}
+                    className="p-2 rounded-xl bg-gray-100 dark:bg-white/[0.06] hover:bg-gray-200 dark:hover:bg-white/[0.1] transition-colors text-gray-600 dark:text-white/60"
+                  >
+                    <ChevronLeft size={18} />
+                  </button>
+                )}
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                  {selectedGenre 
+                    ? selectedGenre 
+                    : searchQuery 
+                      ? `"${searchQuery}"` 
+                      : "For You"}
+                </h2>
+              </div>
+              {searchResults.length > 0 && (
+                <span className="text-xs font-medium text-gray-400 dark:text-white/25 tabular-nums">
+                  {searchResults.length} results
+                </span>
+              )}
             </div>
             
-            {/* Horizontal Scroll for results instead of grid */}
-            <div className="flex overflow-x-auto gap-3 md:gap-5 pb-4 custom-scrollbar snap-x px-1 -mx-2 md:mx-0">
-              {searchResults.map((item, i) => {
-                 // Render Logic based on searchType (or item.type if available)
-                 
-                 // 1. Song Card
-                 if (searchType === "song") {
-                   return (
+            {/* Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-5">
+              {searchResults.length > 0 ? searchResults.map((item, i) => {
+                if (searchType === "song") {
+                  const isCurrent = songs[currentSongIndex]?.id === item.id;
+                  return (
                     <motion.div
                       key={item.id}
                       variants={itemVariants}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      className="group cursor-pointer space-y-2 min-w-[130px] md:min-w-[160px] snap-start"
+                      whileHover={{ y: -4 }}
+                      whileTap={{ scale: 0.97 }}
+                      className="group cursor-pointer"
                       onClick={() => handlePlaySong(item.id)}
                     >
-                      <div className="aspect-square relative rounded-2xl md:rounded-3xl overflow-hidden shadow-md transition-all duration-500 group-hover:shadow-xl">
-                         {item.cover ? (
-                          <img src={item.cover} alt={item.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
+                      <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.04] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+                        {item.cover ? (
+                          <img src={item.cover} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-                            <Music className="text-gray-400 w-12 h-12 md:w-16 md:h-16" />
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Music size={32} className="text-gray-300 dark:text-white/10" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center">
-                           <PlayCircle size={48} className="text-white fill-white/10 backdrop-blur-md rounded-full md:w-16 md:h-16" />
-                        </div>
-                      </div>
-                      <div className="px-1">
-                        <h3 className="font-bold text-gray-900 dark:text-white truncate text-xs md:text-sm tracking-tight">{item.title}</h3>
-                        <div className="flex justify-between items-center">
-                          <p className="text-gray-500 text-[10px] truncate max-w-[80px]">{item.artist || "Artist"}</p>
-                          <button 
-                            onClick={(e) => { e.stopPropagation(); openPlaylistModal(item); }}
-                            className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full"
+                        {/* Hover Play Overlay */}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                          <motion.div 
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            whileHover={{ scale: 1 }}
+                            className="w-12 h-12 bg-white/90 dark:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl"
                           >
-                            <ListPlus size={14} className="text-gray-400 hover:text-gray-900 dark:hover:text-white" />
-                          </button>
+                            <Play size={18} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                          </motion.div>
                         </div>
-                      </div>
-                    </motion.div>
-                   );
-                 }
-
-                 // 2. Entity Card (Album, Artist, Playlist)
-                 return (
-                    <motion.div
-                      key={item.id}
-                      variants={itemVariants}
-                      whileHover={{ scale: 1.05, y: -5 }}
-                      className="group cursor-pointer space-y-2 md:space-y-4 min-w-[150px] md:min-w-[200px] snap-start"
-                      onClick={() => handleEntityClick(item)}
-                    >
-                      <div className={`aspect-square relative overflow-hidden shadow-lg md:shadow-xl transition-all ${
-                          item.type === 'artist' ? 'rounded-full' : 'rounded-[2rem]'
-                      }`}>
-                         {item.image ? (
-                          <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                        ) : (
-                          <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-                            <Library className="text-gray-500 w-10 h-10 md:w-12 md:h-12" />
+                        {/* Now Playing indicator */}
+                        {isCurrent && isPlaying && (
+                          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg">
+                            {[...Array(3)].map((_, j) => (
+                              <motion.div 
+                                key={j}
+                                className="w-0.5 rounded-full bg-white"
+                                animate={{ height: [3, 10, 3] }}
+                                transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.15 }}
+                              />
+                            ))}
                           </div>
                         )}
                       </div>
-                      <div className="text-center px-1 md:px-2">
-                        <h3 className="font-bold text-gray-900 dark:text-white truncate text-xs md:text-sm">{item.name}</h3>
-                        <p className="text-gray-400 text-[8px] md:text-[10px] uppercase tracking-wider">{item.type}</p>
+                      <div className="space-y-0.5 px-0.5">
+                        <h3 className={`font-semibold text-[14px] truncate tracking-[-0.01em] leading-tight ${
+                          isCurrent ? "text-blue-500 dark:text-blue-400" : "text-gray-900 dark:text-white"
+                        }`}>{item.title}</h3>
+                        <p className="text-gray-500 dark:text-white/35 text-[12px] truncate font-medium">{item.artist || "Unknown"}</p>
                       </div>
                     </motion.div>
-                 );
-              })}
+                  );
+                }
+                // Entity Card (Artist, Album, Playlist)
+                return (
+                  <motion.div
+                    key={item.id}
+                    variants={itemVariants}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="group cursor-pointer"
+                    onClick={() => handleEntityClick(item)}
+                  >
+                    <div className={`aspect-square relative overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.04] shadow-sm group-hover:shadow-xl transition-shadow duration-500 ${
+                      item.type === 'artist' ? 'rounded-full' : 'rounded-2xl'
+                    }`}>
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Music size={32} className="text-gray-300 dark:text-white/10" />
+                        </div>
+                      )}
+                    </div>
+                    <div className={`space-y-0.5 ${item.type === 'artist' ? 'text-center' : ''} px-0.5`}>
+                      <h3 className="font-semibold text-[14px] text-gray-900 dark:text-white truncate tracking-[-0.01em]">{item.name}</h3>
+                      <p className="text-gray-400 dark:text-white/30 text-[11px] font-semibold uppercase tracking-wider">{item.type}</p>
+                    </div>
+                  </motion.div>
+                );
+              }) : (
+                <div className="col-span-full py-24 flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gray-100 dark:bg-white/[0.04] flex items-center justify-center">
+                    <Music size={24} className="text-gray-300 dark:text-white/15" />
+                  </div>
+                  <div className="text-center space-y-1">
+                    <p className="text-gray-500 dark:text-white/30 font-semibold text-[15px]">No results yet</p>
+                    <p className="text-gray-400 dark:text-white/20 text-[13px]">Try searching or pick a genre below</p>
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
-          {/* Recently Played */}
-          {recentlyPlayed.length > 0 && searchType === "song" && (
-            <section className="space-y-6 md:space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-1000">
-               <div className="flex items-center justify-between px-2">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <History size={20} style={{ color: colors.primary }} className="md:w-6 md:h-6" />
-                    <h2 className="text-xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Jump Back In</h2>
-                  </div>
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 hidden md:inline">Where you left off</span>
-                    <button 
-                      onClick={clearHistory}
-                      className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.2em] text-red-500/60 hover:text-red-500 transition-colors"
-                    >
-                      Clear
-                    </button>
-                  </div>
-               </div>
-               
-               <div className="flex gap-4 md:gap-6 overflow-x-auto pb-4 md:pb-8 custom-scrollbar scroll-smooth snap-x">
-                  {recentlyPlayed.map((song, i) => (
-                    <motion.div
-                      key={`recent-${song.id}`}
-                      whileHover={{ y: -5 }}
-                      onClick={() => setQueue([song, ...songs], 0)}
-                      className="min-w-[130px] md:min-w-[160px] group cursor-pointer snap-start"
-                    >
-                       <div className="aspect-square relative rounded-2xl md:rounded-3xl overflow-hidden mb-3 md:mb-4 shadow-lg group-hover:shadow-xl transition-all">
-                          {song.cover ? (
-                            <img src={song.cover} alt={song.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                          ) : (
-                            <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center"><Music /></div>
-                          )}
-                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center">
-                             <Play size={24} className="text-white fill-white md:w-8 md:h-8" />
-                          </div>
-                       </div>
-                       <h4 className="font-bold text-gray-900 dark:text-white truncate px-1 text-sm md:text-base">{song.title}</h4>
-                       <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 px-1 mt-0.5 md:mt-1 truncate">{song.artist}</p>
-                       <button 
-                          onClick={(e) => { e.stopPropagation(); openPlaylistModal(song); }}
-                          className="absolute bottom-2 right-2 p-1.5 bg-white/10 backdrop-blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
-                        >
-                          <ListPlus size={12} className="text-white" />
-                        </button>
-                    </motion.div>
-                  ))}
-               </div>
-            </section>
-          )}
-
-          {/* Library List (Only visible if search type is SONG or after clicking an entity) */}
-          {searchType === "song" && (
-            <section className="space-y-6 md:space-y-10">
-               <div className="flex items-center justify-between px-2">
-                  <h2 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white tracking-tighter">Your Collection</h2>
-                  <div className="flex items-center gap-3">
-                     <button
-                       onClick={() => {
-                         if (filteredSongs.length > 0) {
-                           handlePlaySong(filteredSongs[0].id);
-                         }
-                       }}
-                       className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/5 dark:bg-white/10 hover:bg-black/10 dark:hover:bg-white/20 transition-all text-[10px] font-black uppercase tracking-widest text-gray-600 dark:text-gray-300"
-                     >
-                       <Play size={10} fill="currentColor" />
-                       Play All
-                     </button>
-                     <span className="text-[10px] md:text-xs font-black uppercase tracking-widest text-gray-400 opacity-60">{filteredSongs.length} Tracks</span>
-                  </div>
-               </div>
-               
-               <div className="bg-white/40 dark:bg-white/5 rounded-[2rem] md:rounded-[4rem] border border-gray-100 dark:border-white/10 overflow-hidden backdrop-blur-3xl shadow-xl">
-                  {filteredSongs.slice(0, 7).map((song, i) => {
-                    const isCurrent = songs[currentSongIndex]?.id === song.id;
-                    const favorite = isFavorite(song.id);
-                    
-                      return (
-                        <div
-                          key={song.id}
-                          onClick={() => handlePlaySong(song.id)}
-                          style={{ 
-                            backgroundColor: isCurrent ? `${colors.primary}10` : undefined,
-                            borderColor: isCurrent ? `${colors.primary}20` : undefined
-                          }}
-                          className={`group flex items-center gap-3 md:gap-5 px-3 py-2 md:px-5 md:py-3 cursor-pointer transition-all border-b border-gray-50 dark:border-white/5 last:border-0 hover:bg-black/5 dark:hover:bg-white/5 ${
-                            isCurrent ? "border-l-4" : "border-l-4 border-l-transparent" 
-                          }`}
-                        >
-                           {/* Number / Play Icon */}
-                           <div className="w-6 md:w-8 text-center flex-shrink-0 text-gray-400 font-bold text-[10px] md:text-xs">
-                             {isCurrent && isPlaying ? (
-                                <div className="flex items-center justify-center gap-0.5 h-3">
-                                  {[...Array(3)].map((_, j) => (
-                                    <motion.div 
-                                      key={j}
-                                      style={{ backgroundColor: colors.primary }}
-                                      className="w-0.5 md:w-1 rounded-full"
-                                      animate={{ height: [4, 12, 4] }}
-                                      transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.2 }}
-                                    />
-                                  ))}
-                                </div>
-                             ) : (
-                               <span className="group-hover:hidden">{i + 1}</span>
-                             )}
-                             <Play size={12} className={`hidden group-hover:block mx-auto ${isCurrent ? "text-[var(--color-primary)]" : "text-gray-900 dark:text-white"}`} fill="currentColor" />
-                           </div>
-
-                           <div className="w-10 h-10 md:w-12 md:h-12 rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 shrink-0 shadow-sm relative group-hover:shadow-md transition-shadow">
-                              {song.cover ? (
-                                <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center"><Music size={16} className="md:w-5 md:h-5 text-gray-400" /></div>
-                              )}
-                              {/* Overlay Play Button on Cover */}
-                              <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Play size={16} className="text-white fill-white" />
-                              </div>
-                           </div>
-    
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                               <div 
-                                 style={{ color: isCurrent ? colors.primary : undefined }}
-                                 className={`font-bold truncate text-sm md:text-base tracking-tight leading-tight ${!isCurrent ? "text-gray-900 dark:text-white group-hover:text-[var(--color-primary)] transition-colors" : ""}`}
-                               >
-                                 {song.title}
-                               </div>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] md:text-xs text-gray-500 font-medium truncate max-w-[150px]">{song.artist || "Unknown artist"}</span>
-                                {song.source && (
-                                  <span className={`px-1 py-px rounded text-[8px] border opacity-60 ${
-                                    song.source === "YouTube" 
-                                      ? "border-red-500/30 text-red-500 bg-red-500/5" 
-                                      : "border-blue-500/30 text-blue-500 bg-blue-500/5"
-                                  }`}>
-                                    {song.source}
-                                  </span>
-                                )}
-                              </div>
-                           </div>
-    
-                           <div className="flex items-center gap-3">
-                              <span className="text-[10px] text-gray-400 font-medium hidden md:block">
-                                {song.duration ? `${Math.floor(song.duration / 60)}:${(song.duration % 60).toString().padStart(2, '0')}` : "--:--"}
-                              </span>
-                              <button 
-                                 onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                                 className={`p-2 rounded-full transition-all hover:bg-gray-100 dark:hover:bg-white/10 ${favorite ? "text-red-500" : "text-gray-300 hover:text-red-500"}`}
-                              >
-                                 <Heart size={16} fill={favorite ? "currentColor" : "none"} className="md:w-5 md:h-5" />
-                              </button>
-                              <button 
-                                 onClick={(e) => { e.stopPropagation(); openPlaylistModal(song); }}
-                                 className="p-2 rounded-full transition-all text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-blue-500"
-                              >
-                                 <ListPlus size={16} className="md:w-5 md:h-5" />
-                              </button>
-                           </div>
-                        </div>
-                    );
-                  })}
-               </div>
-            </section>
-          )}
-
-          {/* Search Type Specific Sections */}
-          {searchType === "song" && (
-            <section className="space-y-6 md:space-y-10">
-               {/* 4. Genre Selectors - MOVED HERE */}
-               <section className="space-y-6 md:space-y-8 pt-10 border-t border-gray-100 dark:border-white/5">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-2">
-                   <h2 className="text-[10px] md:text-xs font-black uppercase tracking-[0.2em] md:tracking-[0.3em] text-gray-400 text-center md:text-left">Explore by Mood</h2>
-                    
-                   {!isLocal && (
-                     <motion.button
-                       whileHover={{ scale: 1.05 }}
-                       whileTap={{ scale: 0.95 }}
-                       onClick={toggleLocal}
-                       className="flex items-center gap-2 px-5 py-2.5 rounded-full font-black uppercase text-[9px] tracking-widest bg-white/50 dark:bg-white/5 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all backdrop-blur-md"
-                     >
-                       <Folder size={14} />
-                       Play Local
-                     </motion.button>
-                   )}
-                </div>
-
-                {!isLocal ? (
-                  <div className="flex gap-3 md:gap-4 overflow-x-auto pb-4 custom-scrollbar snap-x px-1">
-                    {Object.entries(GENRE_CONFIG).map(([name, conf]) => (
-                      <motion.button
-                        key={name}
-                        whileHover={{ scale: 1.02, y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => {
-                           setSearchType("song");
-                           setSelectedGenre(name);
-                           loadSongs(`${name} hits`).then(setSearchResults);
-                           window.scrollTo({ top: 0, behavior: 'smooth' });
-                        }}
-                        className={`flex-shrink-0 w-[160px] md:w-[200px] p-4 md:p-5 rounded-2xl md:rounded-3xl relative overflow-hidden transition-all snap-start ${
-                          selectedGenre === name 
-                            ? "ring-2 ring-offset-1 ring-offset-transparent ring-[var(--color-primary)] shadow-lg" 
-                            : "bg-white/40 dark:bg-white/5 hover:bg-white/60 dark:hover:bg-white/10"
-                        }`}
-                      >
-                         <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} opacity-40`} />
-                         <div className="relative z-10 flex flex-col justify-end h-full text-left">
-                            <div>
-                               <span className="text-lg md:text-2xl font-black tracking-tighter text-gray-900 dark:text-white block leading-none mb-1">{name}</span>
-                               <span className="text-[9px] font-bold uppercase tracking-wider text-gray-500 opacity-60">Top Hits</span>
-                            </div>
-                         </div>
-                      </motion.button>
-                    ))}
-                  </div>
-                ) : (
-                  <div 
-                    style={{ backgroundColor: `${colors.primary}10`, borderColor: `${colors.primary}20` }}
-                    className="p-8 md:p-12 rounded-[2.5rem] border flex flex-col items-center text-center gap-4 w-full"
+          {/* ═══════════════════════════════════════════════
+              SECTION 4 — Explore by Mood (Genre Grid)
+              Only shown on default view with no active search/genre
+              ═══════════════════════════════════════════════ */}
+          {!isLocal && searchType === "song" && !selectedGenre && !searchQuery && (
+            <motion.section variants={fadeUp} className="space-y-6">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                Explore by Mood
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                {Object.entries(GENRE_CONFIG).map(([name, conf], i) => (
+                  <motion.button
+                    key={name}
+                    variants={itemVariants}
+                    whileHover={{ y: -3, scale: 1.01 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      setSearchType("song");
+                      setSelectedGenre(name);
+                      loadSongs(`${name} hits`).then(setSearchResults);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`relative overflow-hidden rounded-2xl p-5 md:p-6 flex flex-col justify-end text-left group transition-all duration-300 border border-transparent hover:border-white/[0.08] ${
+                      (i === 0 || i === 7) ? "sm:col-span-2 aspect-[2/1]" : "aspect-[4/3]"
+                    }`}
                   >
-                     <div className="flex items-center gap-4">
-                         <div 
-                            style={{ backgroundColor: `${colors.primary}20`, color: colors.primary }}
-                            className="p-4 rounded-full"
-                         >
-                           <Folder size={32} />
-                         </div>
-                         <div className="text-left">
-                            <h3 className="text-xl md:text-2xl font-black tracking-tighter text-gray-900 dark:text-white">Local Library</h3>
-                            <button 
-                              onClick={toggleLocal}
-                              className="text-xs font-bold text-red-500/80 hover:text-red-500 uppercase tracking-widest mt-1"
-                            >
-                              Exit Local Mode
-                            </button>
-                         </div>
-                     </div>
-                  </div>
-                )}
-              </section>
-            </section>
+                    {/* Gradient fill */}
+                    <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} transition-opacity duration-500`} />
+                    {/* Bottom fade for text legibility */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                    {/* Subtle noise texture */}
+                    <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
+
+                    <div className="relative z-10 space-y-0.5">
+                      <span className="text-lg md:text-xl font-bold text-white tracking-[-0.02em] leading-tight block drop-shadow-sm">{name}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-widest text-white/50 block translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        Explore →
+                      </span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.section>
           )}
 
-          {/* Open Source Footer */}
-          <footer className="py-20 border-t border-gray-100 dark:border-white/5 flex flex-col items-center gap-6">
-             <div className="flex items-center gap-3">
-                <Github size={24} className="text-gray-400" />
-                <span className="text-xl font-black tracking-tighter text-gray-900 dark:text-white">Grovy</span>
-             </div>
-             <p className="text-gray-500 font-medium text-center text-sm md:text-base">
-                Grovy is an open-source web music player.<br />
-                Crafted for premium audio experiences.
-             </p>
-              <Link 
-                 href="https://github.com/archduke1337/grovy" 
-                 target="_blank"
-                 style={{ 
-                   backgroundColor: colors.primary,
-                   boxShadow: `0 20px 40px ${colors.primary}40`
-                 }}
-                 className="px-8 py-3 rounded-full text-white font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-all"
-              >
-                 Star on GitHub
-              </Link>
+          {/* ═══════════════════════════════════════════════
+              SECTION 5 — Jump Back In (Recently Played)
+              ═══════════════════════════════════════════════ */}
+          {recentlyPlayed.length > 0 && searchType === "song" && (
+            <motion.section variants={fadeUp} className="space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                  Jump Back In
+                </h2>
+                <button 
+                  onClick={clearHistory} 
+                  className="text-[12px] font-semibold text-gray-400 dark:text-white/25 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+              
+              <div className="flex gap-4 md:gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory -mx-5 px-5 md:mx-0 md:px-0">
+                {recentlyPlayed.map((song) => (
+                  <motion.div
+                    key={`recent-${song.id}`}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setQueue([song, ...songs], 0)}
+                    className="min-w-[140px] md:min-w-[160px] group cursor-pointer snap-start"
+                  >
+                    <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.04] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+                      {song.cover ? (
+                        <img src={song.cover} alt={song.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Music size={24} className="text-gray-300 dark:text-white/10" /></div>
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 bg-white/90 dark:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl">
+                          <Play size={14} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-0.5">
+                      <h4 className="font-semibold text-gray-900 dark:text-white truncate text-[13px] tracking-[-0.01em]">{song.title}</h4>
+                      <p className="text-gray-500 dark:text-white/30 text-[11px] font-medium truncate mt-0.5">{song.artist}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* ═══════════════════════════════════════════════
+              SECTION 6 — Local Library Banner
+              ═══════════════════════════════════════════════ */}
+          {!isLocal && (
+            <motion.section 
+              variants={fadeUp}
+              whileHover={{ scale: 1.005 }}
+              className="relative rounded-3xl overflow-hidden cursor-pointer group" 
+              onClick={toggleLocal}
+            >
+              {/* Background layers */}
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-white/[0.04] dark:to-white/[0.02]" />
+              <div className="absolute inset-0 border border-gray-200/50 dark:border-white/[0.06] rounded-3xl" />
+
+              <div className="relative z-10 p-8 md:p-12 lg:p-14 flex items-center justify-between gap-6">
+                <div className="space-y-2 max-w-lg">
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                    Your Local Library
+                  </h2>
+                  <p className="text-gray-500 dark:text-white/40 font-medium text-[14px] md:text-[15px] leading-relaxed">
+                    Play your local audio files with the Grovy engine. High fidelity, zero latency.
+                  </p>
+                </div>
+                <div className="w-14 h-14 md:w-16 md:h-16 bg-gray-200/60 dark:bg-white/[0.06] rounded-2xl flex items-center justify-center group-hover:bg-gray-300/60 dark:group-hover:bg-white/[0.1] transition-colors shrink-0">
+                  <Folder size={24} className="text-gray-500 dark:text-white/40 md:w-7 md:h-7" />
+                </div>
+              </div>
+            </motion.section>
+          )}
+
+          {/* ═══════════════════════════════════════════════
+              FOOTER
+              ═══════════════════════════════════════════════ */}
+          <footer className="pt-12 pb-8 border-t border-gray-100 dark:border-white/[0.04] flex flex-col items-center gap-4">
+            <div className="flex items-center gap-2.5 text-gray-400 dark:text-white/20 hover:text-gray-600 dark:hover:text-white/40 transition-colors">
+              <Github size={18} />
+              <span className="text-[13px] font-semibold tracking-[-0.01em]">Grovy — Open Source Music Player</span>
+            </div>
           </footer>
         </motion.div>
       </AnimatePresence>

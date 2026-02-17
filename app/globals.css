@@ -4,10 +4,22 @@
 @layer base {
   body {
     @apply bg-bg dark:bg-bg-dark text-gray-900 dark:text-gray-100;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
   }
 
+  /* Apple-tier selection colors */
+  ::selection {
+    background-color: rgba(0, 122, 255, 0.2);
+    color: inherit;
+  }
+
+  /* Stagger transition durations per property to remove jankiness */
   * {
-    @apply transition-colors;
+    transition-property: color, background-color, border-color, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -79,43 +91,32 @@
     scroll-behavior: smooth;
   }
 
-  /* Dark mode toggle */
-  @media (prefers-color-scheme: dark) {
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
+  /* Scrollbar — ultra-thin, Apple style */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
   }
 
-  @media (prefers-color-scheme: light) {
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-    ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
-    }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 100px;
+  }
 
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-    }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
+  }
 
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(0, 0, 0, 0.3);
-    }
+  .dark ::-webkit-scrollbar-thumb,
+  :root.dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  :root.dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
   }
 }
 
@@ -124,17 +125,20 @@
     text-wrap: balance;
   }
 
+  /* Vision Pro Glass — Light mode */
   .glass-effect {
-    @apply bg-white/60 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)];
+    @apply bg-white/70 backdrop-blur-2xl border border-black/[0.04] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.06)];
   }
 
+  /* Vision Pro Glass — Dark mode */
   .glass-effect-dark {
-    @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)];
+    @apply bg-white/[0.04] backdrop-blur-2xl border border-white/[0.06] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)];
   }
 
+  /* Horizontal scroll area — minimal scrollbar */
   .custom-scrollbar::-webkit-scrollbar {
-    height: 4px;
-    width: 4px;
+    height: 3px;
+    width: 3px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -142,7 +146,12 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-gray-300 dark:bg-gray-700 rounded-full;
+    background: rgba(128, 128, 128, 0.15);
+    border-radius: 100px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(128, 128, 128, 0.3);
   }
 
   @keyframes music-bar {

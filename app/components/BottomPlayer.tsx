@@ -114,22 +114,22 @@ export const BottomPlayer = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 120 }}
-            className="fixed inset-0 z-[100] bg-bg/95 dark:bg-bg-dark/95 backdrop-blur-3xl flex flex-col items-center overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-black flex flex-col items-center overflow-hidden"
           >
-            {/* Grab Handle */}
-            <div className="sticky top-0 left-0 right-0 h-10 flex items-center justify-center cursor-pointer z-10" onClick={() => setIsExpanded(false)}>
-               <div className="w-16 h-1.5 bg-gray-300/50 dark:bg-white/20 rounded-full mb-2" />
+            {/* Grab Handle - Floating */}
+            <div className="absolute top-0 left-0 right-0 h-12 flex items-center justify-center cursor-pointer z-50 pointer-events-none">
+               <div className="w-16 h-1.5 bg-white/20 rounded-full mt-2 pointer-events-auto transition-colors hover:bg-white/40" onClick={() => setIsExpanded(false)} />
             </div>
             
             <button 
               onClick={() => setIsExpanded(false)}
-              className="absolute top-8 right-8 p-3 rounded-full glass-effect dark:glass-effect-dark text-gray-500 hover:text-blue-600 transition-all z-20"
+              className="absolute top-6 right-6 p-3 rounded-full bg-black/20 text-white/50 hover:text-white hover:bg-white/10 transition-all z-50 backdrop-blur-md"
             >
               <ChevronUp size={24} className="rotate-180" />
             </button>
 
-            {/* Embedded Full Player Component with padding for mobile */}
-            <div className="w-full max-w-7xl px-4 py-8 md:py-16">
+            {/* Embedded Full Player Component - Full Width/Height */}
+            <div className="w-full min-h-full flex-1">
               <MusicPlayer />
             </div>
           </motion.div>

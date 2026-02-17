@@ -49,7 +49,7 @@ export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className 
               times: [0, 0.33, 0.66, 1],
               delay: blob.delay
             }}
-            className="absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[100px] md:blur-[120px] opacity-20 dark:opacity-25"
+            className="absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[120px] md:blur-[160px] opacity-[0.12] dark:opacity-[0.15]"
             style={{
               backgroundColor: blob.color,
               top: `${blob.initialY}%`,
@@ -65,19 +65,19 @@ export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className 
       {/* Rhythmic Pulse synced to isPlaying state */}
       <motion.div
         animate={{
-          opacity: isPlaying ? [0, 0.05, 0] : 0,
+          opacity: isPlaying ? [0, 0.03, 0] : 0,
         }}
         transition={{
-          duration: 2, 
+          duration: 2.5, 
           repeat: Infinity,
           ease: "easeInOut"
         }}
         className="absolute inset-0 bg-white dark:bg-white mix-blend-overlay pointer-events-none"
       />
 
-      {/* Cinematic Grain & Vignette */}
-      <div className="absolute inset-0 bg-noise opacity-[0.04] mix-blend-overlay pointer-events-none" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-20 dark:opacity-90 pointer-events-none" />
+      {/* Cinematic Grain & Vignette — subtle, not overpowering */}
+      <div className="absolute inset-0 bg-noise opacity-[0.025] mix-blend-overlay pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.4)_100%)] opacity-30 dark:opacity-40 pointer-events-none" />
     </div>
   );
 };
