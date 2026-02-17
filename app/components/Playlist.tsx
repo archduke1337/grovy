@@ -18,7 +18,7 @@ export const Playlist: React.FC = () => {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       {songs.slice(currentSongIndex, currentSongIndex + 8).map((song, i) => {
         const index = currentSongIndex + i;
         const isCurrent = index === currentSongIndex;
@@ -29,30 +29,31 @@ export const Playlist: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: i * 0.05 }}
             onClick={() => setCurrentSongIndex(index)}
-            className={`w-full group flex items-center gap-3 p-2 rounded-xl transition-all ${
+            className={`w-full group flex items-center gap-4 p-3 rounded-[1.5rem] transition-all duration-300 border border-transparent ${
               isCurrent 
-                ? "bg-white/10 dark:bg-white/5 shadow-sm" 
-                : "hover:bg-white/5 dark:hover:bg-white/5 opacity-60 hover:opacity-100"
+                ? "bg-white/10 shadow-[0_0_20px_-5px_rgba(255,255,255,0.1)] border-white/5" 
+                : "hover:bg-white/5 opacity-60 hover:opacity-100 hover:scale-[1.02]"
             }`}
           >
             {/* Cover Art or Number */}
-            <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 bg-gray-800">
+            <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-lg">
                {song.cover ? (
                  <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
                ) : (
-                 <div className="w-full h-full flex items-center justify-center bg-gray-700">
-                    <Music size={14} className="text-gray-400" />
+                 <div className="w-full h-full flex items-center justify-center bg-white/5">
+                    <Music size={16} className="text-gray-400" />
                  </div>
                )}
                {isCurrent && isPlaying && (
                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                    <div className="flex gap-0.5 items-end h-3">
+                    <div className="flex gap-0.5 items-end h-4 pb-1">
                       {[...Array(3)].map((_, i) => (
                         <motion.div 
                           key={i}
-                          animate={{ height: [4, 12, 4] }}
+                          animate={{ height: [4, 16, 4] }}
                           transition={{ repeat: Infinity, duration: 0.6, delay: i * 0.1 }}
                           className="w-1 bg-white rounded-full"
+                          style={{ backgroundColor: colors.primary }}
                         />
                       ))}
                     </div>
@@ -62,12 +63,17 @@ export const Playlist: React.FC = () => {
 
             <div className="text-left min-w-0 flex-1">
               <h4 
-                style={{ color: isCurrent ? colors.primary : undefined }}
-                className={`text-xs font-bold truncate ${isCurrent ? "" : "text-gray-900 dark:text-white"}`}
+                style={{ color: isCurrent ? "white" : undefined }}
+                className={`text-sm font-bold truncate ${isCurrent ? "" : "text-white"}`}
               >
                 {song.title}
               </h4>
-              <p className="text-[10px] font-medium text-gray-500 truncate">{song.artist}</p>
+              <p 
+                className="text-xs font-medium truncate transition-colors mt-0.5"
+                style={{ color: isCurrent ? colors.primary : "rgba(255,255,255,0.5)" }}
+              >
+                {song.artist}
+              </p>
             </div>
           </motion.button>
         );
