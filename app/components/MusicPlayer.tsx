@@ -155,69 +155,79 @@ export const MusicPlayer: React.FC = () => {
                   </motion.div>
               </div>
 
-              {/* Progress Bar - Soft & Organic */}
-              <div className="space-y-2 group/progress px-6">
-                <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden cursor-pointer transition-all duration-300 group-hover/progress:h-4 group-hover/progress:bg-white/15">
-                  <div className="absolute inset-0 opacity-0 group-hover/progress:opacity-20 transition-opacity bg-white/20" />
-                  <motion.div 
-                    className="absolute inset-0 rounded-full"
-                    style={{ 
-                      width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                      background: `linear-gradient(90deg, var(--player-primary), var(--player-secondary))`,
-                      boxShadow: `0 0 20px -2px var(--player-primary)`
-                    }}
-                  />
-                  <input
-                    type="range"
-                    min="0"
-                    max={duration || 0}
-                    value={currentTime}
-                    onChange={(e) => seek(parseFloat(e.target.value))}
-                    className="absolute inset-0 w-full opacity-0 cursor-pointer"
-                  />
-                </div>
-                <div className="flex justify-between text-xs font-bold text-gray-400 tracking-wider px-1">
-                  <span>{formatTime(currentTime)}</span>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </div>
+               {/* Progress Bar - Vision Pro Glass Style */}
+               <div className="space-y-3 group/progress px-8 w-full">
+                 <div className="relative h-1.5 w-full bg-white/20 rounded-full cursor-pointer transition-all duration-300 hover:h-2">
+                   {/* Hover Glow Background */}
+                   <div className="absolute -inset-2 bg-white/5 rounded-full opacity-0 group-hover/progress:opacity-100 blur-md transition-opacity" />
+                   
+                   <motion.div 
+                     className="absolute inset-y-0 left-0 rounded-full bg-white shadow-[0_0_15px_rgba(255,255,255,0.5)]"
+                     style={{ 
+                       width: `${duration ? (currentTime / duration) * 100 : 0}%`,
+                     }}
+                   >
+                     {/* Glowing Knob */}
+                     <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-[0_0_20px_rgba(255,255,255,0.8)] scale-0 group-hover/progress:scale-100 transition-transform" />
+                   </motion.div>
+                   
+                   <input
+                     type="range"
+                     min="0"
+                     max={duration || 0}
+                     value={currentTime}
+                     onChange={(e) => seek(parseFloat(e.target.value))}
+                     className="absolute inset-0 w-full opacity-0 cursor-pointer z-20"
+                   />
+                 </div>
+                 
+                 <div className="flex justify-between text-[10px] font-medium text-white/40 tracking-widest px-1">
+                   <span>{formatTime(currentTime)}</span>
+                   <span>{formatTime(duration)}</span>
+                 </div>
+               </div>
 
-              <div className="flex justify-center pt-4">
-                 <PlayerControls />
-              </div>
+               <div className="flex justify-center pt-8 pb-4">
+                  <PlayerControls />
+               </div>
 
-              <div className="flex items-center justify-center gap-6 pt-4">
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => currentSong && toggleFavorite(currentSong.id)} 
-                    className={`p-4 rounded-full transition-all duration-300 ${favorite ? "bg-red-500/20 text-red-500 shadow-[0_0_20px_rgba(239,68,68,0.3)]" : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white"}`}
-                  >
-                    <Heart size={22} fill={favorite ? "currentColor" : "none"} />
-                  </motion.button>
-                  
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsLyricsOpen(true)} 
-                    className="p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                  >
-                     <Music size={22} />
-                  </motion.button>
-                  
-                  <div className="scale-110">
-                    <ArtistInfo />
-                  </div>
-                  
-                  <motion.button 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => currentSong && openPlaylistModal(currentSong)} 
-                    className="p-4 rounded-full bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                  >
-                     <ListPlus size={22} />
-                  </motion.button>
-              </div>
+               {/* Bottom Actions - Glass Circles */}
+               <div className="flex items-center justify-center gap-8">
+                   <motion.button 
+                     whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.15)" }}
+                     whileTap={{ scale: 0.95 }}
+                     onClick={() => currentSong && toggleFavorite(currentSong.id)} 
+                     className={`p-3.5 rounded-full backdrop-blur-md border border-white/10 transition-all duration-300 ${
+                       favorite 
+                         ? "bg-red-500/20 text-red-500 shadow-[0_0_30px_rgba(239,68,68,0.4)] border-red-500/30" 
+                         : "bg-white/5 text-white/70 hover:text-white shadow-lg"
+                     }`}
+                   >
+                     <Heart size={20} fill={favorite ? "currentColor" : "none"} strokeWidth={2} />
+                   </motion.button>
+                   
+                   <motion.button 
+                     whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.15)" }}
+                     whileTap={{ scale: 0.95 }}
+                     onClick={() => setIsLyricsOpen(true)} 
+                     className="p-3.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white shadow-lg transition-all"
+                   >
+                      <Music size={20} strokeWidth={2} />
+                   </motion.button>
+                   
+                   <div className="scale-110">
+                     <ArtistInfo />
+                   </div>
+                   
+                   <motion.button 
+                     whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.15)" }}
+                     whileTap={{ scale: 0.95 }}
+                     onClick={() => currentSong && openPlaylistModal(currentSong)} 
+                     className="p-3.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-white/70 hover:text-white shadow-lg transition-all"
+                   >
+                      <ListPlus size={20} strokeWidth={2} />
+                   </motion.button>
+               </div>
            </div>
         </div>
 
