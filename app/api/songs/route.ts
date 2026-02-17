@@ -2,6 +2,7 @@ import { list } from "@vercel/blob";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
 import { NextRequest } from "next/server";
+import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 
 const GENRES = [
   "Bollywood",
@@ -48,7 +49,6 @@ export async function GET(request: NextRequest) {
       let songsList: any[] = [];
       
       if (isYT) {
-         // YouTube responses usually have songs in tracks or are the array themselves
          songsList = data.tracks || data.songs || (Array.isArray(data) ? data : []);
       } else if (data.success) {
         if (type === "artist") {
@@ -65,9 +65,10 @@ export async function GET(request: NextRequest) {
                 title: item.title,
                 url: `/api/stream?id=${item.videoId}`,
                 artist: item.artists?.[0]?.name || "YT Artist",
-                cover: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url,
+                cover: getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url),
                 genre: "YouTube",
                 duration: item.duration || 0,
+                source: "YouTube",
              };
           }
 
@@ -211,23 +212,23 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    // Robust YouTube Parsing
+    // Robust YouTube Parsing — with HD thumbnail upgrade
     const ytRaw = Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || ytRes?.songs || []);
     const ytSongs = ytRaw.map((item: any) => {
-      // Mapping Verome/YouTube Music results to SongSchema
-      // We prioritze videoId but fallback to id if videoId is missing
       const id = item.videoId || item.id;
       if (!id) return null;
+
+      // Get HD thumbnail — upgrade from 60x60 to 544x544
+      const cover = getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url) || item.image;
 
       return {
         id: `yt-${id}`,
         title: item.title || item.name,
-        // Point to our internal proxy that handles the redirection
         url: `/api/stream?id=${id}`, 
         artist: item.artists?.[0]?.name || item.artist || "YouTube Artist",
-        cover: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url || item.image,
+        cover,
         genre: "YouTube",
-        duration: item.duration || item.duration_ms / 1000 || 180, // Fallback to 3 mins
+        duration: item.duration || item.duration_ms / 1000 || 180,
         source: "YouTube"
       };
     }).filter(Boolean);

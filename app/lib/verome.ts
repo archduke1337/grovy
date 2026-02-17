@@ -1,4 +1,6 @@
 
+import { getHDThumbnail, getBestThumbnail } from "./thumbnail";
+
 const BASE_URL = "https://ytapi.gauravramyadav.workers.dev";
 
 export interface VeromeTrack {
@@ -25,8 +27,6 @@ export async function getStreamUrl(videoId: string) {
   try {
     const res = await fetch(`${BASE_URL}/stream?id=${videoId}`);
     const data = await res.json();
-    // Usually returns { stream: [{ url: ... }, ...] } or similar
-    // Based on the user's provided info: "/api/stream?id= Audio stream URLs"
     return data;
   } catch (error) {
     console.error("Verome Stream Error:", error);
@@ -43,4 +43,11 @@ export async function getLyrics(title: string, artist: string) {
     console.error("Verome Lyrics Error:", error);
     return null;
   }
+}
+
+/**
+ * Helper to get an HD cover URL from a VeromeTrack's thumbnails
+ */
+export function getTrackCover(track: VeromeTrack): string | undefined {
+  return getBestThumbnail(track.thumbnails) || getHDThumbnail(track.thumbnails?.[0]?.url);
 }

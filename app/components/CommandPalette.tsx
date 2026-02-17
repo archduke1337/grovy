@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Music, Moon, Sun, X, Home, Info, Mail, Play, Github, Loader2 } from "lucide-react";
+import { Search, Music, X, Home, Info, Play, Github, Loader2 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { useRouter } from "next/navigation";
 import { Song } from "../types/song";
@@ -37,8 +37,8 @@ export const CommandPalette: React.FC = () => {
     // 1. Navigation Actions
     const navigation = [
       { id: "nav-home", title: "Go to Home", icon: <Home size={18} />, action: () => router.push("/") },
-      { id: "nav-github", title: "View Source code", icon: <Github size={18} />, action: () => window.open("https://github.com/archduke/grovy", "_blank") },
-      { id: "nav-about", title: "Open Source Credits", icon: <Info size={18} />, action: () => window.open("https://github.com/archduke/grovy/blob/main/README.md", "_blank") },
+      { id: "nav-github", title: "View Source code", icon: <Github size={18} />, action: () => window.open("https://github.com/archduke1337/grovy", "_blank") },
+      { id: "nav-about", title: "Open Source Credits", icon: <Info size={18} />, action: () => window.open("https://github.com/archduke1337/grovy/blob/main/README.md", "_blank") },
     ];
 
     navigation.forEach(item => {
@@ -167,7 +167,7 @@ export const CommandPalette: React.FC = () => {
                 <input
                   autoFocus
                   type="text"
-                  placeholder="Seach millions of tracks globally..."
+                  placeholder="Search millions of tracks globally..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   className="w-full bg-transparent outline-none text-xl text-gray-900 dark:text-white placeholder-gray-400"
@@ -180,7 +180,7 @@ export const CommandPalette: React.FC = () => {
                 </div>
               </div>
 
-              <div className="max-h-[400px] overflow-y-auto custom-scrollbar b-6">
+              <div className="max-h-[400px] overflow-y-auto custom-scrollbar pb-6">
                 {filteredItems.length > 0 ? (
                   <div className="p-2">
                     {filteredItems.map((item, i) => (

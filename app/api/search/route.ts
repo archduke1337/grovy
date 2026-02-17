@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
+import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 
 const ResultSchema = z.object({
   id: z.string(),
@@ -73,11 +74,14 @@ export async function GET(request: NextRequest) {
 
     const ytFormatted = (Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || [])).map((item: any) => {
       const browseId = item.browseId || item.videoId || item.id;
+      // Use HD thumbnails for YouTube results
+      const image = getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url);
+      
       return {
         id: `yt-${browseId}`,
         name: item.name || item.title,
         description: item.artists?.map((a: any) => a.name).join(", ") || "YouTube",
-        image: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url,
+        image,
         type: type === "all" ? "song" : type,
         url: "",
         source: "YouTube"

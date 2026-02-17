@@ -147,11 +147,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           'iv_load_policy': 3,
           'origin': window.location.origin,
           'playsinline': 1,
-          'enablejsapi': 1
+          'enablejsapi': 1,
         },
         events: {
           onReady: (event: any) => {
             event.target.setVolume(volume * 100);
+            // Request highest available quality for best audio
+            try {
+              event.target.setPlaybackQuality('hd1080');
+            } catch (e) {}
           },
           onStateChange: (event: any) => {
             // YT.PlayerState.ENDED = 0
@@ -174,14 +178,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     };
     
-    // Attempt to set high quality when possible
-    const qualityInterval = setInterval(() => {
-       if (ytPlayerRef.current?.setPlaybackQuality) {
-          ytPlayerRef.current.setPlaybackQuality("hd1080");
-       }
-    }, 5000);
-    
-    return () => clearInterval(qualityInterval);
+    // No interval needed — quality is set on ready and state change
   }, []);
 
   // Sync Timer for both players

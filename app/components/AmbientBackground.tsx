@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
-import { AnimatePresence, motion, useAnimationFrame } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface AmbientBackgroundProps {
   className?: string;

@@ -1,5 +1,6 @@
 
 import { NextRequest } from "next/server";
+import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
         title: item.title,
         url: `/api/stream?id=${item.videoId || item.id}`,
         artist: item.artists?.[0]?.name || item.author || "YouTube Artist",
-        cover: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url || item.thumbnail,
+        cover: getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url) || item.thumbnail,
         genre: "Related",
         duration: item.duration || 0,
         source: "YouTube"
