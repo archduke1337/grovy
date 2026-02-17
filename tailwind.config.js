@@ -13,7 +13,7 @@ module.exports = {
       },
       colors: {
         bg: "#f5f5f7",
-        "bg-dark": "#1a1a1a",
+        "bg-dark": "#000000",
         "bg-dark-card": "#2a2a2a",
         accent: "#007AFF",
       },

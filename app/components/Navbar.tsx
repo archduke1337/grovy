@@ -42,11 +42,15 @@ export const Navbar = () => {
 
   useEffect(() => {
     setMounted(true);
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    // Default to dark mode if no preference is saved, or conform to system if preferred
     const savedTheme = localStorage.getItem("theme");
-    const dark = savedTheme ? savedTheme === "dark" : prefersDark;
+    const dark = savedTheme ? savedTheme === "dark" : true; 
     setIsDark(dark);
-    if (dark) document.documentElement.classList.add("dark");
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
   const toggleTheme = () => {
@@ -86,14 +90,12 @@ export const Navbar = () => {
               >
                 <Music 
                   size={24} 
-                  className="md:w-8 md:h-8"
+                  className="md:w-8 md:h-8 text-black dark:text-white"
                   strokeWidth={2.5}
-                  style={{ color: colors.primary, filter: `drop-shadow(0 0 8px ${colors.primary}40)` }} 
                 />
               </motion.div>
               <span 
-                style={{ backgroundImage: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})` }}
-                className="text-xl md:text-2xl font-black bg-clip-text text-transparent tracking-tighter hidden md:block"
+                className="text-xl md:text-2xl font-black tracking-tighter hidden md:block text-black dark:text-white"
               >
                 Grovy
               </span>
@@ -103,11 +105,7 @@ export const Navbar = () => {
               <motion.div 
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                style={{ 
-                  borderColor: `${colors.primary}30`,
-                  backgroundColor: `${colors.primary}10`
-                }}
-                className="hidden lg:flex items-center gap-3 px-4 py-1.5 rounded-full border"
+                className="hidden lg:flex items-center gap-3 px-4 py-1.5 rounded-full border border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5"
               >
                 <div className="flex gap-1">
                   {[...Array(3)].map((_, i) => (
@@ -115,14 +113,12 @@ export const Navbar = () => {
                       key={i}
                       animate={{ height: [4, 12, 4] }}
                       transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.2 }}
-                      style={{ backgroundColor: colors.primary }}
-                      className="w-1 rounded-full"
+                      className="w-1 rounded-full bg-black dark:bg-white"
                     />
                   ))}
                 </div>
                 <span 
-                  style={{ color: colors.primary }}
-                  className="text-[10px] font-black uppercase tracking-widest truncate max-w-[150px]"
+                  className="text-[10px] font-black uppercase tracking-widest truncate max-w-[150px] text-black dark:text-white"
                 >
                   {currentSong.title}
                 </span>
@@ -139,10 +135,9 @@ export const Navbar = () => {
                   <Link
                     key={item.name}
                     href={item.path}
-                    style={{ color: isActive ? colors.primary : undefined }}
                     className={`relative px-6 py-2 rounded-full text-[11px] font-black uppercase tracking-widest transition-all duration-500 ${
                       isActive
-                        ? ""
+                        ? "text-black dark:text-white"
                         : "text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
@@ -163,10 +158,7 @@ export const Navbar = () => {
 
               <button
                 onClick={toggleTheme}
-                style={{ color: isDark ? "#9ca3af" : "#6b7280" }}
-                onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
-                onMouseLeave={(e) => e.currentTarget.style.color = isDark ? "#9ca3af" : "#6b7280"}
-                className="p-3 rounded-full hover:bg-white dark:hover:bg-white/10 transition-all group"
+                className="p-3 rounded-full hover:bg-white dark:hover:bg-white/10 transition-all group text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
                 aria-label="Toggle theme"
               >
                 {mounted && (isDark ? <Sun size={18} className="group-hover:rotate-45 transition-transform" /> : <Moon size={18} className="group-hover:-rotate-12 transition-transform" />)}
@@ -174,10 +166,7 @@ export const Navbar = () => {
               <Link
                 href="https://github.com/archduke/grovy"
                 target="_blank"
-                style={{ color: "#9ca3af" }}
-                onMouseEnter={(e) => e.currentTarget.style.color = colors.primary}
-                onMouseLeave={(e) => e.currentTarget.style.color = "#9ca3af"}
-                className="p-3 rounded-full hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-center group"
+                className="p-3 rounded-full hover:bg-white dark:hover:bg-white/10 transition-all flex items-center justify-center group text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white"
               >
                 <Github size={18} className="group-hover:scale-110 transition-transform" />
               </Link>
@@ -189,11 +178,7 @@ export const Navbar = () => {
 
             <button
                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-               style={{ 
-                 backgroundColor: isMobileMenuOpen ? colors.primary : "transparent",
-                 color: isMobileMenuOpen ? "white" : undefined 
-               }}
-               className={`p-2.5 rounded-full transition-all ${!isMobileMenuOpen ? "text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10" : ""}`}
+               className={`p-2.5 rounded-full transition-all text-black dark:text-white ${!isMobileMenuOpen ? "hover:bg-gray-100 dark:hover:bg-white/10" : "bg-black/5 dark:bg-white/10"}`}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>

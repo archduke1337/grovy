@@ -27,22 +27,28 @@ export const BottomPlayer = () => {
         className="fixed bottom-6 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-[800px] z-50"
       >
         <div 
-          className="rounded-[3rem] overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.5)] border border-white/10 relative backdrop-blur-3xl"
+          className="rounded-[3rem] overflow-hidden shadow-[0_25px_60px_-15px_rgba(0,0,0,0.6)] border border-white/10 relative backdrop-blur-3xl"
           style={{ 
-            background: `linear-gradient(90deg, rgba(20,20,20,0.95) 0%, rgba(30,30,30,0.95) 100%)`
+            background: `linear-gradient(90deg, #151515 0%, #1a1a1a 100%)`
           }}
         >
+          {/* Main Tint Layer */}
+          <div 
+             className="absolute inset-0 opacity-40 transition-colors duration-1000"
+             style={{ background: `linear-gradient(to right, ${colors.primary}20, transparent)` }}
+          />
+
           {/* Animated Glow Stroke */}
           <motion.div 
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
             className="absolute inset-0 rounded-[3rem] border border-white/20 pointer-events-none z-10"
             style={{ 
-                boxShadow: `inset 0 0 20px ${colors.primary}20` 
+                boxShadow: `inset 0 0 30px ${colors.primary}30` 
             }}
           />
 
-          <AmbientBackground className="absolute opacity-20 mix-blend-screen pointer-events-none" />
+          <AmbientBackground className="absolute opacity-50 mix-blend-screen pointer-events-none" />
           
           {/* Progress Bar Layer - Top Border with Glow */}
           <div className="absolute top-0 left-6 right-6 h-[2px] bg-white/5 cursor-pointer group/progress z-20 hover:h-1 transition-all"

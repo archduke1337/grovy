@@ -127,32 +127,36 @@ export const MusicPlayer: React.FC = () => {
 
            {/* Song Info & Progress */}
            <div className="w-full max-w-lg space-y-8 text-center">
-              <div className="space-y-3">
+              <div className="space-y-4">
                  <motion.h2 
                     key={currentSong?.title}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-4xl md:text-5xl font-black text-white tracking-tighter truncate leading-[1.1]"
+                    className="text-4xl md:text-5xl font-black text-white tracking-tighter truncate leading-[1.1] drop-shadow-2xl"
                   >
                     {currentSong?.title || "Choose a Vibe"}
                   </motion.h2>
                   <motion.div
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }} 
-                    className="inline-block px-4 py-1.5 rounded-full bg-white/5 border border-white/5 backdrop-blur-sm"
+                    transition={{ delay: 0.1 }}
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full border transition-all duration-300 backdrop-blur-md hover:bg-white/10"
+                    style={{ 
+                      backgroundColor: `${colors.primary}20`,
+                      borderColor: `${colors.primary}40`
+                    }}
                   >
-                    <p 
-                      className="text-lg md:text-xl font-bold tracking-wide"
-                      style={{ color: colors.primary }}
+                    <span 
+                      className="text-lg font-bold tracking-wide"
+                      style={{ color: "white" }}
                     >
                       {currentSong?.artist || "Grovy Music"}
-                    </p>
+                    </span>
                   </motion.div>
               </div>
 
               {/* Progress Bar - Soft & Organic */}
-              <div className="space-y-2 group/progress px-4">
+              <div className="space-y-2 group/progress px-6">
                 <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden cursor-pointer transition-all duration-300 group-hover/progress:h-4 group-hover/progress:bg-white/15">
                   <div className="absolute inset-0 opacity-0 group-hover/progress:opacity-20 transition-opacity bg-white/20" />
                   <motion.div 
@@ -221,21 +225,18 @@ export const MusicPlayer: React.FC = () => {
         <div 
           className="w-full lg:w-5/12 h-[600px] lg:h-[700px] flex flex-col gap-6 rounded-[3rem] p-8 backdrop-blur-3xl transition-colors duration-1000"
           style={{ 
-            background: `linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%)`,
-            border: `1px solid rgba(255,255,255,0.05)`,
-            boxShadow: `inset 0 0 50px rgba(0,0,0,0.2)`
+            background: `linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%)`,
+            border: `1px solid rgba(255,255,255,0.08)`,
+            boxShadow: `0 20px 60px -10px rgba(0,0,0,0.5)`
           }}
         >
-           {/* Dynamic Top Border Accent */}
-           <div className="h-1 w-20 rounded-full mx-auto opacity-30" style={{ background: colors.primary }} />
-
-           {/* Tab-like generic header */}
-           <div className="flex items-center justify-between pb-4 border-b border-white/5">
-              <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white/80 flex items-center gap-2">
-                <ListPlus size={16} style={{ color: colors.primary }} />
+           {/* Header */}
+           <div className="flex items-center justify-between pb-6 border-b border-white/5">
+              <h3 className="text-lg font-black tracking-tight text-white flex items-center gap-3">
+                <span className="w-1.5 h-6 rounded-full" style={{ background: colors.primary }} />
                 Up Next
               </h3>
-              <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-xs font-bold text-gray-400">
+              <div className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-xs font-bold text-white/50">
                 {songs.length} Tracks
               </div>
            </div>
