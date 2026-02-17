@@ -76,141 +76,126 @@ export const MusicPlayer: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.8 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         style={{ willChange: "transform, opacity" }}
-        className="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-24 z-10 px-4 py-8 lg:px-6 lg:py-12 relative"
+        className="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-12 lg:gap-32 z-10 px-6 py-12 lg:px-12 relative"
       >
         {/* Left: Cinematic Art */}
-        <div className="w-full lg:w-1/2 flex flex-col items-center gap-8 lg:gap-12">
+        <div className="w-full lg:w-1/2 flex flex-col items-center justify-center">
            <motion.div
             layoutId={`art-${currentSongIndex}`}
             style={{ willChange: "transform" }}
-            className="w-64 h-64 md:w-[400px] md:h-[400px] lg:w-[500px] lg:h-[500px] relative group"
+            className="w-72 h-72 md:w-[450px] md:h-[450px] lg:w-[550px] lg:h-[550px] relative group perspective-[1000px]"
            >
-              {/* Art Glow */}
+              {/* Dynamic Glow Layers */}
               <motion.div 
-                animate={{ boxShadow: isPlaying ? `0 0 100px -20px ${colors.primary}50` : 'none' }}
-                className="absolute inset-8 bg-black/10 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" 
+                animate={{ 
+                  opacity: isPlaying ? 0.6 : 0.3,
+                  scale: isPlaying ? 1.1 : 1
+                }}
+                transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
+                className="absolute inset-0 bg-gradient-to-tr from-[var(--player-primary)] to-[var(--player-secondary)] blur-[80px] rounded-full opacity-40" 
+              />
+              <motion.div 
+                animate={{ 
+                   opacity: isPlaying ? 0.4 : 0.2,
+                   rotate: isPlaying ? 10 : 0
+                }}
+                transition={{ duration: 7, repeat: Infinity, repeatType: "mirror" }}
+                className="absolute -inset-10 bg-[var(--player-secondary)] blur-[120px] rounded-full opacity-30 mix-blend-screen" 
               />
               
-              <div className="relative w-full h-full rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] border border-white/10 isolate">
+              {/* Main Artwork Container */}
+              <motion.div 
+                whileHover={{ scale: 1.02, rotateX: 5, rotateY: 5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="relative w-full h-full rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_30px_60px_-10px_rgba(0,0,0,0.5)] border border-white/10 bg-[#1a1a1a]"
+              >
                  {currentSong?.cover ? (
-                   <motion.img
-                     key={currentSong.cover}
-                     src={currentSong.cover}
-                     alt={currentSong?.title}
-                     className="w-full h-full object-cover"
-                     initial={{ scale: 1.1, opacity: 0 }}
-                     animate={{ scale: 1, opacity: 1 }}
-                     transition={{ duration: 0.8 }}
-                   />
+                   <>
+                     <motion.img
+                       key={currentSong.cover}
+                       src={currentSong.cover}
+                       alt={currentSong?.title}
+                       className="w-full h-full object-cover"
+                       initial={{ scale: 1.1, opacity: 0 }}
+                       animate={{ scale: 1, opacity: 1 }}
+                       transition={{ duration: 0.8 }}
+                     />
+                     {/* Glass Reflection */}
+                     <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-50 pointer-events-none" />
+                   </>
                  ) : (
-                   <div className="w-full h-full bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 flex items-center justify-center">
-                     <Music className="w-20 h-20 md:w-32 md:h-32 text-gray-400/20" />
+                   <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
+                     <Music className="w-32 h-32 text-white/5" />
                    </div>
                  )}
-              </div>
+              </motion.div>
            </motion.div>
         </div>
 
         {/* Right: Controls & Info */}
-        <div className="w-full lg:w-1/2 space-y-8 lg:space-y-12">
-           <div className="space-y-6 lg:space-y-8">
-              <div className="flex flex-col lg:flex-row items-center lg:items-start justify-between gap-6 text-center lg:text-left">
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="flex items-center justify-center lg:justify-start gap-2 text-[10px] font-black uppercase tracking-[0.3em]" style={{ color: colors.primary }}>
-                    <Sparkles size={12} />
-                    <span>Now Playing</span>
+        <div className="w-full lg:w-1/2 flex flex-col justify-center space-y-10 lg:space-y-14">
+           <div className="space-y-8">
+              <div className="flex flex-col lg:flex-row items-end justify-between gap-8">
+                <div className="space-y-3 flex-1 min-w-0 text-center lg:text-left">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/5 backdrop-blur-md mx-auto lg:mx-0">
+                    <Sparkles size={12} style={{ color: colors.primary }} />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/60">Now Vibrating</span>
                   </div>
-                  <motion.h2 
-                    key={currentSong?.title}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-3xl md:text-7xl font-black text-gray-900 dark:text-white tracking-tighter truncate leading-tight px-4 lg:px-0"
-                  >
-                    {currentSong?.title || "Grovy Music"}
-                  </motion.h2>
-                  <motion.p 
-                    key={currentSong?.artist}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="text-lg md:text-2xl text-gray-500 font-bold tracking-tight"
-                  >
-                    {currentSong?.artist || "Start the vibe"}
-                  </motion.p>
+                  
+                  <div className="space-y-1">
+                    <motion.h2 
+                      key={currentSong?.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tighter truncate leading-[0.9]"
+                    >
+                      {currentSong?.title || "Choose a Vibe"}
+                    </motion.h2>
+                    <motion.p 
+                      key={currentSong?.artist}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.1 }}
+                      className="text-xl md:text-2xl font-medium tracking-tight opacity-60 mix-blend-plus-lighter"
+                      style={{ color: colors.primary }}
+                    >
+                      {currentSong?.artist || "Grovy Music"}
+                    </motion.p>
+                  </div>
                 </div>
                 
-                <div className="flex flex-row lg:flex-col items-center gap-4">
+                <div className="flex gap-3">
                   <motion.button
-                    whileHover={{ scale: 1.1 }}
+                    whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
                     whileTap={{ scale: 0.9 }}
                     onClick={() => currentSong && toggleFavorite(currentSong.id)}
-                    className={`p-4 lg:p-5 rounded-full shadow-lg transition-all ${favorite ? "text-red-500 bg-red-50 dark:bg-red-500/10" : "text-gray-400 bg-white/5 dark:bg-white/5 hover:text-white"}`}
+                    className={`p-4 rounded-2xl border transition-all ${favorite ? "bg-red-500/10 border-red-500/20 text-red-500" : "bg-white/5 border-white/5 text-gray-400 hover:text-white"}`}
                   >
-                    <Heart size={24} className="lg:w-7 lg:h-7" fill={favorite ? "currentColor" : "none"} />
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => currentSong && startRadio(currentSong.id)}
-                    title="Start Radio"
-                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-amber-500 hover:bg-amber-500/10"
-                  >
-                    <Zap size={20} className="lg:w-6 lg:h-6" />
-                  </motion.button>
-
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => currentSong && openPlaylistModal(currentSong)}
-                    title="Add to Playlist"
-                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-blue-500 hover:bg-blue-500/10"
-                  >
-                    <ListPlus size={20} className="lg:w-6 lg:h-6" />
-                  </motion.button>
-
-                   <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => {
-                      if (navigator.share && currentSong) {
-                        navigator.share({
-                          title: currentSong.title,
-                          text: `Check out this track: ${currentSong.title} by ${currentSong.artist} on Grovy!`,
-                          url: window.location.href,
-                        }).catch(() => {});
-                      }
-                    }}
-                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-[var(--player-primary)] hover:bg-[var(--player-primary)]/10"
-                  >
-                    <Share2 size={20} className="lg:w-6 lg:h-6" />
+                    <Heart size={24} fill={favorite ? "currentColor" : "none"} />
                   </motion.button>
                   
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsLyricsOpen(true)}
-                    title="Lyrics"
-                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-green-500 hover:bg-green-500/10"
-                  >
-                    <Music size={20} className="lg:w-6 lg:h-6" />
-                  </motion.button>
-                  
-                  <ArtistInfo />
+                  <div className="flex bg-white/5 border border-white/5 rounded-2xl p-1">
+                     <motion.button onClick={() => setIsLyricsOpen(true)} className="p-3 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all"><Music size={20} /></motion.button>
+                     <motion.button onClick={() => currentSong && openPlaylistModal(currentSong)} className="p-3 rounded-xl hover:bg-white/10 text-gray-400 hover:text-white transition-all"><ListPlus size={20} /></motion.button>
+                     <ArtistInfo />
+                  </div>
                 </div>
               </div>
 
-              {/* Progress Section */}
-              <div className="space-y-4">
-                <div className="relative h-2 w-full bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden group cursor-pointer">
+              {/* Enhanced Progress Bar */}
+              <div className="space-y-3 group/progress">
+                <div className="relative h-2 w-full bg-white/10 rounded-full overflow-hidden cursor-pointer transition-all duration-300 group-hover/progress:h-4">
+                  <div 
+                    className="absolute inset-0 opacity-0 group-hover/progress:opacity-20 transition-opacity bg-white/20" 
+                  />
                   <motion.div 
                     className="absolute inset-0 rounded-full"
                     style={{ 
                       width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                      background: `linear-gradient(to right, var(--player-primary), var(--player-secondary))`,
-                      transition: "width 0.1s linear, background 2s ease"
+                      background: `linear-gradient(90deg, var(--player-primary), var(--player-secondary))`,
+                      boxShadow: `0 0 20px -5px var(--player-primary)`
                     }}
                   />
                   <input
@@ -222,28 +207,28 @@ export const MusicPlayer: React.FC = () => {
                     className="absolute inset-0 w-full opacity-0 cursor-pointer"
                   />
                 </div>
-                <div className="flex justify-between text-xs font-black text-gray-400 tracking-widest uppercase">
+                <div className="flex justify-between text-xs font-bold text-gray-500 tracking-wider">
                   <span>{formatTime(currentTime)}</span>
                   <span>{formatTime(duration)}</span>
                 </div>
               </div>
 
-              <PlayerControls />
-           </div>
-
-           {/* Playlist Integration */}
-           <div className="space-y-6 pt-12 border-t border-white/5">
-              <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
-                Up Next <div className="flex-1 h-px bg-white/5" />
-              </h3>
-               <div className="max-h-[220px] overflow-y-auto custom-scrollbar pr-4">
-                 <Playlist />
+              <div className="pt-2">
+                 <PlayerControls />
               </div>
            </div>
 
-           {/* Related / Discovery Section */}
-           <div className="pt-12">
-              <RelatedTracks />
+           {/* Footer Areas */}
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+              <div>
+                 <RelatedTracks />
+              </div>
+              <div className="bg-white/5 rounded-3xl p-6 border border-white/5">
+                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400 mb-4">Up Next</h3>
+                 <div className="max-h-[160px] overflow-y-auto custom-scrollbar -mr-2 pr-2">
+                   <Playlist />
+                 </div>
+              </div>
            </div>
         </div>
       </motion.div>

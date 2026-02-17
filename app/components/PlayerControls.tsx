@@ -69,89 +69,109 @@ export const PlayerControls: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Main controls */}
-      <div className="flex items-center justify-center gap-4 md:gap-8">
+      <div className="flex items-center justify-center gap-6 md:gap-10">
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.1, color: "var(--player-primary)" }}
+          whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); previousTrack(); }}
-          className="p-3 md:p-4 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
-          aria-label="Previous track"
+          className="p-2 md:p-3 rounded-full text-gray-500 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-white/10 transition-all"
         >
-          <SkipBack size={24} className="text-gray-700 dark:text-gray-300 md:w-8 md:h-8" />
+          <SkipBack size={28} className="md:w-8 md:h-8" fill="currentColor" />
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, boxShadow: "0 0 30px var(--player-primary)" }}
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-          className="flex items-center justify-center w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-full shadow-lg hover:shadow-xl transition-shadow"
-          aria-label={isPlaying ? "Pause" : "Play"}
+          className="flex items-center justify-center w-20 h-20 md:w-24 md:h-24 rounded-full shadow-2xl relative group overflow-hidden"
+          style={{ 
+            background: `linear-gradient(135deg, var(--player-primary), var(--player-secondary))`,
+            boxShadow: `0 10px 40px -10px var(--player-primary)`
+          }}
         >
+          <div className="absolute inset-0 bg-white/20 group-hover:bg-white/30 transition-colors" />
           {isPlaying ? (
-            <Pause size={32} className="text-white fill-white md:w-10 md:h-10" />
+            <Pause size={40} className="text-white fill-white relative z-10 md:w-10 md:h-10" />
           ) : (
-            <Play size={32} className="text-white fill-white ml-1 md:w-10 md:h-10" />
+            <Play size={40} className="text-white fill-white ml-1 relative z-10 md:w-10 md:h-10" />
           )}
         </motion.button>
 
         <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
+          whileHover={{ scale: 1.1, color: "var(--player-primary)" }}
+          whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); nextTrack(); }}
-          className="p-3 md:p-4 hover:bg-black/5 dark:hover:bg-white/5 rounded-full transition-colors"
-          aria-label="Next track"
+          className="p-2 md:p-3 rounded-full text-gray-500 hover:bg-white/10 dark:text-gray-400 dark:hover:bg-white/10 transition-all"
         >
-          <SkipForward size={24} className="text-gray-700 dark:text-gray-300 md:w-8 md:h-8" />
+          <SkipForward size={28} className="md:w-8 md:h-8" fill="currentColor" />
         </motion.button>
       </div>
 
       {/* Secondary controls */}
-      <div className="flex items-center justify-center gap-4 md:gap-8">
+      <div className="flex items-center justify-center gap-6 md:gap-10">
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); toggleShuffle(); }}
-          className={`p-2 rounded-full transition-colors ${
+          style={{ 
+            color: isShuffle ? "var(--player-primary)" : undefined
+          }}
+          className={`p-2.5 rounded-full transition-all ${
             isShuffle
-              ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
-              : "text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5"
+              ? "bg-[var(--player-primary)]/10"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
-          aria-label="Toggle shuffle"
         >
-          <Shuffle size={20} className="md:w-6 md:h-6" />
+          <Shuffle size={20} className="md:w-5 md:h-5" />
         </motion.button>
 
-        <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-black/5 dark:bg-white/5">
-          {volume === 0 ? (
-            <VolumeX size={18} className="text-gray-600 dark:text-gray-400" />
-          ) : (
-            <Volume2 size={18} className="text-gray-600 dark:text-gray-400" />
-          )}
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={volume}
-            onChange={(e) => setVolume(parseFloat(e.target.value))}
-            onClick={(e) => e.stopPropagation()}
-            className="w-24 h-1 bg-gray-300 dark:bg-gray-600 rounded-full appearance-none cursor-pointer accent-blue-500"
-            aria-label="Volume"
-          />
+        <div className="hidden md:flex items-center gap-3 px-4 py-2 rounded-full bg-white/5 backdrop-blur-md border border-white/5 group/vol">
+          <button 
+             onClick={() => setVolume(volume === 0 ? 1 : 0)}
+             className="text-gray-400 hover:text-white transition-colors"
+          >
+            {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </button>
+          
+          <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden relative cursor-pointer">
+             <div 
+               className="absolute inset-0 bg-white/10" 
+             />
+             <motion.div 
+               layout
+               className="h-full rounded-full"
+               style={{ 
+                 width: `${volume * 100}%`,
+                 backgroundColor: "var(--player-primary)" 
+               }}
+             />
+             <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                value={volume}
+                onChange={(e) => setVolume(parseFloat(e.target.value))}
+                onClick={(e) => e.stopPropagation()}
+                className="absolute inset-0 w-full opacity-0 cursor-pointer"
+             />
+          </div>
         </div>
 
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); toggleLoop(); }}
-          className={`p-2 rounded-full transition-colors ${
+          style={{ 
+            color: isLoop ? "var(--player-primary)" : undefined
+          }}
+          className={`p-2.5 rounded-full transition-all ${
             isLoop
-              ? "bg-blue-500/20 text-blue-600 dark:text-blue-400"
-              : "text-gray-600 dark:text-gray-400 hover:bg-black/5 dark:hover:bg-white/5"
+              ? "bg-[var(--player-primary)]/10"
+              : "text-gray-400 hover:text-white hover:bg-white/5"
           }`}
-          aria-label="Toggle loop"
         >
-          {isLoop ? <Repeat1 size={20} className="md:w-6 md:h-6" /> : <Repeat size={20} className="md:w-6 md:h-6" />}
+          {isLoop ? <Repeat1 size={20} className="md:w-5 md:h-5" /> : <Repeat size={20} className="md:w-5 md:h-5" />}
         </motion.button>
       </div>
     </div>

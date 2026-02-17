@@ -81,15 +81,21 @@ export const ArtistInfo: React.FC = () => {
                   <p className="text-xs font-black uppercase tracking-widest text-gray-500">Retrieving Biography...</p>
                 </div>
               ) : info?.artist ? (
-                <div className="space-y-8">
-                  <div className="flex items-end gap-6">
-                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-3xl overflow-hidden shadow-xl flex-shrink-0">
+                <div className="space-y-10">
+                  <div className="flex items-end gap-8 relative z-10">
+                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] overflow-hidden shadow-2xl flex-shrink-0 border-2 border-white/10 rotate-3 transition-transform hover:rotate-0 duration-500">
                        <img src={currentSong?.cover} alt={info.artist.name} className="w-full h-full object-cover" />
                     </div>
                     <div>
-                       <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-2" style={{ color: colors.primary }}>{info.artist.name}</h2>
+                       <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-3 leading-[0.9]" 
+                           style={{ 
+                             color: "white",
+                             textShadow: `0 0 30px ${colors.primary}60`
+                           }}>
+                         {info.artist.name}
+                       </h2>
                        <div className="flex gap-4">
-                          <div className="flex items-center gap-1.5 text-gray-500 text-sm font-bold">
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-gray-400 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
                              <Users size={14} />
                              <span>{parseInt(info.artist.stats.listeners).toLocaleString()} Listeners</span>
                           </div>
@@ -98,17 +104,22 @@ export const ArtistInfo: React.FC = () => {
                   </div>
 
                   <div className="space-y-4">
-                     <h3 className="text-xs font-black uppercase tracking-widest text-gray-400">About</h3>
+                     <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
+                       <Info size={12} style={{ color: colors.primary }} />
+                       Biography
+                       <div className="flex-1 h-px bg-white/5" />
+                     </h3>
                      <div 
-                       className="text-gray-600 dark:text-gray-400 text-sm md:text-base leading-relaxed font-medium max-h-[300px] overflow-y-auto custom-scrollbar pr-4 text-justify"
+                       className="text-lg md:text-xl leading-relaxed font-medium text-gray-300 max-h-[300px] overflow-y-auto custom-scrollbar pr-4 text-justify mix-blend-plus-lighter"
                        dangerouslySetInnerHTML={{ __html: info.artist.bio.summary }}
                      />
                   </div>
 
                   {info.artist.tags?.tag && (
-                    <div className="flex flex-wrap gap-2 pt-4">
+                    <div className="flex flex-wrap gap-2 pt-2">
                        {info.artist.tags.tag.slice(0, 5).map((tag: any) => (
-                         <span key={tag.name} className="px-4 py-1.5 rounded-full bg-black/5 dark:bg-white/5 text-[10px] font-black uppercase tracking-widest text-gray-500 flex items-center gap-1.5">
+                         <span key={tag.name} 
+                               className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-default">
                             <Tag size={10} />
                             {tag.name}
                          </span>
