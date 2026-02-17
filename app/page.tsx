@@ -184,7 +184,7 @@ export default function Home() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="w-full max-w-[1400px] mx-auto px-4 sm:px-5 md:px-10 lg:px-16 py-6 sm:py-8 space-y-10 sm:space-y-14 pb-32 sm:pb-40 min-h-dvh relative"
+      className="w-full max-w-[1400px] mx-auto px-3 sm:px-5 md:px-10 lg:px-16 py-4 sm:py-6 md:py-8 space-y-8 sm:space-y-10 md:space-y-14 pb-36 sm:pb-40 min-h-dvh relative"
     >
       {/* ═══ HERO HEADER ═══ */}
       <header className="relative z-10 pt-2 sm:pt-4 md:pt-8">
@@ -198,7 +198,7 @@ export default function Home() {
             <motion.h1 
               variants={fadeUp}
               suppressHydrationWarning
-              className="text-[clamp(2rem,7vw,5rem)] font-bold text-gray-900 dark:text-white leading-[0.95] tracking-[-0.03em]"
+              className="text-[clamp(1.75rem,6vw,5rem)] font-bold text-gray-900 dark:text-white leading-[0.95] tracking-[-0.03em]"
             >
               {greeting}
               <span className="text-black/10 dark:text-white/10">.</span>
@@ -464,8 +464,8 @@ export default function Home() {
                       loadSongs(`${name} hits`).then(setSearchResults);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 flex flex-col justify-end text-left group transition-all duration-300 border border-transparent hover:border-white/[0.06] ${
-                      (i === 0 || i === 7) ? "sm:col-span-2 aspect-[2/1]" : "aspect-[4/3]"
+                    className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col justify-end text-left group transition-all duration-300 border border-transparent hover:border-white/[0.06] ${
+                      (i === 0 || i === 7) ? "sm:col-span-2 aspect-[2.2/1] sm:aspect-[2/1]" : "aspect-[4/3]"
                     }`}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} transition-opacity duration-500`} />
@@ -592,7 +592,7 @@ export default function Home() {
               <div className="space-y-3">
                 <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-white/20">Community</h4>
                 <div className="space-y-2">
-                  <a href="https://github.com/groovymusic/grovy" target="_blank" rel="noopener" className="flex items-center gap-1.5 text-[13px] text-gray-500 dark:text-white/35 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  <a href="https://github.com/archduke1337/grovy" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[13px] text-gray-500 dark:text-white/35 hover:text-gray-900 dark:hover:text-white transition-colors">
                     <Github size={13} />
                     GitHub
                   </a>

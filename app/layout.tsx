@@ -125,7 +125,7 @@ export default function RootLayout({
           <SmoothScroll>
             <CommandPalette />
             <Navbar />
-            <main className="min-h-screen min-h-dvh pt-20 pb-24">
+            <main className="min-h-screen min-h-dvh pt-14 sm:pt-16 md:pt-20 pb-28 sm:pb-32 safe-bottom">
               {children}
             </main>
             <BottomPlayer />

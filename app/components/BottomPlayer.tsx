@@ -22,10 +22,10 @@ export const BottomPlayer = () => {
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         style={{ willChange: "transform" }}
-        className="fixed bottom-3 sm:bottom-6 left-3 right-3 sm:left-4 sm:right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-[680px] z-50 safe-bottom"
+        className="fixed bottom-2 sm:bottom-4 md:bottom-6 left-2 right-2 sm:left-4 sm:right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-[680px] z-50 safe-bottom"
       >
         <div 
-          className="rounded-2xl sm:rounded-[3rem] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 relative backdrop-blur-3xl bg-black/70"
+          className="rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 relative backdrop-blur-3xl bg-black/70"
         >
           {/* Progress Line */}
           <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 cursor-pointer group/progress z-20 hover:h-1 transition-all"
@@ -42,14 +42,14 @@ export const BottomPlayer = () => {
             />
           </div>
 
-          <div className="px-3 sm:px-4 py-2.5 sm:py-3 md:px-5 md:py-3 flex items-center justify-between gap-3 sm:gap-4 relative z-20">
+          <div className="px-2.5 sm:px-3 md:px-5 py-2 sm:py-2.5 md:py-3 flex items-center justify-between gap-2.5 sm:gap-3 md:gap-4 relative z-20">
             
             {/* Song Info */}
             <div 
               className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group"
               onClick={() => setIsExpanded(true)}
             >
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden relative shadow-lg border border-white/10 shrink-0">
+              <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden relative shadow-lg border border-white/10 shrink-0">
                 {currentSong?.cover ? (
                   <img src={currentSong.cover} alt={currentSong.title} className="w-full h-full object-cover animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }} />
                 ) : (
@@ -63,7 +63,7 @@ export const BottomPlayer = () => {
               </div>
               
               <div className="flex flex-col min-w-0 justify-center">
-                <h4 className="font-bold text-white truncate text-[13px] sm:text-sm tracking-wide">
+                <h4 className="font-bold text-white truncate text-[12px] sm:text-[13px] md:text-sm tracking-wide">
                   {currentSong?.title}
                 </h4>
                 <p className="text-[11px] sm:text-xs text-white/40 truncate font-medium">
@@ -73,7 +73,7 @@ export const BottomPlayer = () => {
             </div>
 
             {/* Controls */}
-            <div className="flex items-center gap-3 sm:gap-4 md:gap-6 z-20">
+            <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 z-20">
               <button 
                 onClick={(e) => { e.stopPropagation(); previousTrack(); }}
                 className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-all hidden sm:block hover:scale-110 active:scale-95"
@@ -85,7 +85,7 @@ export const BottomPlayer = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-                className="p-2.5 sm:p-3 rounded-full bg-white text-black shadow-lg flex items-center justify-center shrink-0 hover:brightness-110 transition-all"
+                className="p-2 sm:p-2.5 md:p-3 rounded-full bg-white text-black shadow-lg flex items-center justify-center shrink-0 hover:brightness-110 transition-all"
               >
                 {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
               </motion.button>

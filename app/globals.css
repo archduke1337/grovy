@@ -3,8 +3,24 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ──────────────────────────────────────────────
-   Design Foundations — Premium Apple-tier
+   Design Foundations
    ────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background-color: #f5f5f7;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+html.dark {
+  background-color: #000000;
+}
 
 body {
   font-family:
@@ -14,6 +30,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
 }
 
 /* Safe area insets for notched devices */
@@ -62,6 +79,17 @@ body {
   border-radius: 999px;
 }
 
+/* Hide scrollbar on mobile for horizontal scroll areas */
+@media (max-width: 640px) {
+  .custom-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .custom-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
 /* ──────────────────────────────────────────────
    Glass Effects
    ────────────────────────────────────────────── */
@@ -78,6 +106,17 @@ body {
   border-color: rgba(255, 255, 255, 0.06);
 }
 
+.glass-effect {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+}
+
+:is(.dark) .glass-effect,
+.glass-effect-dark {
+  background: rgba(30, 30, 30, 0.8);
+}
+
 /* ──────────────────────────────────────────────
    Player Range Inputs
    ────────────────────────────────────────────── */
@@ -87,6 +126,7 @@ input[type="range"] {
   appearance: none;
   background: transparent;
   cursor: pointer;
+  touch-action: none;
 }
 
 input[type="range"]::-webkit-slider-thumb {
@@ -132,19 +172,9 @@ html.lenis body {
 }
 
 /* ──────────────────────────────────────────────
-   Mobile-specific fixes
+   Viewport Height Fix (mobile browsers)
    ────────────────────────────────────────────── */
 
-/* Prevent iOS rubber-banding white flash */
-html {
-  background-color: #f5f5f7;
-}
-
-html.dark {
-  background-color: #000000;
-}
-
-/* Fix 100vh on mobile browsers */
 @supports (height: 100dvh) {
   .min-h-dvh {
     min-height: 100dvh;
@@ -154,13 +184,20 @@ html.dark {
   }
 }
 
-/* Remove tap highlight on mobile */
-* {
-  -webkit-tap-highlight-color: transparent;
+/* ──────────────────────────────────────────────
+   Responsive Typography clamp helpers
+   ────────────────────────────────────────────── */
+
+.text-responsive-hero {
+  font-size: clamp(1.75rem, 6vw, 5rem);
 }
 
-/* Prevent text size adjustment on orientation change */
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
+/* ──────────────────────────────────────────────
+   Small Phone Specific (<375px — iPhone SE etc)
+   ────────────────────────────────────────────── */
+
+@media (max-width: 374px) {
+  .text-responsive-hero {
+    font-size: 1.5rem;
+  }
 }

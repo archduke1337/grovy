@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Info, Mail, Music, Moon, Sun, Menu, X, Search, Github, ChevronRight, Scale, Code } from "lucide-react";
+import { Home, Music, Moon, Sun, Menu, X, Github, Code } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
@@ -161,7 +161,7 @@ export const Navbar = () => {
                 {isDark ? <Sun size={16} className="group-hover:rotate-45 transition-transform" /> : <Moon size={16} className="group-hover:-rotate-12 transition-transform" />}
               </button>
               <Link
-                href="https://github.com/groovymusic/grovy"
+                href="https://github.com/archduke1337/grovy"
                 target="_blank"
                 className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
               >
@@ -215,7 +215,7 @@ export const Navbar = () => {
                   </Link>
                 ))}
                 <Link
-                  href="https://github.com/groovymusic/grovy"
+                  href="https://github.com/archduke1337/grovy"
                   target="_blank"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-black/50 dark:text-white/40 text-[14px] font-semibold"
