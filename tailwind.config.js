@@ -18,6 +18,7 @@ module.exports = {
           "Segoe UI",
           ...defaultTheme.fontFamily.sans,
         ],
+        pixel: ["Silkscreen", "monospace"],
       },
       colors: {
         bg: "#f5f5f7",

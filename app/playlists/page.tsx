@@ -5,6 +5,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Music, Plus, PlayCircle, Folder } from "lucide-react";
+import Image from "next/image";
 
 export default function PlaylistsPage() {
   const { playlists, colors, createPlaylist } = usePlayer();
@@ -19,20 +20,20 @@ export default function PlaylistsPage() {
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 md:px-8 pt-32 pb-40 space-y-10">
-      <header className="flex flex-col md:flex-row items-end justify-between gap-6">
-        <div className="space-y-4">
-           <div className="flex items-center gap-2 font-black uppercase text-[10px] tracking-[0.3em]" style={{ color: colors.primary }}>
+    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 pt-8 sm:pt-12 pb-32 sm:pb-40 space-y-8 sm:space-y-10">
+      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 sm:gap-6">
+        <div className="space-y-3 sm:space-y-4">
+           <div className="flex items-center gap-2 font-bold uppercase text-[10px] sm:text-[11px] tracking-[0.2em] text-gray-400 dark:text-white/20">
              <Folder size={14} />
              <span>Your Library</span>
            </div>
-           <h1 className="text-4xl md:text-6xl font-black text-gray-900 dark:text-white tracking-tighter">
-             Playlists<span style={{ color: colors.primary }}>.</span>
+           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 dark:text-white tracking-[-0.03em]">
+             Playlists<span className="text-gray-200 dark:text-white/10">.</span>
            </h1>
         </div>
       </header>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
         {/* Create New Card */}
         <motion.div
           onClick={() => setIsCreating(true)}
@@ -46,14 +47,10 @@ export default function PlaylistsPage() {
           }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="aspect-square rounded-[2rem] border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 flex flex-col items-center justify-center gap-4 group transition-all w-full h-full"
-          style={{  
-            // @ts-ignore
-            '--color-primary': colors.primary 
-          }}
+          className="aspect-square rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/[0.06] hover:border-gray-400 dark:hover:border-white/15 flex flex-col items-center justify-center gap-3 sm:gap-4 group transition-all w-full h-full cursor-pointer"
         >
           {isCreating ? (
-            <div className="w-full px-6 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full px-4 sm:px-6 space-y-2 sm:space-y-3" onClick={(e) => e.stopPropagation()}>
                <input
                  autoFocus
                  type="text"
@@ -64,19 +61,19 @@ export default function PlaylistsPage() {
                     if (e.key === "Enter") handleCreate();
                     if (e.key === "Escape") setIsCreating(false);
                  }}
-                 className="w-full text-center bg-transparent border-b border-gray-300 dark:border-white/20 focus:border-[var(--color-primary)] outline-none py-2 font-bold text-lg"
+                 className="w-full text-center bg-transparent border-b border-gray-300 dark:border-white/15 focus:border-gray-500 dark:focus:border-white/30 outline-none py-2 font-bold text-base sm:text-lg text-gray-900 dark:text-white"
                />
-               <div className="flex gap-2 justify-center">
-                 <button onClick={handleCreate} className="text-xs font-black uppercase tracking-wider text-[var(--color-primary)]">Create</button>
-                 <button onClick={() => setIsCreating(false)} className="text-xs font-black uppercase tracking-wider text-gray-400">Cancel</button>
+               <div className="flex gap-3 justify-center">
+                 <button onClick={handleCreate} className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-600 transition-colors">Create</button>
+                 <button onClick={() => setIsCreating(false)} className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-gray-500 transition-colors">Cancel</button>
                </div>
             </div>
           ) : (
             <>
-              <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-white/5 group-hover:bg-[var(--color-primary)] group-hover:text-white flex items-center justify-center transition-colors">
-                <Plus size={32} />
+              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gray-100 dark:bg-white/[0.04] group-hover:bg-gray-200 dark:group-hover:bg-white/[0.08] flex items-center justify-center transition-colors">
+                <Plus size={24} className="text-gray-400 dark:text-white/25 sm:w-7 sm:h-7" />
               </div>
-              <span className="font-bold text-gray-400 group-hover:text-[var(--color-primary)] transition-colors">Create Playlist</span>
+              <span className="font-semibold text-[13px] sm:text-[14px] text-gray-400 dark:text-white/25 group-hover:text-gray-600 dark:group-hover:text-white/40 transition-colors">Create Playlist</span>
             </>
           )}
         </motion.div>
@@ -87,22 +84,22 @@ export default function PlaylistsPage() {
             <motion.div
               whileHover={{ scale: 1.02, y: -5 }}
               whileTap={{ scale: 0.98 }}
-              className="group aspect-square relative rounded-[2rem] overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800 w-full h-full"
+              className="group aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800 w-full h-full"
             >
               {playlist.songs.length > 0 && playlist.songs[0].cover ? (
-                <img src={playlist.songs[0].cover} alt={playlist.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                <img src={playlist.songs[0].cover} alt={playlist.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-                  <Music size={48} className="text-gray-300 dark:text-gray-600" />
+                  <Music size={36} className="text-gray-300 dark:text-gray-600 sm:w-12 sm:h-12" />
                 </div>
               )}
               
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
-                 <h3 className="text-xl font-bold text-white tracking-tight truncate">{playlist.name}</h3>
-                 <p className="text-xs font-medium text-white/60 uppercase tracking-wider">{playlist.songs.length} Tracks</p>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-6">
+                 <h3 className="text-base sm:text-xl font-bold text-white tracking-tight truncate">{playlist.name}</h3>
+                 <p className="text-[10px] sm:text-xs font-medium text-white/50 uppercase tracking-wider">{playlist.songs.length} Tracks</p>
                  
-                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <PlayCircle size={48} className="text-white fill-white/20 backdrop-blur-md rounded-full" />
+                 <div className="absolute top-3 sm:top-4 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <PlayCircle size={36} className="text-white fill-white/20 backdrop-blur-md rounded-full sm:w-12 sm:h-12" />
                  </div>
               </div>
             </motion.div>

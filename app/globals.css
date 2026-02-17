@@ -1,201 +1,166 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
 
-@layer base {
-  body {
-    @apply bg-bg dark:bg-bg-dark text-gray-900 dark:text-gray-100;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    text-rendering: optimizeLegibility;
-  }
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Apple-tier selection colors */
-  ::selection {
-    background-color: rgba(0, 122, 255, 0.2);
-    color: inherit;
-  }
+/* ──────────────────────────────────────────────
+   Design Foundations — Premium Apple-tier
+   ────────────────────────────────────────────── */
 
-  /* Stagger transition durations per property to remove jankiness */
-  * {
-    transition-property: color, background-color, border-color, box-shadow;
-    transition-duration: 150ms;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter",
+    "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
-@layer components {
-  /* Smooth player card shadow */
-  .player-shadow {
-    box-shadow:
-      0 20px 25px -5px rgba(0, 0, 0, 0.1),
-      0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  }
-
-  .dark .player-shadow {
-    box-shadow:
-      0 20px 25px -5px rgba(0, 0, 0, 0.3),
-      0 10px 10px -5px rgba(0, 0, 0, 0.2);
-  }
-
-  /* Custom range slider styling */
-  input[type="range"] {
-    -webkit-appearance: none;
-    appearance: none;
-    background: transparent;
-    cursor: pointer;
-  }
-
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: linear-gradient(
-      135deg,
-      var(--player-primary),
-      var(--player-secondary)
-    );
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-  }
-
-  input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
-  }
-
-  input[type="range"]::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: linear-gradient(
-      135deg,
-      var(--player-primary),
-      var(--player-secondary)
-    );
-    cursor: pointer;
-    border: none;
-    transition: all 0.2s;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
-  }
-
-  input[type="range"]::-moz-range-thumb:hover {
-    transform: scale(1.2);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.6);
-  }
-
-  /* Smooth scrolling */
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Scrollbar — ultra-thin, Apple style */
-  ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  ::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.15);
-    border-radius: 100px;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.25);
-  }
-
-  .dark ::-webkit-scrollbar-thumb,
-  :root.dark ::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
-  }
-
-  :root.dark ::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
+/* Safe area insets for notched devices */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Vision Pro Glass — Light mode */
-  .glass-effect {
-    @apply bg-white/70 backdrop-blur-2xl border border-black/[0.04] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.06)];
-  }
-
-  /* Vision Pro Glass — Dark mode */
-  .glass-effect-dark {
-    @apply bg-white/[0.04] backdrop-blur-2xl border border-white/[0.06] shadow-[0_2px_20px_-4px_rgba(0,0,0,0.3)];
-  }
-
-  /* Horizontal scroll area — minimal scrollbar */
-  .custom-scrollbar::-webkit-scrollbar {
-    height: 3px;
-    width: 3px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: rgba(128, 128, 128, 0.15);
-    border-radius: 100px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: rgba(128, 128, 128, 0.3);
-  }
-
-  @keyframes music-bar {
-    0%,
-    100% {
-      height: 4px;
-    }
-    50% {
-      height: 16px;
-    }
-  }
-
-  .animate-music-bar {
-    animation: music-bar 1s ease-in-out infinite;
-  }
-
-  .bg-noise {
-    background-image: url("https://grainy-gradients.vercel.app/noise.svg");
-    filter: contrast(150%) brightness(100%);
-  }
-
-  .safe-area-inset-top {
-    padding-top: env(safe-area-inset-top);
-  }
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0);
 }
 
-/* Lenis Recommended CSS */
+/* ──────────────────────────────────────────────
+   Selection & Scrollbars
+   ────────────────────────────────────────────── */
+
+::selection {
+  background: rgba(59, 130, 246, 0.2);
+  color: inherit;
+}
+
+/* Ultra-thin scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.2);
+  border-radius: 999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 128, 128, 0.35);
+}
+
+/* Global scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(128, 128, 128, 0.15);
+  border-radius: 999px;
+}
+
+/* ──────────────────────────────────────────────
+   Glass Effects
+   ────────────────────────────────────────────── */
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+:is(.dark) .glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+/* ──────────────────────────────────────────────
+   Player Range Inputs
+   ────────────────────────────────────────────── */
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0;
+  height: 0;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: 0;
+}
+
+/* ──────────────────────────────────────────────
+   Noise Texture Utility
+   ────────────────────────────────────────────── */
+
+.bg-noise {
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* ──────────────────────────────────────────────
+   Lenis Smooth Scrolling
+   ────────────────────────────────────────────── */
+
 html.lenis,
 html.lenis body {
   height: auto;
 }
-
 .lenis.lenis-smooth {
-  scroll-behavior: auto !important;
+  scroll-behavior: auto;
 }
-
 .lenis.lenis-smooth [data-lenis-prevent] {
   overscroll-behavior: contain;
 }
-
 .lenis.lenis-stopped {
   overflow: hidden;
 }
-
 .lenis.lenis-scrolling iframe {
   pointer-events: none;
+}
+
+/* ──────────────────────────────────────────────
+   Mobile-specific fixes
+   ────────────────────────────────────────────── */
+
+/* Prevent iOS rubber-banding white flash */
+html {
+  background-color: #f5f5f7;
+}
+
+html.dark {
+  background-color: #000000;
+}
+
+/* Fix 100vh on mobile browsers */
+@supports (height: 100dvh) {
+  .min-h-dvh {
+    min-height: 100dvh;
+  }
+  .h-dvh {
+    height: 100dvh;
+  }
+}
+
+/* Remove tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text size adjustment on orientation change */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
