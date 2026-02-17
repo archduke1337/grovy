@@ -19,14 +19,15 @@ export const Playlist: React.FC = () => {
 
   return (
     <div className="space-y-2">
-      {songs.map((song, index) => {
+      {songs.slice(currentSongIndex, currentSongIndex + 8).map((song, i) => {
+        const index = currentSongIndex + i;
         const isCurrent = index === currentSongIndex;
         return (
           <motion.button
             key={`${song.id}-${index}`}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.05 }}
+            transition={{ delay: i * 0.05 }}
             onClick={() => setCurrentSongIndex(index)}
             className={`w-full group flex items-center gap-3 p-2 rounded-xl transition-all ${
               isCurrent 

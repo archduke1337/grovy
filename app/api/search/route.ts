@@ -24,32 +24,35 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let endpoint = "";
+    let saavnEndpoint = "";
+    let ytFilter = "";
+    
     switch (type) {
       case "artist":
-        endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/artists?query=${encodeURIComponent(query)}&limit=10`;
+        saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/artists?query=${encodeURIComponent(query)}&limit=10`;
+        ytFilter = "artists";
         break;
       case "album":
-        endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/albums?query=${encodeURIComponent(query)}&limit=10`;
+        saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/albums?query=${encodeURIComponent(query)}&limit=10`;
+        ytFilter = "albums";
         break;
       case "playlist":
-        endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/playlists?query=${encodeURIComponent(query)}&limit=10`;
+        saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/playlists?query=${encodeURIComponent(query)}&limit=10`;
+        ytFilter = "playlists";
         break;
       default:
-        // Default to songs, though handled by /api/songs usually. 
-        // This file mainly handles structured entity search.
-        endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=10`;
+        saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=10`;
+        ytFilter = "songs";
     }
 
-    const response = await fetch(endpoint);
-    const data = await response.json();
+    const ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/search?q=${encodeURIComponent(query)}&filter=${ytFilter}`;
 
-    if (!data.success || !data.data?.results) {
-      return Response.json([]);
-    }
+    const [saavnRes, ytRes] = await Promise.all([
+      fetch(saavnEndpoint).then(res => res.json()).catch(() => ({ success: false })),
+      fetch(ytEndpoint).then(res => res.json()).catch(() => [])
+    ]);
 
-    const rawResults = data.data.results.map((item: any) => {
-      // Normalize image
+    const saavnFormatted = (saavnRes.success && saavnRes.data?.results) ? saavnRes.data.results.map((item: any) => {
       let imageUrl = "";
       if (Array.isArray(item.image) && item.image.length > 0) {
         imageUrl = item.image[item.image.length - 1].url;
@@ -63,11 +66,33 @@ export async function GET(request: NextRequest) {
         description: item.description || item.subtitle || item.artist || "",
         image: imageUrl,
         type: type === "all" ? item.type : type,
-        url: item.url
+        url: item.url,
+        source: "Saavn"
+      };
+    }) : [];
+
+    const ytFormatted = (Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || [])).map((item: any) => {
+      const browseId = item.browseId || item.videoId || item.id;
+      return {
+        id: `yt-${browseId}`,
+        name: item.name || item.title,
+        description: item.artists?.map((a: any) => a.name).join(", ") || "YouTube",
+        image: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url,
+        type: type === "all" ? "song" : type,
+        url: "",
+        source: "YouTube"
       };
     });
 
-    return Response.json(rawResults);
+    // Interleave results
+    const combined = [];
+    const maxLen = Math.max(saavnFormatted.length, ytFormatted.length);
+    for (let i = 0; i < maxLen; i++) {
+        if (saavnFormatted[i]) combined.push(saavnFormatted[i]);
+        if (ytFormatted[i]) combined.push(ytFormatted[i]);
+    }
+
+    return Response.json(combined);
 
   } catch (error) {
     console.error("Search API Error:", error);

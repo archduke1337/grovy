@@ -11,8 +11,7 @@ import React, {
 
 import { Song, SongSchema } from "@/app/types/song";
 import { z } from "zod";
-
-
+import Hls from "hls.js";
 
 interface Colors {
   primary: string;
@@ -29,11 +28,8 @@ interface PlayerContextType {
   volume: number;
   isLoop: boolean;
   isShuffle: boolean;
-  analyser: AnalyserNode | null;
   favorites: string[];
   colors: Colors;
-  eqEnabled: boolean;
-  spatialEnabled: boolean;
   play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
@@ -47,36 +43,38 @@ interface PlayerContextType {
   toggleFavorite: (id: string) => void;
   isFavorite: (id: string) => boolean;
   loadSongs: (query?: string, source?: string) => Promise<Song[]>;
-  setQueue: (newSongs: z.infer<typeof SongSchema>[], index: number) => void;
-  toggleEQ: () => void;
-  toggleSpatial: () => void;
-  setEqGain: (index: number, value: number) => void;
+  setQueue: (newSongs: Song[], index: number) => void;
+  startRadio: (videoId: string) => Promise<void>;
+  loadRelated: (videoId: string) => Promise<Song[]>;
   isCommandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
   recentlyPlayed: Song[];
+  clearHistory: () => void;
 }
 
 const DEFAULT_COLORS: Colors = {
-  primary: "#3b82f6", // blue-500
-  secondary: "#8b5cf6", // purple-500
+  primary: "#3b82f6", 
+  secondary: "#8b5cf6", 
   accent: "#3b82f6"
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
 
-const EQ_FREQUENCIES = [60, 300, 1000, 4000, 16000];
+declare global {
+  interface Window {
+    onYouTubeIframeAPIReady: () => void;
+    YT: any;
+  }
+}
 
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const sourceRef = useRef<MediaElementAudioSourceNode | null>(null);
-  const eqNodesRef = useRef<BiquadFilterNode[]>([]);
-  const pannerNodeRef = useRef<StereoPannerNode | null>(null);
-
+  const hlsRef = useRef<Hls | null>(null);
+  const ytPlayerRef = useRef<any>(null);
   const currentTimeRef = useRef(0);
+  const lastStateRef = useRef<number>(-1);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
@@ -87,88 +85,294 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoop, setIsLoop] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
-  const [analyser, setAnalyser] = useState<AnalyserNode | null>(null);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [colors, setColors] = useState<Colors>(DEFAULT_COLORS);
-  const [eqEnabled, setEqEnabled] = useState(false);
-  const [spatialEnabled, setSpatialEnabled] = useState(false);
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
-  const seek = useCallback((time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
-      currentTimeRef.current = time;
-    }
+  // Initialize YouTube IFrame API and Hydrate History
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    // Hydrate history
+    try {
+      const saved = localStorage.getItem("grovy-history");
+      if (saved) setRecentlyPlayed(JSON.parse(saved).slice(0, 20));
+      
+      const favs = localStorage.getItem("grovy-favorites");
+      if (favs) setFavorites(JSON.parse(favs));
+    } catch (e) {}
+
+    const tag = document.createElement('script');
+    tag.src = "https://www.youtube.com/iframe_api";
+    const firstScriptTag = document.getElementsByTagName('script')[0];
+    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+
+    window.onYouTubeIframeAPIReady = () => {
+      ytPlayerRef.current = new window.YT.Player('yt-player-hidden', {
+        height: '0',
+        width: '0',
+        videoId: '',
+        playerVars: {
+          'autoplay': 0,
+          'controls': 0,
+          'disablekb': 1,
+          'fs': 0,
+          'rel': 0,
+          'showinfo': 0,
+          'iv_load_policy': 3,
+          'origin': window.location.origin,
+          'playsinline': 1,
+          'enablejsapi': 1
+        },
+        events: {
+          onReady: (event: any) => {
+            event.target.setVolume(volume * 100);
+          },
+          onStateChange: (event: any) => {
+            // YT.PlayerState.ENDED = 0
+            if (event.data === 0) {
+              if (isLoop) {
+                event.target.playVideo();
+              } else {
+                nextTrack();
+              }
+            }
+            // YT.PlayerState.PLAYING = 1
+            if (event.data === 1) setIsPlaying(true);
+            // YT.PlayerState.PAUSED = 2
+            if (event.data === 2) setIsPlaying(false);
+            
+            lastStateRef.current = event.data;
+          },
+          onError: (e: any) => console.error("[YTPlayer] Error:", e.data)
+        }
+      });
+    };
+    
+    // Attempt to set high quality when possible
+    const qualityInterval = setInterval(() => {
+       if (ytPlayerRef.current?.setPlaybackQuality) {
+          ytPlayerRef.current.setPlaybackQuality("hd1080");
+       }
+    }, 5000);
+    
+    return () => clearInterval(qualityInterval);
   }, []);
 
+  // Sync Timer for both players
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const currentSong = songs[currentSongIndex];
+      if (!currentSong) return;
+
+      if (currentSong.source === "YouTube" && ytPlayerRef.current?.getCurrentTime) {
+        try {
+          const ytTime = ytPlayerRef.current.getCurrentTime();
+          const ytDur = ytPlayerRef.current.getDuration();
+          if (ytTime !== currentTime) {
+            setCurrentTime(ytTime);
+            currentTimeRef.current = ytTime;
+          }
+          if (ytDur !== duration && ytDur > 0) setDuration(ytDur);
+        } catch (e) {}
+      } else if (audioRef.current) {
+        // Audio element listener handles this via events, but we sync ref here just in case
+        currentTimeRef.current = audioRef.current.currentTime;
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, [songs, currentSongIndex, duration, currentTime]);
+
+  // 1. Initialize Audio Element (Saavn/Gaana)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    
+    const audio = new Audio();
+    audio.volume = volume;
+    audioRef.current = audio;
+
+    const updateTime = () => {
+      const currentSong = songs[currentSongIndex];
+      if (currentSong?.source !== "YouTube") {
+        setCurrentTime(audio.currentTime);
+        currentTimeRef.current = audio.currentTime;
+      }
+    };
+    const updateDuration = () => {
+      const currentSong = songs[currentSongIndex];
+      if (currentSong?.source !== "YouTube") {
+        setDuration(audio.duration);
+      }
+    };
+    const handleEnded = () => {
+      const currentSong = songs[currentSongIndex];
+      if (currentSong?.source !== "YouTube") {
+        isLoop ? (audio.currentTime = 0, audio.play()) : nextTrack();
+      }
+    };
+
+    audio.addEventListener("timeupdate", updateTime);
+    audio.addEventListener("loadedmetadata", updateDuration);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("timeupdate", updateTime);
+      audio.removeEventListener("loadedmetadata", updateDuration);
+      audio.removeEventListener("ended", handleEnded);
+      audio.pause();
+    };
+  }, [songs, currentSongIndex, isLoop]);
+
+  const seek = useCallback((time: number) => {
+    const currentSong = songs[currentSongIndex];
+    if (currentSong?.source === "YouTube" && ytPlayerRef.current?.seekTo) {
+      ytPlayerRef.current.seekTo(time, true);
+    } else if (audioRef.current) {
+      audioRef.current.currentTime = time;
+    }
+    setCurrentTime(time);
+    currentTimeRef.current = time;
+  }, [songs, currentSongIndex]);
+
   const nextTrack = useCallback(() => {
+    if (songs.length === 0) return;
     setCurrentSongIndex((prev) => (isShuffle ? Math.floor(Math.random() * songs.length) : (prev + 1) % songs.length));
+    setIsPlaying(true);
   }, [songs.length, isShuffle]);
 
   const previousTrack = useCallback(() => {
-    // Use ref to avoid dependency on constantly changing currentTime state
-    if (currentTimeRef.current > 3 || songs.length === 0) {
+    if (songs.length === 0) return;
+    if (currentTimeRef.current > 3) {
        seek(0);
     } else {
        setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
     }
+    setIsPlaying(true);
   }, [songs.length, seek]);
 
-  // Sync Media Session
-  useEffect(() => {
-    if ("mediaSession" in navigator && songs.length > 0) {
-      const song = songs[currentSongIndex];
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: song.title,
-        artist: song.artist || "Grovy",
-        album: "My Collection",
-        artwork: [
-          { src: song.cover || "/icons/icon.svg", sizes: "512x512", type: "image/png" }
-        ]
-      });
+  const togglePlayPause = useCallback(() => {
+    setIsPlaying((prev) => !prev);
+  }, []);
 
-      navigator.mediaSession.setActionHandler("play", () => setIsPlaying(true));
-      navigator.mediaSession.setActionHandler("pause", () => setIsPlaying(false));
-      navigator.mediaSession.setActionHandler("previoustrack", () => previousTrack());
-      navigator.mediaSession.setActionHandler("nexttrack", () => nextTrack());
-      navigator.mediaSession.setActionHandler("seekto", (details) => {
-        if (details.seekTime !== undefined) seek(details.seekTime);
-      });
+  const play = useCallback(() => setIsPlaying(true), []);
+  const pause = useCallback(() => setIsPlaying(false), []);
+
+
+  const toggleLoop = useCallback(() => {
+    setIsLoop((prev) => !prev);
+  }, []);
+
+  const changeVolume = useCallback((v: number) => {
+    const newVol = Math.max(0, Math.min(1, v));
+    setVolumeState(newVol);
+    if (audioRef.current) audioRef.current.volume = newVol;
+    if (ytPlayerRef.current?.setVolume) ytPlayerRef.current.setVolume(newVol * 100);
+    localStorage.setItem("grovy-volume", newVol.toString());
+  }, []);
+
+  // Hydrate Volume
+  useEffect(() => {
+    const savedVol = localStorage.getItem("grovy-volume");
+    if (savedVol) changeVolume(parseFloat(savedVol));
+  }, [changeVolume]);
+
+  // Manage Source Change
+  useEffect(() => {
+    const currentSong = songs[currentSongIndex];
+    if (!currentSong) return;
+
+    const audio = audioRef.current;
+    
+     // Stop the "other" player
+     if (currentSong.source === "YouTube") {
+        if (audio) {
+          audio.pause();
+          audio.src = "";
+          if (hlsRef.current) {
+            hlsRef.current.destroy();
+            hlsRef.current = null;
+          }
+        }
+        if (ytPlayerRef.current?.loadVideoById) {
+           const videoId = currentSong.id.replace("yt-", "");
+           console.log(`[PlayerContext] Switching to YT Player: ${videoId}`);
+           ytPlayerRef.current.loadVideoById(videoId);
+           // We'll let the onStateChange or the next useEffect handle play/pause
+        }
+     } else {
+       if (ytPlayerRef.current?.stopVideo) ytPlayerRef.current.stopVideo();
+       
+       if (audio) {
+         const targetUrl = new URL(currentSong.url, window.location.origin).href;
+         const isHLS = targetUrl.includes(".m3u8");
+
+         if (audio.src !== targetUrl || isHLS) {
+            console.log(`[PlayerContext] Switching to Audio Player: ${targetUrl}`);
+            audio.pause();
+            if (hlsRef.current) hlsRef.current.destroy();
+
+             if (isHLS) {
+                const hls = new Hls({
+                  maxMaxBufferLength: 30, // Increase buffer for smoother playback
+                  enableWorker: true,
+                });
+                hls.loadSource(targetUrl);
+               hls.attachMedia(audio);
+               hlsRef.current = hls;
+               hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                  if (isPlaying) audio.play();
+               });
+            } else {
+               audio.removeAttribute('crossorigin');
+               audio.src = targetUrl;
+               audio.load();
+               if (isPlaying) audio.play().catch(() => {});
+            }
+         }
+       }
     }
-  }, [songs, currentSongIndex, isPlaying, previousTrack, nextTrack, seek]);
+  }, [currentSongIndex, songs]);
 
-  // Sync Document Title
+  // Update Recently Played
   useEffect(() => {
-    if (isPlaying && songs.length > 0) {
-      const song = songs[currentSongIndex];
-      document.title = `▶ ${song.title} - ${song.artist} | Grovy`;
+    const song = songs[currentSongIndex];
+    if (!song) return;
+
+    setRecentlyPlayed((prev) => {
+      const filtered = prev.filter((s) => s.id !== song.id);
+      const updated = [song, ...filtered].slice(0, 20);
+      localStorage.setItem("grovy-history", JSON.stringify(updated));
+      return updated;
+    });
+  }, [currentSongIndex, songs]);
+
+  // Sync Favorites to LocalStorage
+  useEffect(() => {
+    localStorage.setItem("grovy-favorites", JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Sync Play/Pause Global Action
+  useEffect(() => {
+    const currentSong = songs[currentSongIndex];
+    if (!currentSong) return;
+
+    if (currentSong.source === "YouTube") {
+      if (isPlaying) ytPlayerRef.current?.playVideo?.();
+      else ytPlayerRef.current?.pauseVideo?.();
     } else {
-      document.title = "Grovy";
+      if (isPlaying) audioRef.current?.play().catch(() => {});
+      else audioRef.current?.pause();
     }
-  }, [isPlaying, songs, currentSongIndex]);
+  }, [isPlaying, currentSongIndex, songs]);
 
-  // Load songs from API
   const loadSongs = useCallback(async (query?: string, source?: string): Promise<Song[]> => {
     try {
       const params = new URLSearchParams();
       if (source) params.append("source", source);
       if (query) params.append("query", query);
-      
-      const url = `/api/songs?${params.toString()}`;
-      
-      const response = await fetch(url);
-      const data = await response.json();
-      
-      const result = z.array(SongSchema).safeParse(data);
-      if (result.success) {
-        return result.data;
-      } else {
-        console.error("Context Validation Error:", result.error);
-        return data as Song[];
-      }
-    } catch (error) {
-      console.error("Failed to load songs:", error);
+      const res = await fetch(`/api/songs?${params.toString()}`);
+      return await res.json();
+    } catch (e) {
       return [];
     }
   }, []);
@@ -178,7 +382,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setCurrentSongIndex(index);
     setIsPlaying(true);
   }, []);
-  // Palette Sync Implementation
+
+  const startRadio = useCallback(async (id: string) => {
+    const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
+    const res = await fetch(`/api/songs/radio?videoId=${vId}`);
+    const data = await res.json();
+    if (data.length > 0) setQueue(data, 0);
+  }, [setQueue]);
+
+  const loadRelated = useCallback(async (id: string) => {
+    const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
+    const res = await fetch(`/api/songs/related?videoId=${vId}`);
+    return await res.json();
+  }, []);
+
+  // Palette Sync
   useEffect(() => {
     const song = songs[currentSongIndex];
     if (!song?.cover) {
@@ -214,181 +432,60 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     img.onerror = () => {
       if (isMounted) setColors(DEFAULT_COLORS);
     };
-
     return () => { isMounted = false; };
   }, [currentSongIndex, songs]);
 
-  // Audio Graph initialization
-  const initAudioContext = useCallback(() => {
-    if (!audioContextRef.current && audioRef.current) {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      const ctx = new AudioCtx();
-      
-      const source = ctx.createMediaElementSource(audioRef.current);
-      
-      // EQ Chain
-      const filters = EQ_FREQUENCIES.map(freq => {
-        const filter = ctx.createBiquadFilter();
-        filter.type = "peaking";
-        filter.frequency.value = freq;
-        filter.Q.value = 1;
-        filter.gain.value = 0;
-        return filter;
-      });
-
-      // Spatial Node
-      const panner = ctx.createStereoPanner();
-      panner.pan.value = 0;
-
-      const ana = ctx.createAnalyser();
-      ana.fftSize = 256;
-
-      // Connect: Source -> filters -> panner -> analyser -> destination
-      let lastNode: AudioNode = source;
-      filters.forEach(f => {
-        lastNode.connect(f);
-        lastNode = f;
-      });
-      lastNode.connect(panner);
-      panner.connect(ana);
-      ana.connect(ctx.destination);
-      
-      audioContextRef.current = ctx;
-      analyserRef.current = ana;
-      sourceRef.current = source;
-      eqNodesRef.current = filters;
-      pannerNodeRef.current = panner;
-      setAnalyser(ana);
-    }
-    
-    if (audioContextRef.current?.state === 'suspended') {
-      audioContextRef.current.resume();
-    }
-  }, []);
-
-  // Audio Source Management
+  // Global Keyboard Shortcuts
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio || songs.length === 0) return;
-    
-    const song = songs[currentSongIndex];
-    if (!song) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input or textarea
+      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
+      if ((e.target as HTMLElement).isContentEditable) return;
 
-    // Only update src if it changed. 
-    // We check if current src ends with the new url to handle absolute vs relative paths confusion
-    // or simply if they don't match. 
-    // Using decodeURIComponent to handle potential encoding discrepancies.
-    const currentSrc = decodeURIComponent(audio.src).split(window.location.origin).pop(); 
-    const newSrc = song.url; // song.url is usually relative e.g. /songs/...
-
-    // Simple check: if audio.src includes the song url? 
-    // Better: Maintain a currentSongIdRef to track logic?
-    // Easiest robust check:
-    if (audio.src !== new URL(song.url, window.location.href).href) {
-       audio.src = song.url;
-       if (isPlaying) audio.play().catch(() => {});
-    }
-  }, [currentSongIndex, songs, isPlaying]);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    if (isPlaying) {
-      initAudioContext();
-      audio.play().catch(() => {});
-    } else {
-      audio.pause();
-    }
-  }, [isPlaying, initAudioContext]);
-
-  useEffect(() => {
-    if (audioRef.current) audioRef.current.volume = volume;
-  }, [volume]);
-
-  // Apply Spatial Audio Logic
-  useEffect(() => {
-    if (pannerNodeRef.current) {
-      // Subtle widening effect
-      pannerNodeRef.current.pan.value = spatialEnabled ? 0.05 : 0;
-    }
-  }, [spatialEnabled]);
-
-  const play = useCallback(() => {
-    initAudioContext();
-    setIsPlaying(true);
-  }, [initAudioContext]);
-
-  const pause = useCallback(() => setIsPlaying(false), []);
-  const togglePlayPause = useCallback(() => {
-    if (!isPlaying) initAudioContext();
-    setIsPlaying((prev) => !prev);
-  }, [isPlaying, initAudioContext]);
-
-
-
-  const setVolume = useCallback((vol: number) => {
-    const v = Math.max(0, Math.min(1, vol));
-    setVolumeState(v);
-    localStorage.setItem("grovy-volume", v.toString());
-  }, []);
-
-  const toggleLoop = useCallback(() => setIsLoop((prev) => {
-    const next = !prev;
-    const settings = JSON.parse(localStorage.getItem("grovy-settings") || '{"shuffle":false}');
-    localStorage.setItem("grovy-settings", JSON.stringify({ ...settings, loop: next }));
-    return next;
-  }), []);
-
-  const toggleShuffle = useCallback(() => setIsShuffle((prev) => {
-    const next = !prev;
-    const settings = JSON.parse(localStorage.getItem("grovy-settings") || '{"loop":false}');
-    localStorage.setItem("grovy-settings", JSON.stringify({ ...settings, shuffle: next }));
-    return next;
-  }), []);
-  const toggleFavorite = useCallback((id: string) => setFavorites(prev => prev.includes(id) ? prev.filter(f => f !== id) : [...prev, id]), []);
-  const isFavorite = useCallback((id: string) => favorites.includes(id), [favorites]);
-
-  const toggleEQ = () => setEqEnabled(!eqEnabled);
-  const toggleSpatial = () => setSpatialEnabled(!spatialEnabled);
-  const setEqGain = (index: number, value: number) => {
-    if (eqNodesRef.current[index]) {
-      eqNodesRef.current[index].gain.value = value;
-    }
-  };
-
-  useEffect(() => {
-    if (!audioRef.current) {
-      const audio = new Audio();
-      audio.crossOrigin = "anonymous";
-      audio.volume = 0.8;
-      audioRef.current = audio;
-    }
-
-    const audio = audioRef.current;
-    const updateTime = () => {
-      setCurrentTime(audio.currentTime);
-      currentTimeRef.current = audio.currentTime;
-      if ("mediaSession" in navigator) {
-        navigator.mediaSession.setPositionState({
-          duration: audio.duration || 0,
-          playbackRate: audio.playbackRate,
-          position: audio.currentTime
-        });
+      switch (e.code) {
+        case "Space":
+          e.preventDefault();
+          togglePlayPause();
+          break;
+        case "ArrowRight":
+          // If Command Palette is open, let it handle arrows
+          if (isCommandPaletteOpen) return;
+          if (e.metaKey || e.ctrlKey) {
+             nextTrack();
+          } else {
+             seek(Math.min(currentTime + 5, duration));
+          }
+          break;
+        case "ArrowLeft":
+          if (isCommandPaletteOpen) return;
+          if (e.metaKey || e.ctrlKey) {
+             previousTrack();
+          } else {
+             seek(Math.max(currentTime - 5, 0));
+          }
+          break;
+        case "ArrowUp":
+          if (isCommandPaletteOpen) return;
+          e.preventDefault();
+          changeVolume(volume + 0.1);
+          break;
+        case "ArrowDown":
+          if (isCommandPaletteOpen) return;
+          e.preventDefault();
+          changeVolume(volume - 0.1);
+          break;
+        case "KeyM":
+           changeVolume(volume === 0 ? 0.8 : 0);
+           break;
+        case "KeyL":
+           toggleLoop();
+           break;
       }
     };
-    const updateDuration = () => setDuration(audio.duration);
-    const handleEnded = () => isLoop ? (audio.currentTime = 0, audio.play()) : nextTrack();
 
-    audio.addEventListener("timeupdate", updateTime);
-    audio.addEventListener("loadedmetadata", updateDuration);
-    audio.addEventListener("ended", handleEnded);
-
-    return () => {
-      audio.removeEventListener("timeupdate", updateTime);
-      audio.removeEventListener("loadedmetadata", updateDuration);
-      audio.removeEventListener("ended", handleEnded);
-    };
-  }, [isLoop, nextTrack]);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isPlaying, volume, currentTime, duration, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
 
   const value: PlayerContextType = {
     songs,
@@ -399,13 +496,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     volume,
     isLoop,
     isShuffle,
-    analyser,
     favorites,
     colors,
-    eqEnabled,
-    spatialEnabled,
-    toggleFavorite,
-    isFavorite,
     play,
     pause,
     togglePlayPause,
@@ -413,30 +505,32 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     previousTrack,
     seek,
     setCurrentSongIndex,
-    setVolume,
+    setVolume: changeVolume,
     toggleLoop,
-    toggleShuffle,
+    toggleShuffle: () => setIsShuffle(p => !p),
+    toggleFavorite: (id) => setFavorites(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]),
+    isFavorite: (id) => favorites.includes(id),
     loadSongs,
     setQueue,
-    toggleEQ,
-    toggleSpatial,
-    setEqGain,
+    startRadio,
+    loadRelated,
     isCommandPaletteOpen,
     setCommandPaletteOpen,
     recentlyPlayed,
+    clearHistory: () => {
+       setRecentlyPlayed([]);
+       localStorage.removeItem("grovy-history");
+    }
   };
 
   return (
     <PlayerContext.Provider value={value}>
-      <div 
-        style={{ 
-          display: 'contents',
+      <div id="yt-player-hidden" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }} />
+      <div style={{ display: 'contents', 
           // @ts-ignore
-          '--player-primary': colors.primary,
-          '--player-secondary': colors.secondary,
-          '--player-accent': colors.accent,
-        }}
-      >
+          '--player-primary': colors.primary, 
+          '--player-secondary': colors.secondary 
+      }}>
         {children}
       </div>
     </PlayerContext.Provider>

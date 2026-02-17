@@ -5,9 +5,12 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { PlayerControls } from "./PlayerControls";
 import { Playlist } from "./Playlist";
 import { motion } from "framer-motion";
-import { Music, Heart, Sparkles, Share2 } from "lucide-react";
-import { AudioVisualizer } from "./AudioVisualizer";
-import { AudioProPanel } from "./AudioProPanel";
+import { Music, Heart, Sparkles, Share2, Zap } from "lucide-react";
+import { LyricsView } from "./LyricsView";
+import { RelatedTracks } from "./RelatedTracks";
+import { ArtistInfo } from "./ArtistInfo";
+import { AmbientBackground } from "./AmbientBackground";
+import { useState } from "react";
 
 const formatTime = (seconds: number): string => {
   if (!seconds || !isFinite(seconds)) return "0:00";
@@ -27,8 +30,11 @@ export const MusicPlayer: React.FC = () => {
     loadSongs,
     toggleFavorite,
     isFavorite,
+    startRadio,
     colors
   } = usePlayer();
+
+  const [isLyricsOpen, setIsLyricsOpen] = useState(false);
 
 
 
@@ -38,16 +44,32 @@ export const MusicPlayer: React.FC = () => {
   return (
     <div className="w-full h-full flex flex-col items-center justify-center relative bg-bg dark:bg-bg-dark">
       
-      {/* 1. Ambient Dynamic Glows (Now using extraction) */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-40">
-        <div 
-          style={{ backgroundColor: colors.primary }}
-          className="absolute -top-[10%] -left-[5%] w-[70%] h-[70%] blur-[180px] rounded-full transition-colors duration-[2000ms]"
-        />
-        <div 
-          style={{ backgroundColor: colors.secondary }}
-          className="absolute -bottom-[10%] -right-[5%] w-[70%] h-[70%] blur-[180px] rounded-full transition-colors duration-[2000ms]"
-        />
+      {/* 1. Immersive Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none bg-black">
+         {/* Base Dark Overlay */}
+         <div className="absolute inset-0 bg-black/40 z-[1]" />
+         
+         {/* Dynamic Color Blobs */}
+         <AmbientBackground className="absolute" />
+
+         {currentSong?.cover && (
+           <motion.div 
+             key={currentSong.cover}
+             initial={{ opacity: 0, scale: 1.1 }}
+             animate={{ opacity: 1, scale: 1 }}
+             transition={{ duration: 1.5 }}
+             className="absolute inset-0 blur-[80px] scale-110 opacity-40 mix-blend-overlay"
+             style={{ 
+               backgroundImage: `url(${currentSong.cover})`, 
+               backgroundPosition: "center", 
+               backgroundSize: "cover" 
+             }}
+           />
+         )}
+         
+         {/* Vignette & Gradient */}
+         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/90 z-[2]" />
+         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.8)_100%)] z-[2]" />
       </div>
 
       <motion.div
@@ -55,12 +77,12 @@ export const MusicPlayer: React.FC = () => {
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8 }}
         style={{ willChange: "transform, opacity" }}
-        className="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-24 z-10 px-4 py-8 lg:px-6 lg:py-12"
+        className="w-full max-w-7xl flex flex-col lg:flex-row items-center gap-8 lg:gap-24 z-10 px-4 py-8 lg:px-6 lg:py-12 relative"
       >
-        {/* Left: Cinematic Art & Visualizer */}
+        {/* Left: Cinematic Art */}
         <div className="w-full lg:w-1/2 flex flex-col items-center gap-8 lg:gap-12">
            <motion.div
-            layoutId={`art-${currentSong?.id}`}
+            layoutId={`art-${currentSongIndex}`}
             style={{ willChange: "transform" }}
             className="w-64 h-64 md:w-[500px] md:h-[500px] relative group"
            >
@@ -70,7 +92,7 @@ export const MusicPlayer: React.FC = () => {
                 className="absolute inset-8 bg-black/10 blur-[100px] rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-700" 
               />
               
-              <div className="relative w-full h-full rounded-[2rem] md:rounded-[4rem] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5)] border border-white/20 dark:border-white/5 isolate">
+              <div className="relative w-full h-full rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] border border-white/10 isolate">
                  {currentSong?.cover ? (
                    <motion.img
                      key={currentSong.cover}
@@ -87,28 +109,7 @@ export const MusicPlayer: React.FC = () => {
                    </div>
                  )}
               </div>
-
-              {/* Dynamic Aura */}
-              {isPlaying && (
-                <div className="absolute inset-0 -z-10 flex items-center justify-center">
-                  {[...Array(2)].map((_, i) => (
-                    <motion.div
-                      key={i}
-                      className="absolute inset-0 border-2 rounded-[2.5rem] md:rounded-[4.5rem]"
-                      style={{ borderColor: `${colors.primary}20` }}
-                      initial={{ scale: 1, opacity: 0.5 }}
-                      animate={{ scale: 1.25 + i * 0.1, opacity: 0 }}
-                      transition={{ duration: 4, repeat: Infinity, delay: i * 2 }}
-                    />
-                  ))}
-                </div>
-              )}
            </motion.div>
-
-           {/* Audio Visualizer (Desktop Only) */}
-           <div className="w-full max-w-sm hidden lg:block">
-              <AudioVisualizer />
-           </div>
         </div>
 
         {/* Right: Controls & Info */}
@@ -152,6 +153,16 @@ export const MusicPlayer: React.FC = () => {
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
+                    onClick={() => currentSong && startRadio(currentSong.id)}
+                    title="Start Radio"
+                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-amber-500 hover:bg-amber-500/10"
+                  >
+                    <Zap size={20} className="lg:w-6 lg:h-6" />
+                  </motion.button>
+
+                   <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
                     onClick={() => {
                       if (navigator.share && currentSong) {
                         navigator.share({
@@ -166,7 +177,17 @@ export const MusicPlayer: React.FC = () => {
                     <Share2 size={20} className="lg:w-6 lg:h-6" />
                   </motion.button>
                   
-                  <AudioProPanel />
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setIsLyricsOpen(true)}
+                    title="Lyrics"
+                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-green-500 hover:bg-green-500/10"
+                  >
+                    <Music size={20} className="lg:w-6 lg:h-6" />
+                  </motion.button>
+                  
+                  <ArtistInfo />
                 </div>
               </div>
 
@@ -177,7 +198,6 @@ export const MusicPlayer: React.FC = () => {
                     className="absolute inset-0 rounded-full"
                     style={{ 
                       width: `${duration ? (currentTime / duration) * 100 : 0}%`,
-                      // Use CSS variables for color transition to avoid heavy JS reclac
                       background: `linear-gradient(to right, var(--player-primary), var(--player-secondary))`,
                       transition: "width 0.1s linear, background 2s ease"
                     }}
@@ -205,12 +225,19 @@ export const MusicPlayer: React.FC = () => {
               <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-500 flex items-center gap-2">
                 Up Next <div className="flex-1 h-px bg-white/5" />
               </h3>
-              <div className="max-h-[220px] overflow-y-auto custom-scrollbar pr-4">
+               <div className="max-h-[220px] overflow-y-auto custom-scrollbar pr-4">
                  <Playlist />
               </div>
            </div>
+
+           {/* Related / Discovery Section */}
+           <div className="pt-12">
+              <RelatedTracks />
+           </div>
         </div>
       </motion.div>
+
+      <LyricsView isOpen={isLyricsOpen} onClose={() => setIsLyricsOpen(false)} />
     </div>
   );
 };

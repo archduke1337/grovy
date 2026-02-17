@@ -28,39 +28,7 @@ export const CommandPalette: React.FC = () => {
   const [apiResults, setApiResults] = useState<Song[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
-
-  // Handle keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        setCommandPaletteOpen(!isOpen);
-      }
-      if (e.key === "Escape") {
-        setCommandPaletteOpen(false);
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, setCommandPaletteOpen]);
-
-  // Global API Search
-  useEffect(() => {
-    if (query.trim().length === 0) {
-      setApiResults([]);
-      return;
-    }
-
-    const handler = setTimeout(async () => {
-      setIsSearching(true);
-      const results = await loadSongs(query);
-      setApiResults(results);
-      setIsSearching(false);
-    }, 400);
-
-    return () => clearTimeout(handler);
-  }, [query, loadSongs]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   const filteredItems = useMemo(() => {
     const q = query.toLowerCase();
@@ -96,7 +64,6 @@ export const CommandPalette: React.FC = () => {
     if (results.length < 5) {
       localSongs.forEach((song, idx) => {
         if (song.title.toLowerCase().includes(q) || song.artist?.toLowerCase().includes(q)) {
-          // Avoid duplicates
           if (!apiResults.find(as => as.id === song.id)) {
             results.push({
               id: `local-song-${song.id}`,
@@ -117,11 +84,65 @@ export const CommandPalette: React.FC = () => {
     return results;
   }, [query, localSongs, apiResults, router, setCommandPaletteOpen, setQueue]);
 
+  // Handle keyboard shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen(!isOpen);
+      }
+      if (e.key === "Escape") {
+        setCommandPaletteOpen(false);
+      }
+      
+      if (isOpen) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setSelectedIndex(prev => (prev + 1) % Math.max(1, filteredItems.length));
+        }
+        if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setSelectedIndex(prev => (prev - 1 + filteredItems.length) % Math.max(1, filteredItems.length));
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          if (filteredItems[selectedIndex]) {
+            filteredItems[selectedIndex].action();
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, setCommandPaletteOpen, filteredItems, selectedIndex]);
+
+  // Reset index when query changes
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
+
+  // Global API Search
+  useEffect(() => {
+    if (query.trim().length === 0) {
+      setApiResults([]);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      setIsSearching(true);
+      const results = await loadSongs(query);
+      setApiResults(results);
+      setIsSearching(false);
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [query, loadSongs]);
+
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -130,7 +151,6 @@ export const CommandPalette: React.FC = () => {
             className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[100]"
           />
 
-          {/* Dialog */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -166,11 +186,14 @@ export const CommandPalette: React.FC = () => {
                     {filteredItems.map((item, i) => (
                       <button
                         key={item.id}
+                        onMouseEnter={() => setSelectedIndex(i)}
                         onClick={() => {
                           item.action();
                           setCommandPaletteOpen(false);
                         }}
-                        className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-left group"
+                        className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all text-left group ${
+                          selectedIndex === i ? "bg-gray-100 dark:bg-white/10" : ""
+                        }`}
                       >
                         <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-white/5 flex items-center justify-center text-gray-500 group-hover:text-blue-500 group-hover:bg-blue-50 dark:group-hover:bg-blue-500/10 transition-all">
                           {item.icon}

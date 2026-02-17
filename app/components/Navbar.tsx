@@ -60,7 +60,7 @@ export const Navbar = () => {
   };
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] px-4 py-4 md:py-6 pointer-events-none">
+    <div className="fixed top-0 left-0 right-0 z-[60] px-4 py-2 md:py-4 pointer-events-none">
       <nav 
         style={{ 
           borderColor: scrolled ? `${colors.primary}40` : "transparent",
@@ -69,7 +69,7 @@ export const Navbar = () => {
         className={`
           mx-auto max-w-6xl pointer-events-auto transition-all duration-700 ease-out border
           ${scrolled 
-            ? "rounded-full px-6 py-2.5 backdrop-blur-2xl bg-white/70 dark:bg-black/70" 
+            ? "rounded-full px-6 py-2.5 backdrop-blur-3xl bg-white/60 dark:bg-black/60 shadow-lg" 
             : "rounded-[2.5rem] px-8 py-5 bg-transparent"}
         `}
       >

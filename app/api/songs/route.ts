@@ -28,38 +28,56 @@ export async function GET(request: NextRequest) {
   try {
     // 1. Fetch by ID (Album/Playlist/Artist details)
     if (id && type && ["album", "playlist", "artist"].includes(type)) {
+      const isYT = id.startsWith("yt-");
+      const realId = isYT ? id.replace("yt-", "") : id;
+
       let endpoint = "";
-      if (type === "album") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/albums?id=${id}`;
-      if (type === "playlist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/playlists?id=${id}`;
-      // for artist, the endpoint usually is /api/artists?id={id} - check docs or assume standard
-      // Actually docs say: /api/artists/{id}/songs ?? or just /api/artists?id={id}
-      // Let's try standard detail endpoint first. If it fails we might need specific songs endpoint.
-      // Based on common Saavn APIs:
-      if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${id}&song_count=20`; 
+      if (isYT) {
+        if (type === "album") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/albums/${realId}`;
+        if (type === "playlist") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/playlists/${realId}`;
+        if (type === "artist") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/artists/${realId}`;
+      } else {
+        if (type === "album") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/albums?id=${id}`;
+        if (type === "playlist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/playlists?id=${id}`;
+        if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${id}&song_count=20`; 
+      }
 
       const response = await fetch(endpoint);
       const data = await response.json();
 
       let songsList: any[] = [];
       
-      if (data.success) {
+      if (isYT) {
+         // YouTube responses usually have songs in tracks or are the array themselves
+         songsList = data.tracks || data.songs || (Array.isArray(data) ? data : []);
+      } else if (data.success) {
         if (type === "artist") {
-           // Artist API usually returns { data: { topSongs: [] } } or similar
            songsList = data.data.topSongs || data.data.songs || [];
         } else {
-           // Album/Playlist returns { data: { songs: [] } }
            songsList = data.data.songs || [];
         }
       }
 
       const rawSongs = songsList.map((item: any) => {
+          if (isYT) {
+             return {
+                id: `yt-${item.videoId}`,
+                title: item.title,
+                url: `/api/stream?id=${item.videoId}`,
+                artist: item.artists?.[0]?.name || "YT Artist",
+                cover: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url,
+                genre: "YouTube",
+                duration: item.duration || 0,
+             };
+          }
+
           const cover = item.image?.[item.image.length - 1]?.url;
           const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url;
           const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
                         item.artist || "Unknown Artist";
           
           return {
-            id: item.id,
+            id: `saavn-${item.id}`,
             title: item.name || item.title,
             url: downloadUrl,
             artist: artist,
@@ -154,49 +172,85 @@ export async function GET(request: NextRequest) {
       return Response.json([]);
     }
 
-    const apiUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=20`;
-
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-
-    if (!data.success || !data.data?.results) {
-      console.error("API Error or No Results:", data.message || "Unknown error");
-      return Response.json([]); 
+    const country = searchParams.get("country") || "IN";
+    
+    // Parallel fetch from both sources
+    const saavnUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=15`;
+    
+    let ytUrl = "";
+    if (query === "trending") {
+      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/trending?region=${country}`;
+    } else if (query === "charts") {
+      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/charts?region=${country}`;
+    } else {
+      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/search?q=${encodeURIComponent(query)}`;
     }
 
-    const results = data.data.results;
+    const [saavnRes, ytRes] = await Promise.all([
+      fetch(saavnUrl).then(res => res.json()).catch(() => ({ success: false })),
+      fetch(ytUrl).then(res => res.json()).catch(() => [])
+    ]);
 
-    const rawSongs = results.map((item: any, index: number) => {
-      // Get highest quality image and download URL
-      const cover = item.image?.[item.image.length - 1]?.url;
-      const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url;
+    // Robust Saavn Parsing
+    const saavnRaw = saavnRes.data?.results || saavnRes.data || (Array.isArray(saavnRes) ? saavnRes : []);
+    const saavnSongs = saavnRaw.map((item: any, index: number) => {
+      const cover = item.image?.[item.image.length - 1]?.url || (Array.isArray(item.image) ? item.image[0]?.url : item.image);
+      const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url || (Array.isArray(item.downloadUrl) ? item.downloadUrl[0]?.url : item.downloadUrl);
       const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
                      item.artist || "Unknown Artist";
       
-      const genre = GENRES[index % GENRES.length];
-
       return {
-        id: item.id,
+        id: `saavn-${item.id}`,
         title: item.name || item.title,
         url: downloadUrl,
         artist: artist,
         cover: cover,
-        genre: genre,
+        genre: GENRES[index % GENRES.length],
         duration: item.duration,
+        source: "Saavn"
       };
     });
 
-    const result = z.array(SongSchema).safeParse(rawSongs);
+    // Robust YouTube Parsing
+    const ytRaw = Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || ytRes?.songs || []);
+    const ytSongs = ytRaw.map((item: any) => {
+      // Mapping Verome/YouTube Music results to SongSchema
+      // We prioritze videoId but fallback to id if videoId is missing
+      const id = item.videoId || item.id;
+      if (!id) return null;
+
+      return {
+        id: `yt-${id}`,
+        title: item.title || item.name,
+        // Point to our internal proxy that handles the redirection
+        url: `/api/stream?id=${id}`, 
+        artist: item.artists?.[0]?.name || item.artist || "YouTube Artist",
+        cover: item.thumbnails?.[item.thumbnails.length - 1]?.url || item.thumbnails?.[0]?.url || item.image,
+        genre: "YouTube",
+        duration: item.duration || item.duration_ms / 1000 || 180, // Fallback to 3 mins
+        source: "YouTube"
+      };
+    }).filter(Boolean);
+
+    // Interleave and filter invalid entries
+    const rawSongs = [];
+    const maxLen = Math.max(saavnSongs.length, ytSongs.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (saavnSongs[i]) rawSongs.push(saavnSongs[i]);
+      if (ytSongs[i]) rawSongs.push(ytSongs[i]);
+    }
+
+    const cleanSongs = rawSongs.filter(s => s && s.id && s.url);
+    const result = z.array(SongSchema).safeParse(cleanSongs);
     
     if (!result.success) {
       console.error("Zod Validation Failed:", result.error.format());
-      return Response.json(rawSongs);
+      return Response.json(cleanSongs);
     }
 
     return Response.json(result.data);
   } catch (error) {
     console.error("Error fetching songs:", error);
-    // Return empty array or fallback logic here if needed
     return Response.json([], { status: 200 });
   }
 }

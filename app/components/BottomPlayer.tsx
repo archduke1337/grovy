@@ -5,6 +5,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music, Volume2, VolumeX } from "lucide-react";
 import { MusicPlayer } from "./MusicPlayer";
+import { AmbientBackground } from "./AmbientBackground";
 
 export const BottomPlayer = () => {
   const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek, volume, setVolume, colors } = usePlayer();
@@ -25,9 +26,21 @@ export const BottomPlayer = () => {
         style={{ willChange: "transform" }}
         className="fixed bottom-4 left-4 right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-5xl z-40"
       >
-        <div className="glass-effect dark:glass-effect-dark rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.3)]">
-          {/* Progress Bar Layer */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gray-100 dark:bg-white/5 cursor-pointer group/progress"
+        <div 
+          className="glass-effect dark:glass-effect-dark rounded-full overflow-hidden shadow-[0_8px_32px_0_rgba(0,0,0,0.12)] border border-white/20 dark:border-white/5 backdrop-blur-3xl relative"
+        >
+          {/* Animated Border Gradient */}
+          <motion.div 
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className="absolute inset-0 rounded-full border border-white/10 pointer-events-none z-10"
+            style={{ borderColor: `${colors.primary}30` }}
+          />
+
+          <AmbientBackground className="absolute opacity-50 dark:opacity-30 mix-blend-soft-light" />
+          
+          {/* Progress Bar Layer - Slim & Premium */}
+          <div className="absolute top-0 left-0 right-0 h-[2px] bg-gray-200/20 dark:bg-white/5 cursor-pointer group/progress z-20"
                onClick={(e) => {
                  const rect = e.currentTarget.getBoundingClientRect();
                  const x = e.clientX - rect.left;
@@ -39,142 +52,110 @@ export const BottomPlayer = () => {
               className="h-full relative"
               style={{ 
                 width: `${progress}%`,
-                background: `linear-gradient(to right, var(--player-primary), var(--player-secondary))`,
-                transition: "width 0.1s linear, background 2s ease"
+                background: `linear-gradient(to right, ${colors.primary}, ${colors.secondary})`,
               }}
             >
               <div 
-                className="absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-white border-2 rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity"
-                style={{ borderColor: colors.primary }}
+                className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white shadow-lg rounded-full opacity-0 group-hover/progress:opacity-100 transition-all scale-50 group-hover/progress:scale-100"
+                style={{ boxShadow: `0 0 10px ${colors.primary}60` }}
               />
             </motion.div>
           </div>
 
-          <div className="px-4 py-3 md:px-8 md:py-4 flex items-center justify-between gap-4">
+          <div className="px-3 py-2 md:px-6 md:py-3 flex items-center justify-between gap-4 relative z-20">
             
             {/* Left: Song Info */}
             <div 
-              className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group"
+              className="flex items-center gap-3 md:gap-4 flex-1 min-w-0 cursor-pointer group"
               onClick={() => setIsExpanded(true)}
             >
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gray-200 dark:bg-gray-800 flex-shrink-0 overflow-hidden relative shadow-lg group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-gray-200 dark:bg-gray-800 flex-shrink-0 overflow-hidden relative shadow-md group-hover:scale-105 transition-transform border border-white/10 animate-[spin_10s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
                 {currentSong?.cover ? (
                   <img src={currentSong.cover} alt={currentSong.title} className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-blue-100 dark:bg-blue-900/10">
-                    <Music size={24} style={{ color: colors.primary }} />
+                    <Music size={18} style={{ color: colors.primary }} />
                   </div>
                 )}
-                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <ChevronUp size={20} className="text-white" />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <ChevronUp size={16} className="text-white" />
                 </div>
               </div>
               
-              <div className="flex flex-col min-w-0">
-                <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm md:text-base tracking-tight leading-tight">
+              <div className="flex flex-col min-w-0 justify-center">
+                <h4 className="font-bold text-gray-900 dark:text-white truncate text-xs md:text-sm tracking-tight leading-none mb-1">
                   {currentSong?.title}
                 </h4>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate font-medium">
+                <p className="text-[10px] md:text-xs text-gray-500 dark:text-gray-400 truncate font-semibold opacity-70">
                   {currentSong?.artist || "Unknown artist"}
                 </p>
               </div>
             </div>
 
             {/* Center: Controls */}
-            <div className="flex items-center gap-2 md:gap-6">
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 md:gap-5">
               <button 
                 onClick={(e) => { e.stopPropagation(); previousTrack(); }}
-                className="p-2.5 text-gray-400 hover:bg-white dark:hover:bg-white/10 rounded-full transition-all hidden md:block"
-                style={{ color: undefined }} // Reset dynamic color? No, keep gray, hover logic is tricky with inline.
+                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all hover:scale-110 active:scale-95 hidden md:block"
               >
-                <SkipBack size={20} fill="currentColor" />
+                <SkipBack size={20} fill="currentColor" className="opacity-80" />
               </button>
               
-              <button 
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-                style={{ backgroundColor: colors.primary, boxShadow: `0 10px 20px -5px ${colors.primary}60` }}
-                className="p-3.5 md:p-4 rounded-full text-white transition-all hover:scale-110 active:scale-95 flex items-center justify-center"
+                className="group relative p-3 rounded-full text-white transition-all shadow-lg flex items-center justify-center"
+                style={{ 
+                  backgroundColor: colors.primary,
+                  boxShadow: `0 4px 20px ${colors.primary}40`
+                }}
               >
-                {isPlaying ? <Pause size={22} fill="currentColor" /> : <Play size={22} fill="currentColor" className="ml-0.5" />}
-              </button>
+                {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
+              </motion.button>
 
               <button 
                 onClick={(e) => { e.stopPropagation(); nextTrack(); }}
-                className="p-2.5 text-gray-400 hover:bg-white dark:hover:bg-white/10 rounded-full transition-all"
+                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all hover:scale-110 active:scale-95"
               >
-                <SkipForward size={20} fill="currentColor" />
+                <SkipForward size={20} fill="currentColor" className="opacity-80" />
               </button>
             </div>
 
             {/* Right: Actions / Volume */}
-            <div className="hidden md:flex items-center gap-2 relative">
-               <div 
-                 className="flex items-center gap-2"
-                 onMouseEnter={() => setShowVolume(true)}
-                 onMouseLeave={() => setShowVolume(false)}
-               >
-                 <button className="p-2.5 text-gray-400 hover:bg-white dark:hover:bg-white/10 rounded-full transition-all">
-                    {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+            <div className="hidden md:flex items-center gap-4 relative">
+               {/* Volume Slider - Always visible but sleek */}
+               <div className="flex items-center gap-2 group/volume">
+                 <button 
+                   onClick={() => setVolume(volume === 0 ? 1 : 0)}
+                   className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                 >
+                    {volume === 0 ? <VolumeX size={16} /> : <Volume2 size={16} />}
                  </button>
-                 
-                 <AnimatePresence>
-                   {showVolume && (
-                     <motion.div 
-                        initial={{ opacity: 0, width: 0 }}
-                        animate={{ opacity: 1, width: "auto" }}
-                        exit={{ opacity: 0, width: 0 }}
-                        className="overflow-hidden"
-                     >
-                         <input 
-                           type="range"
-                           min="0"
-                           max="1"
-                           step="0.01"
-                           value={volume}
-                           onChange={(e) => setVolume(parseFloat(e.target.value))}
-                           style={{ accentColor: colors.primary }}
-                           className="w-24"
-                         />
-                     </motion.div>
-                   )}
-                 </AnimatePresence>
+                 <div className="w-20 h-1 bg-gray-200 dark:bg-white/10 rounded-full overflow-hidden cursor-pointer relative group-hover/volume:h-1.5 transition-all">
+                    <div 
+                      className="absolute top-0 left-0 bottom-0 bg-gray-400 dark:bg-white/50 rounded-full"
+                      style={{ width: `${volume * 100}%` }}
+                    />
+                    <input 
+                       type="range"
+                       min="0"
+                       max="1"
+                       step="0.01"
+                       value={volume}
+                       onChange={(e) => setVolume(parseFloat(e.target.value))}
+                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                 </div>
                </div>
                
-                <div className="relative group/hud">
-                  <button 
-                    className="p-2.5 text-gray-400 hover:bg-white dark:hover:bg-white/10 rounded-full transition-all flex items-center justify-center"
-                    aria-label="Keyboard Shortcuts"
-                  >
-                    <div className="px-1.5 py-0.5 border border-gray-400/50 rounded text-[9px] font-black uppercase tracking-tighter">Kbd</div>
-                  </button>
-                  <div className="absolute bottom-full right-0 mb-4 w-56 p-4 glass-effect dark:glass-effect-dark rounded-2xl border border-white/20 dark:border-white/10 shadow-2xl opacity-0 translate-y-2 pointer-events-none group-hover/hud:opacity-100 group-hover/hud:translate-y-0 transition-all z-50">
-                    <h5 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 border-b border-white/5 pb-2">Quick Shortcuts</h5>
-                    <div className="space-y-3">
-                       <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-gray-500">Search</span>
-                          <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-gray-400">⌘ K</kbd>
-                       </div>
-                       <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-gray-500">Play/Pause</span>
-                          <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-gray-400">Space</kbd>
-                       </div>
-                       <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-gray-500">Next Track</span>
-                          <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-gray-400">→</kbd>
-                       </div>
-                       <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold text-gray-500">Volume</span>
-                          <kbd className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-gray-400">↑ ↓</kbd>
-                       </div>
-                    </div>
-                  </div>
-                </div>
+               <div className="h-4 w-px bg-white/10" />
 
                <button 
                  onClick={() => setIsExpanded(true)}
-                 className="p-2.5 text-gray-400 hover:bg-white dark:hover:bg-white/10 rounded-full transition-all"
+                 className="p-2 text-gray-400 hover:bg-white dark:hover:bg-white/10 rounded-full transition-all"
                >
-                 <ChevronUp size={20} />
+                 <ChevronUp size={18} />
                </button>
             </div>
           </div>

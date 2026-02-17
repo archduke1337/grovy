@@ -68,7 +68,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-bg dark:bg-bg-dark min-h-screen overflow-x-hidden antialiased">
+      <body className="bg-bg dark:bg-bg-dark min-h-screen overflow-x-hidden antialiased" suppressHydrationWarning>
         <PlayerProvider>
           <AmbientBackground />
           <SmoothScroll>

@@ -8,6 +8,7 @@ export const SongSchema = z.object({
   cover: z.string().optional(),
   genre: z.string().optional().default("Unknown"),
   duration: z.number().optional(),
+  source: z.string().optional(),
 });
 
 export type Song = z.infer<typeof SongSchema>;
