@@ -12,3 +12,11 @@ export const SongSchema = z.object({
 });
 
 export type Song = z.infer<typeof SongSchema>;
+
+export interface Playlist {
+  id: string;
+  name: string;
+  songs: Song[];
+  createdAt: number;
+  cover?: string;
+}

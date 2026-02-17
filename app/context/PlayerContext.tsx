@@ -9,7 +9,7 @@ import React, {
   useEffect,
 } from "react";
 
-import { Song, SongSchema } from "@/app/types/song";
+import { Song, SongSchema, Playlist } from "@/app/types/song";
 import { z } from "zod";
 import Hls from "hls.js";
 
@@ -50,6 +50,15 @@ interface PlayerContextType {
   setCommandPaletteOpen: (open: boolean) => void;
   recentlyPlayed: Song[];
   clearHistory: () => void;
+  playlists: Playlist[];
+  createPlaylist: (name: string) => void;
+  deletePlaylist: (id: string) => void;
+  addToPlaylist: (playlistId: string, song: Song) => void;
+  removeFromPlaylist: (playlistId: string, songId: string) => void;
+  isPlaylistModalOpen: boolean;
+  playlistModalSong: Song | null;
+  openPlaylistModal: (song: Song) => void;
+  closePlaylistModal: () => void;
 }
 
 const DEFAULT_COLORS: Colors = {
@@ -66,6 +75,11 @@ declare global {
     YT: any;
   }
 }
+
+
+const YouTubeHiddenPlayer = React.memo(() => {
+  return <div id="yt-player-hidden" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }} />;
+}, () => true);
 
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -88,6 +102,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [favorites, setFavorites] = useState<string[]>([]);
   const [colors, setColors] = useState<Colors>(DEFAULT_COLORS);
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
+  const [playlistModalSong, setPlaylistModalSong] = useState<Song | null>(null);
 
   // Initialize YouTube IFrame API and Hydrate History
   useEffect(() => {
@@ -100,14 +117,22 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       
       const favs = localStorage.getItem("grovy-favorites");
       if (favs) setFavorites(JSON.parse(favs));
+
+      const savedPlaylists = localStorage.getItem("grovy-playlists");
+      if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
     } catch (e) {}
 
-    const tag = document.createElement('script');
-    tag.src = "https://www.youtube.com/iframe_api";
-    const firstScriptTag = document.getElementsByTagName('script')[0];
-    firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    // Check if script already exists
+    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
 
     window.onYouTubeIframeAPIReady = () => {
+      if (ytPlayerRef.current) return; // Already initialized
+      
       ytPlayerRef.current = new window.YT.Player('yt-player-hidden', {
         height: '0',
         width: '0',
@@ -351,6 +376,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem("grovy-favorites", JSON.stringify(favorites));
   }, [favorites]);
 
+  // Sync Playlists to LocalStorage
+  useEffect(() => {
+    localStorage.setItem("grovy-playlists", JSON.stringify(playlists));
+  }, [playlists]);
+
   // Sync Play/Pause Global Action
   useEffect(() => {
     const currentSong = songs[currentSongIndex];
@@ -394,6 +424,49 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
     const res = await fetch(`/api/songs/related?videoId=${vId}`);
     return await res.json();
+  }, []);
+
+  const createPlaylist = useCallback((name: string) => {
+    const newPlaylist: Playlist = {
+      id: crypto.randomUUID(),
+      name,
+      songs: [],
+      createdAt: Date.now()
+    };
+    setPlaylists(prev => [...prev, newPlaylist]);
+  }, []);
+
+  const deletePlaylist = useCallback((id: string) => {
+    setPlaylists(prev => prev.filter(p => p.id !== id));
+  }, []);
+
+  const addToPlaylist = useCallback((playlistId: string, song: Song) => {
+    setPlaylists(prev => prev.map(p => {
+      if (p.id === playlistId) {
+        if (p.songs.some(s => s.id === song.id)) return p;
+        return { ...p, songs: [...p.songs, song] };
+      }
+      return p;
+    }));
+  }, []);
+
+  const removeFromPlaylist = useCallback((playlistId: string, songId: string) => {
+    setPlaylists(prev => prev.map(p => {
+      if (p.id === playlistId) {
+        return { ...p, songs: p.songs.filter(s => s.id !== songId) };
+      }
+      return p;
+    }));
+  }, []);
+
+  const openPlaylistModal = useCallback((song: Song) => {
+    setPlaylistModalSong(song);
+    setIsPlaylistModalOpen(true);
+  }, []);
+
+  const closePlaylistModal = useCallback(() => {
+    setIsPlaylistModalOpen(false);
+    setPlaylistModalSong(null);
   }, []);
 
   // Palette Sync
@@ -520,12 +593,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     clearHistory: () => {
        setRecentlyPlayed([]);
        localStorage.removeItem("grovy-history");
-    }
+    },
+    playlists,
+    createPlaylist,
+    deletePlaylist,
+    addToPlaylist,
+    removeFromPlaylist,
+    isPlaylistModalOpen,
+    playlistModalSong,
+    openPlaylistModal,
+    closePlaylistModal,
   };
 
   return (
     <PlayerContext.Provider value={value}>
-      <div id="yt-player-hidden" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }} />
+      <YouTubeHiddenPlayer />
       <div style={{ display: 'contents', 
           // @ts-ignore
           '--player-primary': colors.primary, 

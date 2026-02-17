@@ -47,7 +47,7 @@ export default function GlobalError({
 
           <div className="flex items-center gap-4">
             <button
-              onClick={() => reset()}
+              onClick={() => reset ? reset() : window.location.reload()}
               className="px-6 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-500/30"
             >
               Force Reload

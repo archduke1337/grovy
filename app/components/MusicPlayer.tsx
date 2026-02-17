@@ -5,7 +5,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { PlayerControls } from "./PlayerControls";
 import { Playlist } from "./Playlist";
 import { motion } from "framer-motion";
-import { Music, Heart, Sparkles, Share2, Zap } from "lucide-react";
+import { Music, Heart, Sparkles, Share2, Zap, ListPlus } from "lucide-react";
 import { LyricsView } from "./LyricsView";
 import { RelatedTracks } from "./RelatedTracks";
 import { ArtistInfo } from "./ArtistInfo";
@@ -31,7 +31,8 @@ export const MusicPlayer: React.FC = () => {
     toggleFavorite,
     isFavorite,
     startRadio,
-    colors
+    colors,
+    openPlaylistModal
   } = usePlayer();
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
@@ -84,7 +85,7 @@ export const MusicPlayer: React.FC = () => {
            <motion.div
             layoutId={`art-${currentSongIndex}`}
             style={{ willChange: "transform" }}
-            className="w-64 h-64 md:w-[500px] md:h-[500px] relative group"
+            className="w-64 h-64 md:w-[400px] md:h-[400px] lg:w-[500px] lg:h-[500px] relative group"
            >
               {/* Art Glow */}
               <motion.div 
@@ -158,6 +159,16 @@ export const MusicPlayer: React.FC = () => {
                     className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-amber-500 hover:bg-amber-500/10"
                   >
                     <Zap size={20} className="lg:w-6 lg:h-6" />
+                  </motion.button>
+
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => currentSong && openPlaylistModal(currentSong)}
+                    title="Add to Playlist"
+                    className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-blue-500 hover:bg-blue-500/10"
+                  >
+                    <ListPlus size={20} className="lg:w-6 lg:h-6" />
                   </motion.button>
 
                    <motion.button

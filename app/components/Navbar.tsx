@@ -7,9 +7,12 @@ import { Home, Info, Mail, Music, Moon, Sun, Menu, X, Search, Github, ChevronRig
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
+import { AddToPlaylistModal } from "./AddToPlaylistModal";
+
 
 const navItems = [
   { name: "Home", path: "/", icon: Home },
+  { name: "Playlists", path: "/playlists", icon: Music },
   { name: "About", path: "https://archduke.is-a.dev/about", icon: Info },
   { name: "Contact", path: "https://archduke.is-a.dev/contact", icon: Mail },
 ];
@@ -283,6 +286,7 @@ export const Navbar = () => {
           )}
         </AnimatePresence>
       </nav>
+      <AddToPlaylistModal />
     </div>
   );
 };

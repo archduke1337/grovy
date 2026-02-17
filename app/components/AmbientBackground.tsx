@@ -9,50 +9,71 @@ interface AmbientBackgroundProps {
 }
 
 export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className }) => {
-  const { colors } = usePlayer();
-  // Analyser logic removed in favor of smoother CSS/Framer animations
-  // to prevent context/performance issues and match the new "calm" aesthetic.
+  const { colors, isPlaying } = usePlayer();
+
+  // Create a mesh of 3 moving blobs for a liquid effect
+  const blobs = [
+    { color: colors.primary, initialX: -20, initialY: -20, scale: 1.5, delay: 0 },
+    { color: colors.secondary, initialX: 120, initialY: -20, scale: 1.2, delay: 2 },
+    { color: colors.accent || colors.primary, initialX: 50, initialY: 120, scale: 1.8, delay: 4 },
+  ];
 
   return (
-    <div className={`inset-0 -z-10 overflow-hidden pointer-events-none bg-gray-50 dark:bg-black transition-colors duration-1000 ${className || "fixed"}`}>
-      {/* Dynamic Blobs */}
-      <motion.div
-        animate={{
-          x: [0, 100, -50, 0],
-          y: [0, -100, 50, 0],
-          scale: [1, 1.2, 0.9, 1],
+    <div className={`fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-[#0a0a0a] transition-all duration-1000 ${className}`}>
+      {/* Base gradient layer for depth */}
+      <div 
+        className="absolute inset-0 opacity-40 transition-colors duration-[2000ms]"
+        style={{
+          background: `radial-gradient(circle at 50% 50%, ${colors.primary}10 0%, transparent 70%)`
         }}
-        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px] dark:blur-[180px] opacity-40 dark:opacity-20 mix-blend-multiply dark:mix-blend-screen"
-        style={{ backgroundColor: colors.primary, willChange: "transform, opacity" }}
       />
       
+      {/* Animated Mesh Gradients */}
+      {blobs.map((blob, i) => (
+        <motion.div
+          key={i}
+          animate={{
+            x: ["0%", "20%", "-20%", "0%"],
+            y: ["0%", "15%", "-15%", "0%"],
+            scale: [1, 1.2, 0.9, 1],
+            rotate: [0, 90, 180, 0]
+          }}
+          transition={{
+            duration: 20 + i * 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            times: [0, 0.33, 0.66, 1],
+            delay: blob.delay
+          }}
+          className="absolute rounded-full mix-blend-screen filter blur-[100px] opacity-20 dark:opacity-30"
+          style={{
+            backgroundColor: blob.color,
+            top: `${blob.initialY}%`,
+            left: `${blob.initialX}%`,
+            width: `${50 * blob.scale}vw`,
+            height: `${50 * blob.scale}vw`,
+            willChange: "transform, opacity",
+          }}
+        />
+      ))}
+
+      {/* Rhythmic Pulse synced to isPlaying state */}
       <motion.div
         animate={{
-          x: [0, -100, 50, 0],
-          y: [0, 100, -50, 0],
-          scale: [1, 1.1, 0.9, 1],
+          opacity: isPlaying ? [0, 0.1, 0] : 0,
+          scale: isPlaying ? [1, 1.1, 1] : 1,
         }}
-        transition={{ duration: 30, repeat: Infinity, ease: "linear", delay: 2 }}
-        className="absolute top-[20%] right-[-10%] w-[45vw] h-[45vw] rounded-full blur-[120px] dark:blur-[180px] opacity-40 dark:opacity-20 mix-blend-multiply dark:mix-blend-screen"
-        style={{ backgroundColor: colors.secondary, willChange: "transform, opacity" }}
+        transition={{
+          duration: 2, // Approximate 120BPM/60BPM pulse
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+        className="absolute inset-0 bg-gradient-to-t from-transparent via-white/5 to-transparent mix-blend-overlay pointer-events-none"
       />
 
-      <motion.div
-        animate={{
-          x: [0, 50, -50, 0],
-          y: [0, 50, -50, 0],
-        }}
-        transition={{ duration: 35, repeat: Infinity, ease: "linear", delay: 5 }}
-        className="absolute bottom-[-10%] left-[20%] w-[60vw] h-[60vw] rounded-full blur-[140px] dark:blur-[200px] opacity-30 dark:opacity-15 mix-blend-multiply dark:mix-blend-screen"
-        style={{ backgroundColor: colors.accent || colors.primary, willChange: "transform, opacity" }}
-      />
-      
-      {/* Noise Overlay */}
-      <div className="absolute inset-0 bg-noise opacity-[0.04] dark:opacity-[0.07] mix-blend-overlay pointer-events-none" />
-      
-      {/* Dark Mode Overlay for Depth */}
-      <div className="absolute inset-0 bg-white/30 dark:bg-black/80 mix-blend-overlay dark:mix-blend-hard-light pointer-events-none" />
+      {/* Cinematic Grain & Vignette */}
+      <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)] opacity-80 pointer-events-none" />
     </div>
   );
 };

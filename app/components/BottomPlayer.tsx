@@ -92,8 +92,8 @@ export const BottomPlayer = () => {
               </div>
             </div>
 
-            {/* Center: Controls */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 md:gap-5">
+            {/* Center: Controls (Desktop Absolute, Mobile Flex) */}
+            <div className="flex md:absolute md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 items-center gap-3 md:gap-5 z-20 bg-transparent">
               <button 
                 onClick={(e) => { e.stopPropagation(); previousTrack(); }}
                 className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all hover:scale-110 active:scale-95 hidden md:block"
@@ -105,7 +105,7 @@ export const BottomPlayer = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
-                className="group relative p-3 rounded-full text-white transition-all shadow-lg flex items-center justify-center"
+                className="group relative p-3 rounded-full text-white transition-all shadow-lg flex items-center justify-center shrink-0"
                 style={{ 
                   backgroundColor: colors.primary,
                   boxShadow: `0 4px 20px ${colors.primary}40`
@@ -170,7 +170,7 @@ export const BottomPlayer = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 120 }}
-            className="fixed inset-0 z-50 bg-bg/95 dark:bg-bg-dark/95 backdrop-blur-3xl flex flex-col items-center overflow-y-auto"
+            className="fixed inset-0 z-[100] bg-bg/95 dark:bg-bg-dark/95 backdrop-blur-3xl flex flex-col items-center overflow-y-auto"
           >
             {/* Grab Handle */}
             <div className="sticky top-0 left-0 right-0 h-10 flex items-center justify-center cursor-pointer z-10" onClick={() => setIsExpanded(false)}>

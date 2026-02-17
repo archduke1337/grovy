@@ -8,18 +8,12 @@ import {
   Music, 
   Heart, 
   Search, 
-  Sparkles, 
   PlayCircle,
-  Coffee,
-  Zap,
-  Moon,
   Library,
   Github,
   Folder,
   History,
-  Clock,
-  Activity,
-  Mic2
+  ListPlus
 } from "lucide-react";
 import { Song } from "./types/song";
 import Link from "next/link";
@@ -69,7 +63,8 @@ export default function Home() {
     loadSongs,
     setQueue,
     recentlyPlayed,
-    clearHistory
+    clearHistory,
+    openPlaylistModal
   } = usePlayer();
   
   const [searchResults, setSearchResults] = useState<any[]>([]); // Can be Song[] or Entity[]
@@ -359,7 +354,15 @@ export default function Home() {
                       </div>
                       <div className="px-1">
                         <h3 className="font-bold text-gray-900 dark:text-white truncate text-xs md:text-sm tracking-tight">{item.title}</h3>
-                        <p className="text-gray-500 text-[10px] truncate">{item.artist || "Artist"}</p>
+                        <div className="flex justify-between items-center">
+                          <p className="text-gray-500 text-[10px] truncate max-w-[80px]">{item.artist || "Artist"}</p>
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); openPlaylistModal(item); }}
+                            className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-full"
+                          >
+                            <ListPlus size={14} className="text-gray-400 hover:text-gray-900 dark:hover:text-white" />
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                    );
@@ -433,7 +436,13 @@ export default function Home() {
                           </div>
                        </div>
                        <h4 className="font-bold text-gray-900 dark:text-white truncate px-1 text-sm md:text-base">{song.title}</h4>
-                       <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 px-1 mt-0.5 md:mt-1">{song.artist}</p>
+                       <p className="text-[8px] md:text-[10px] font-black uppercase tracking-widest text-gray-400 px-1 mt-0.5 md:mt-1 truncate">{song.artist}</p>
+                       <button 
+                          onClick={(e) => { e.stopPropagation(); openPlaylistModal(song); }}
+                          className="absolute bottom-2 right-2 p-1.5 bg-white/10 backdrop-blur-md rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white/20"
+                        >
+                          <ListPlus size={12} className="text-white" />
+                        </button>
                     </motion.div>
                   ))}
                </div>
@@ -540,6 +549,12 @@ export default function Home() {
                                  className={`p-2 rounded-full transition-all hover:bg-gray-100 dark:hover:bg-white/10 ${favorite ? "text-red-500" : "text-gray-300 hover:text-red-500"}`}
                               >
                                  <Heart size={16} fill={favorite ? "currentColor" : "none"} className="md:w-5 md:h-5" />
+                              </button>
+                              <button 
+                                 onClick={(e) => { e.stopPropagation(); openPlaylistModal(song); }}
+                                 className="p-2 rounded-full transition-all text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-blue-500"
+                              >
+                                 <ListPlus size={16} className="md:w-5 md:h-5" />
                               </button>
                            </div>
                         </div>
