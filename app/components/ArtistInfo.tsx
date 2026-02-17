@@ -1,10 +1,11 @@
-
 "use client";
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { Info, X, Users, Tag } from "lucide-react";
+import Image from "next/image";
+import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export const ArtistInfo: React.FC = () => {
   const { songs, currentSongIndex, colors, isCommandPaletteOpen } = usePlayer();
@@ -30,11 +31,16 @@ export const ArtistInfo: React.FC = () => {
       }
     };
 
+    fetchInfo();
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isCommandPaletteOpen) setIsOpen(false);
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
   }, [isOpen, currentSong, isCommandPaletteOpen]);
 
   return (
@@ -44,9 +50,9 @@ export const ArtistInfo: React.FC = () => {
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(true)}
         title="Artist Info"
-        className="p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-blue-500 hover:bg-blue-500/10"
+        className="p-3 sm:p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-blue-500 hover:bg-blue-500/10"
       >
-        <Info size={20} className="lg:w-6 lg:h-6" />
+        <Info size={18} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
       </motion.button>
 
       <AnimatePresence>
@@ -56,47 +62,52 @@ export const ArtistInfo: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6"
+            className="fixed inset-0 z-[110] bg-black/90 backdrop-blur-2xl flex items-center justify-center p-0 sm:p-6"
           >
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
+              initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-zinc-950 w-full max-w-2xl rounded-[3rem] p-8 md:p-12 relative overflow-hidden shadow-2xl border border-white/5"
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-zinc-950 w-full h-full sm:h-auto sm:max-w-2xl sm:rounded-[2.5rem] p-6 sm:p-8 md:p-12 relative overflow-hidden shadow-2xl border-0 sm:border border-white/5 flex flex-col sm:block"
             >
               <button 
                 onClick={() => setIsOpen(false)}
-                className="absolute top-6 right-6 p-2 rounded-full bg-black/5 dark:bg-white/5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all"
+                className="absolute top-6 right-6 p-2 rounded-full bg-black/5 dark:bg-white/5 text-gray-500 hover:text-gray-900 dark:hover:text-white transition-all z-20"
               >
-                <X size={20} />
+                <X size={22} />
               </button>
 
               {isLoading ? (
-                <div className="py-20 flex flex-col items-center justify-center gap-4">
+                <div className="flex-1 flex flex-col items-center justify-center gap-4 py-20">
                   <motion.div 
                     animate={{ rotate: 360 }}
                     transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                    className="w-12 h-12 border-4 border-gray-200 dark:border-white/10 border-t-blue-500 rounded-full"
+                    className="w-10 h-10 border-4 border-gray-200 dark:border-white/10 border-t-blue-500 rounded-full"
                   />
-                  <p className="text-xs font-black uppercase tracking-widest text-gray-500">Retrieving Biography...</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-500">Retrieving Biography</p>
                 </div>
               ) : info?.artist ? (
-                <div className="space-y-10">
-                  <div className="flex items-end gap-8 relative z-10">
-                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-[2rem] overflow-hidden shadow-2xl flex-shrink-0 border-2 border-white/10 rotate-3 transition-transform hover:rotate-0 duration-500">
-                       <img src={currentSong?.cover} alt={info.artist.name} className="w-full h-full object-cover" />
+                <div className="flex-1 overflow-y-auto custom-scrollbar sm:overflow-visible pr-0 sm:pr-2 space-y-8 md:space-y-10 pt-10 sm:pt-0">
+                  <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 sm:gap-8 text-center sm:text-left">
+                    <div className="w-40 h-40 md:w-48 md:h-48 rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 border-2 border-white/10 sm:rotate-3 transition-transform hover:rotate-0 duration-500 bg-zinc-900">
+                       <Image 
+                         src={getHDThumbnail(currentSong?.cover) || ""} 
+                         alt={info.artist.name} 
+                         width={200}
+                         height={200}
+                         className="w-full h-full object-cover" 
+                       />
                     </div>
-                    <div>
-                       <h2 className="text-4xl md:text-6xl font-black tracking-tighter mb-3 leading-[0.9]" 
+                    <div className="space-y-3 sm:space-y-4">
+                       <h2 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.9] text-white" 
                            style={{ 
-                             color: "white",
-                             textShadow: `0 0 30px ${colors.primary}60`
+                             textShadow: `0 0 30px ${colors.primary}40`
                            }}>
                          {info.artist.name}
                        </h2>
-                       <div className="flex gap-4">
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-gray-400 text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-                             <Users size={14} />
+                       <div className="flex justify-center sm:justify-start gap-4">
+                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-gray-400 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
+                             <Users size={12} />
                              <span>{parseInt(info.artist.stats.listeners).toLocaleString()} Listeners</span>
                           </div>
                        </div>
@@ -110,16 +121,16 @@ export const ArtistInfo: React.FC = () => {
                        <div className="flex-1 h-px bg-white/5" />
                      </h3>
                      <div 
-                       className="text-lg md:text-xl leading-relaxed font-medium text-gray-300 max-h-[300px] overflow-y-auto custom-scrollbar pr-4 text-justify mix-blend-plus-lighter"
+                       className="text-base md:text-lg lg:text-xl leading-relaxed font-medium text-gray-300 max-h-[300px] overflow-y-auto custom-scrollbar pr-4 text-justify mix-blend-plus-lighter"
                        dangerouslySetInnerHTML={{ __html: info.artist.bio.summary }}
                      />
                   </div>
 
                   {info.artist.tags?.tag && (
-                    <div className="flex flex-wrap gap-2 pt-2">
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-2">
                        {info.artist.tags.tag.slice(0, 5).map((tag: any) => (
                          <span key={tag.name} 
-                               className="px-4 py-1.5 rounded-full bg-white/5 border border-white/5 text-[10px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-default">
+                               className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-default">
                             <Tag size={10} />
                             {tag.name}
                          </span>
@@ -128,7 +139,7 @@ export const ArtistInfo: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="py-20 text-center text-gray-500 font-black uppercase tracking-widest text-sm">
+                <div className="flex-1 flex flex-col items-center justify-center py-20 text-center text-gray-500 font-black uppercase tracking-widest text-xs">
                   Artist profile unavailable.
                 </div>
               )}

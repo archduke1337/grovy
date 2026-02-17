@@ -16,6 +16,8 @@ import {
   ExternalLink
 } from "lucide-react";
 import Link from "next/link";
+import NextImage from "next/image";
+import { getHDThumbnail } from "./lib/thumbnail";
 
 const TRENDING_REGIONS = [
   { code: "IN", name: "India" },
@@ -372,7 +374,14 @@ export default function Home() {
                     >
                       <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
                         {item.cover ? (
-                          <img src={item.cover} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
+                          <NextImage 
+                            src={getHDThumbnail(item.cover) || ""} 
+                            alt={item.title} 
+                            width={200}
+                            height={200}
+                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" 
+                            loading="lazy" 
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
                             <Music size={28} className="text-gray-300 dark:text-white/10" />

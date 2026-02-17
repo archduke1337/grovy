@@ -4,6 +4,8 @@ import React from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
 import { Music } from "lucide-react";
+import Image from "next/image";
+import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export const Playlist: React.FC = () => {
   const { songs, currentSongIndex, setCurrentSongIndex, isPlaying, colors } = usePlayer();
@@ -38,7 +40,13 @@ export const Playlist: React.FC = () => {
             {/* Cover Art or Number */}
             <div className="relative w-12 h-12 rounded-2xl overflow-hidden shrink-0 shadow-lg">
                {song.cover ? (
-                 <img src={song.cover} alt={song.title} className="w-full h-full object-cover" />
+                 <Image 
+                   src={getHDThumbnail(song.cover) || ""} 
+                   alt={song.title} 
+                   width={48} 
+                   height={48} 
+                   className="w-full h-full object-cover" 
+                 />
                ) : (
                  <div className="w-full h-full flex items-center justify-center bg-white/5">
                     <Music size={16} className="text-gray-400" />

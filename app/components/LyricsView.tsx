@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -34,13 +33,16 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isCommandPaletteOpen) onClose();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    
+    if (typeof window !== "undefined") {
+      window.addEventListener("keydown", handleKeyDown);
+      return () => window.removeEventListener("keydown", handleKeyDown);
+    }
   }, [isOpen, currentSong, onClose, isCommandPaletteOpen]);
 
   const activeLineRef = useRef<HTMLDivElement>(null);
 
-  // Sync lyrics with current time if they are synced
+  // Sync lyrics with current time
   const activeIndex = lyrics?.lyrics?.findIndex((line: any, i: number) => {
     const nextLine = lyrics.lyrics[i + 1];
     return currentTime >= line.time && (!nextLine || currentTime < nextLine.time);
@@ -57,54 +59,64 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
       {isOpen && (
         <motion.div
           key="lyrics-modal"
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="fixed inset-0 z-[60] bg-black/80 backdrop-blur-2xl flex flex-col items-center justify-center p-6 md:p-12"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-0"
         >
           <button 
             onClick={onClose}
-            className="absolute top-8 right-8 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"
+            className="absolute top-6 right-6 sm:top-8 sm:right-8 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all z-50 backdrop-blur-md"
           >
             <X size={24} />
           </button>
 
-          <div className="w-full max-w-4xl h-full flex flex-col">
-            <div className="mb-12 text-center">
-               <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter mb-2">{currentSong?.title}</h2>
-               <p className="text-xl text-white/60 font-bold">{currentSong?.artist}</p>
-            </div>
+          <div className="w-full max-w-4xl h-full flex flex-col px-6 py-12 md:px-12 md:py-16">
+            <header className="mb-6 sm:mb-12 text-center shrink-0 pt-8 sm:pt-0">
+               <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tighter mb-1 sm:mb-2 truncate max-w-full px-4">
+                 {currentSong?.title}
+               </h2>
+               <p className="text-base sm:text-xl text-white/50 font-bold truncate max-w-full px-4">
+                 {currentSong?.artist}
+               </p>
+            </header>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-8 py-40 text-center">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 sm:space-y-8 py-[40vh] sm:py-[45vh] text-center">
                {isLoading ? (
                  <div className="h-full flex flex-col items-center justify-center gap-4 text-white/40">
                     <motion.div 
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
                     >
-                      <Music size={48} />
+                      <Music size={40} className="sm:w-[48px] sm:h-[48px]" />
                     </motion.div>
-                    <p className="font-black uppercase tracking-widest text-xs">Finding Lyrics...</p>
+                    <p className="font-black uppercase tracking-widest text-[10px] sm:text-xs">Finding Lyrics</p>
                  </div>
                ) : lyrics?.lyrics ? (
-                 lyrics.lyrics.map((line: any, i: number) => (
-                   <motion.div
-                     key={i}
-                     ref={activeIndex === i ? activeLineRef : null}
-                     initial={{ opacity: 0.2 }}
-                     animate={{ 
-                        opacity: activeIndex === i ? 1 : (activeIndex !== -1 && Math.abs(activeIndex - i) <= 2 ? 0.3 : 0.1),
-                        scale: activeIndex === i ? 1.1 : 1,
-                        color: activeIndex === i ? colors.primary : "#fff",
-                        filter: activeIndex === i ? "blur(0px)" : "blur(2px)"
-                     }}
-                     className="text-2xl md:text-5xl font-black tracking-tight leading-relaxed transition-all duration-700"
-                   >
-                     {line.text}
-                   </motion.div>
-                 ))
+                 lyrics.lyrics.map((line: any, i: number) => {
+                    const isActive = activeIndex === i;
+                    const isNearby = activeIndex !== -1 && Math.abs(activeIndex - i) <= 3;
+                    
+                    return (
+                      <motion.div
+                        key={i}
+                        ref={isActive ? activeLineRef : null}
+                        initial={{ opacity: 0 }}
+                        animate={{ 
+                           opacity: isActive ? 1 : (isNearby ? 0.35 : 0.1),
+                           scale: isActive ? 1.05 : 1,
+                           color: isActive ? colors.primary : "#fff",
+                           filter: isActive ? "blur(0px)" : "blur(1px)"
+                        }}
+                        transition={{ duration: 0.5 }}
+                        className={`text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-relaxed transition-all px-2 ${isActive ? 'cursor-default' : ''}`}
+                      >
+                        {line.text}
+                      </motion.div>
+                    );
+                 })
                ) : (
-                 <div className="h-full flex items-center justify-center text-white/20 font-black uppercase tracking-widest text-xl">
+                 <div className="h-full flex items-center justify-center text-white/20 font-black uppercase tracking-widest text-sm sm:text-lg lg:text-xl px-10">
                    Lyrics not available for this track.
                  </div>
                )}

@@ -398,8 +398,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (source) params.append("source", source);
       if (query) params.append("query", query);
       const res = await fetch(`/api/songs?${params.toString()}`);
+      if (!res.ok) throw new Error("Search failed");
       return await res.json();
     } catch (e) {
+      console.error("loadSongs error:", e);
       return [];
     }
   }, []);
@@ -413,13 +415,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const startRadio = useCallback(async (id: string) => {
     const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
     const res = await fetch(`/api/songs/radio?videoId=${vId}`);
+    if (!res.ok) return;
     const data = await res.json();
-    if (data.length > 0) setQueue(data, 0);
+    if (Array.isArray(data) && data.length > 0) setQueue(data, 0);
   }, [setQueue]);
 
   const loadRelated = useCallback(async (id: string) => {
     const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
     const res = await fetch(`/api/songs/related?videoId=${vId}`);
+    if (!res.ok) return [];
     return await res.json();
   }, []);
 
