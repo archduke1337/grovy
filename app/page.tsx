@@ -21,15 +21,6 @@ import Link from "next/link";
 import NextImage from "next/image";
 import { getHDThumbnail } from "./lib/thumbnail";
 
-const TRENDING_REGIONS = [
-  { code: "IN", name: "India" },
-  { code: "US", name: "USA" },
-  { code: "GB", name: "UK" },
-  { code: "KR", name: "Korea" },
-  { code: "JP", name: "Japan" },
-  { code: "BR", name: "Brazil" },
-];
-
 const GENRE_CONFIG: Record<string, { color: string; accent: string }> = {
   "Bollywood":  { color: "from-rose-500/40 to-pink-600/30",    accent: "#f43f5e" },
   "Punjabi":    { color: "from-amber-400/40 to-orange-500/30",  accent: "#f59e0b" },
@@ -93,7 +84,6 @@ function HomeContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(20);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState("IN");
   const [isLocal, setIsLocal] = useState(false);
   const [greeting, setGreeting] = useState("Hello");
   const [isSearching, setIsSearching] = useState(false);
@@ -141,21 +131,21 @@ function HomeContent() {
     });
   }, []);
 
-  const fetchTrending = useCallback(async (region = selectedRegion) => {
+  const fetchTrending = useCallback(async () => {
     setIsSearching(true);
-    const data = await loadSongs("trending", `youtube&country=${region}`);
+    const data = await loadSongs("trending", "youtube&country=IN");
     setSearchResults(data);
     setSearchType("song");
     setIsSearching(false);
-  }, [loadSongs, selectedRegion]);
+  }, [loadSongs]);
 
-  const fetchCharts = useCallback(async (region = selectedRegion) => {
+  const fetchCharts = useCallback(async () => {
     setIsSearching(true);
-    const data = await loadSongs("charts", `youtube&country=${region}`);
+    const data = await loadSongs("charts", "youtube&country=IN");
     setSearchResults(data);
     setSearchType("song");
     setIsSearching(false);
-  }, [loadSongs, selectedRegion]);
+  }, [loadSongs]);
 
   const handleManualSearch = useCallback(async () => {
     setIsSearching(true);
@@ -209,7 +199,7 @@ function HomeContent() {
         setIsSearching(true);
         try {
           if (searchType === "song") {
-            const results = await loadSongs(searchQuery, isLocal ? "local" : undefined);
+            const results = await loadSongs(searchQuery, isLocal ? "local" : undefined, controller.signal);
             if (!controller.signal.aborted) setSearchResults(results);
           } else {
             const data = await apiSearch(searchQuery, searchType, controller.signal);
@@ -222,7 +212,7 @@ function HomeContent() {
           if (!controller.signal.aborted) setIsSearching(false);
         }
       } else if (!searchQuery && searchType === "song" && !isLocal) {
-        const results = await loadSongs("trending");
+        const results = await loadSongs("trending", undefined, controller.signal);
         if (!controller.signal.aborted) setSearchResults(results);
       }
     }, 800);
@@ -366,51 +356,29 @@ function HomeContent() {
       {/* ═══ QUICK FILTERS ═══ */}
       {!isLocal && (
         <motion.section variants={fadeUp} className="relative z-10">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pb-1 custom-scrollbar w-full sm:w-auto">
-              {TRENDING_REGIONS.map(r => (
-                <button
-                  key={r.code}
-                  onClick={() => {
-                    setSelectedRegion(r.code);
-                    if (searchQuery === "trending") fetchTrending(r.code);
-                    else if (searchQuery === "charts") fetchCharts(r.code);
-                  }}
-                  className={`flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all whitespace-nowrap ${
-                    selectedRegion === r.code 
-                      ? "bg-gray-900 dark:bg-white/[0.1] text-white dark:text-white shadow-sm" 
-                      : "text-gray-500 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
-                  }`}
-                >
-                  {r.name}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-1.5 sm:gap-2 shrink-0">
-              <button 
-                onClick={() => { setSearchQuery("trending"); fetchTrending(); }}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all ${
-                  searchQuery === "trending" 
-                    ? "bg-orange-500/10 text-orange-500 dark:text-orange-400 ring-1 ring-orange-500/20" 
-                    : "text-gray-500 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
-                }`}
-              >
-                <TrendingUp size={14} />
-                Trending
-              </button>
-              <button 
-                onClick={() => { setSearchQuery("charts"); fetchCharts(); }}
-                className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all ${
-                  searchQuery === "charts" 
-                    ? "bg-blue-500/10 text-blue-500 dark:text-blue-400 ring-1 ring-blue-500/20" 
-                    : "text-gray-500 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
-                }`}
-              >
-                <BarChart3 size={14} />
-                Charts
-              </button>
-            </div>
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button 
+              onClick={() => { setSearchQuery("trending"); fetchTrending(); }}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all ${
+                searchQuery === "trending" 
+                  ? "bg-orange-500/10 text-orange-500 dark:text-orange-400 ring-1 ring-orange-500/20" 
+                  : "text-gray-500 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
+              }`}
+            >
+              <TrendingUp size={14} />
+              Trending
+            </button>
+            <button 
+              onClick={() => { setSearchQuery("charts"); fetchCharts(); }}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all ${
+                searchQuery === "charts" 
+                  ? "bg-blue-500/10 text-blue-500 dark:text-blue-400 ring-1 ring-blue-500/20" 
+                  : "text-gray-500 dark:text-white/30 hover:bg-gray-100 dark:hover:bg-white/[0.05]"
+              }`}
+            >
+              <BarChart3 size={14} />
+              Charts
+            </button>
           </div>
         </motion.section>
       )}

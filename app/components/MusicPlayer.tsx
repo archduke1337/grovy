@@ -182,12 +182,12 @@ export const MusicPlayer: React.FC = () => {
                    <div className="space-y-1 sm:space-y-1.5 group/progress w-full">
                      <div className="relative h-1 sm:h-1.5 w-full bg-white/10 rounded-full cursor-pointer transition-all duration-300 hover:h-2 overflow-visible">
                        <div className="absolute -inset-2 bg-white/5 rounded-full opacity-0 group-hover/progress:opacity-100 blur-md transition-opacity" />
-                       <motion.div 
-                         className="absolute inset-y-0 left-0 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)]"
+                       <div 
+                         className="absolute inset-y-0 left-0 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)] transition-[width] duration-1000 ease-linear"
                          style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
                        >
                          <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.7)] scale-100 transition-transform" />
-                       </motion.div>
+                       </div>
                        <input
                          type="range"
                          min="0"

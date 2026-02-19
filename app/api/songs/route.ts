@@ -4,6 +4,13 @@ import { SongSchema } from "@/app/types/song";
 import { NextRequest } from "next/server";
 import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 
+// Helper: fetch with timeout to prevent hanging on slow external APIs
+function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 const GENRES = [
   "Bollywood",
   "Punjabi Pop",
@@ -43,7 +50,7 @@ export async function GET(request: NextRequest) {
         if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${id}&song_count=20`; 
       }
 
-      const response = await fetch(endpoint);
+      const response = await fetchWithTimeout(endpoint);
       if (!response.ok) {
         return Response.json([], { status: 200 });
       }
@@ -193,8 +200,8 @@ export async function GET(request: NextRequest) {
     }
 
     const [saavnRes, ytRes] = await Promise.all([
-      fetch(saavnUrl).then(res => res.json()).catch(() => ({ success: false })),
-      fetch(ytUrl).then(res => res.json()).catch(() => [])
+      fetchWithTimeout(saavnUrl).then(res => res.json()).catch(() => ({ success: false })),
+      fetchWithTimeout(ytUrl).then(res => res.json()).catch(() => [])
     ]);
 
     // Robust Saavn Parsing
@@ -256,7 +263,9 @@ export async function GET(request: NextRequest) {
       return Response.json(validSongs);
     }
 
-    return Response.json(result.data);
+    return Response.json(result.data, {
+      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" }
+    });
   } catch (error) {
     console.error("Error fetching songs:", error);
     return Response.json([], { status: 200 });

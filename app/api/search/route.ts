@@ -1,6 +1,13 @@
 import { NextRequest } from "next/server";
 import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 
+// Helper: fetch with timeout to prevent hanging on slow external APIs
+function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const query = searchParams.get("query");
@@ -35,8 +42,8 @@ export async function GET(request: NextRequest) {
     const ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/search?q=${encodeURIComponent(query)}&filter=${ytFilter}`;
 
     const [saavnRes, ytRes] = await Promise.all([
-      fetch(saavnEndpoint).then(res => res.json()).catch(() => ({ success: false })),
-      fetch(ytEndpoint).then(res => res.json()).catch(() => [])
+      fetchWithTimeout(saavnEndpoint).then(res => res.json()).catch(() => ({ success: false })),
+      fetchWithTimeout(ytEndpoint).then(res => res.json()).catch(() => [])
     ]);
 
     const saavnFormatted = (saavnRes.success && saavnRes.data?.results) ? saavnRes.data.results.map((item: any) => {

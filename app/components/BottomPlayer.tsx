@@ -44,8 +44,8 @@ export const BottomPlayer = () => {
                    }
                  }}>
               <div data-progress-bar className="h-[2px] bg-white/10 group-hover/progress:h-1 group-active/progress:h-1 transition-all">
-                <motion.div 
-                  className="h-full relative rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                <div 
+                  className="h-full relative rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-[width] duration-1000 ease-linear"
                   style={{ width: `${progress}%` }}
                 />
               </div>

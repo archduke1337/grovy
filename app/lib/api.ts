@@ -13,11 +13,32 @@ class ApiError extends Error {
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE}${url}`, options);
-  if (!res.ok) {
-    throw new ApiError(`Request failed: ${res.statusText}`, res.status);
+  const CLIENT_TIMEOUT = 15000; // 15s max for any API call
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CLIENT_TIMEOUT);
+
+  // If caller provides a signal, abort our controller when theirs fires
+  if (options?.signal) {
+    if (options.signal.aborted) {
+      clearTimeout(timeoutId);
+      controller.abort();
+    } else {
+      options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+    }
   }
-  return res.json();
+
+  try {
+    const res = await fetch(`${API_BASE}${url}`, {
+      ...options,
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      throw new ApiError(`Request failed: ${res.statusText}`, res.status);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
 
 // ─── Songs ───────────────────────────────────────────────

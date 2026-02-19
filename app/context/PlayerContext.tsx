@@ -44,7 +44,7 @@ interface PlayerContextType {
   toggleShuffle: () => void;
   toggleFavorite: (id: string) => void;
   isFavorite: (id: string) => boolean;
-  loadSongs: (query?: string, source?: string) => Promise<Song[]>;
+  loadSongs: (query?: string, source?: string, signal?: AbortSignal) => Promise<Song[]>;
   setQueue: (newSongs: Song[], index: number) => void;
   startRadio: (videoId: string) => Promise<void>;
   loadRelated: (videoId: string) => Promise<Song[]>;
@@ -111,6 +111,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const nextTrackRef = useRef<() => void>(() => {});
   const volumeRef = useRef(0.8);
   const isPlayingRef = useRef(false);
+  const lastTimeStateUpdateRef = useRef(0);
+  const durationRef = useRef(0);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
@@ -249,7 +251,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => { songsRef.current = songs; }, [songs]);
   useEffect(() => { currentSongIndexRef.current = currentSongIndex; }, [currentSongIndex]);
 
-  // Sync Timer for both players
+  // Sync Timer for both players (throttled to ~1Hz to reduce re-renders)
   useEffect(() => {
     const interval = setInterval(() => {
       const currentSong = songs[currentSongIndex];
@@ -259,14 +261,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         try {
           const ytTime = ytPlayerRef.current.getCurrentTime();
           const ytDur = ytPlayerRef.current.getDuration();
-          if (ytTime !== currentTime) {
+          currentTimeRef.current = ytTime;
+          // Throttle state updates to ~1Hz to prevent excessive re-renders
+          const now = Date.now();
+          if (now - lastTimeStateUpdateRef.current >= 1000) {
+            lastTimeStateUpdateRef.current = now;
             setCurrentTime(ytTime);
-            currentTimeRef.current = ytTime;
           }
-          if (ytDur !== duration && ytDur > 0) setDuration(ytDur);
+          if (ytDur > 0 && Math.abs(ytDur - durationRef.current) > 0.5) {
+            durationRef.current = ytDur;
+            setDuration(ytDur);
+          }
         } catch (e) {}
       } else if (audioRef.current) {
-        // Audio element listener handles this via events, but we sync ref here just in case
         currentTimeRef.current = audioRef.current.currentTime;
       }
     }, 500);
@@ -285,13 +292,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const updateTime = () => {
       const song = songsRef.current[currentSongIndexRef.current];
       if (song?.source !== "YouTube") {
-        setCurrentTime(audio.currentTime);
         currentTimeRef.current = audio.currentTime;
+        // Throttle state updates to ~1Hz to prevent excessive re-renders
+        const now = Date.now();
+        if (now - lastTimeStateUpdateRef.current >= 1000) {
+          lastTimeStateUpdateRef.current = now;
+          setCurrentTime(audio.currentTime);
+        }
       }
     };
     const updateDuration = () => {
       const song = songsRef.current[currentSongIndexRef.current];
       if (song?.source !== "YouTube") {
+        durationRef.current = audio.duration;
         setDuration(audio.duration);
       }
     };
@@ -302,14 +315,45 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
+    // Error recovery: retry playback on stall/error
+    let stallRetryCount = 0;
+    const handleStalled = () => {
+      console.warn("[Audio] Playback stalled, attempting recovery...");
+      if (stallRetryCount < 3 && audio.src) {
+        stallRetryCount++;
+        const pos = audio.currentTime;
+        audio.load();
+        audio.currentTime = pos;
+        if (isPlayingRef.current) audio.play().catch(() => {});
+      }
+    };
+    const handleError = () => {
+      console.error("[Audio] Playback error");
+      if (stallRetryCount >= 3) {
+        stallRetryCount = 0;
+        nextTrackRef.current();
+      } else {
+        handleStalled();
+      }
+    };
+    const handlePlaying = () => {
+      stallRetryCount = 0;
+    };
+
     audio.addEventListener("timeupdate", updateTime);
     audio.addEventListener("loadedmetadata", updateDuration);
     audio.addEventListener("ended", handleEnded);
+    audio.addEventListener("stalled", handleStalled);
+    audio.addEventListener("error", handleError);
+    audio.addEventListener("playing", handlePlaying);
 
     return () => {
       audio.removeEventListener("timeupdate", updateTime);
       audio.removeEventListener("loadedmetadata", updateDuration);
       audio.removeEventListener("ended", handleEnded);
+      audio.removeEventListener("stalled", handleStalled);
+      audio.removeEventListener("error", handleError);
+      audio.removeEventListener("playing", handlePlaying);
       audio.pause();
     };
   }, []); // Empty deps — Audio element is created once and reused
@@ -469,6 +513,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
     setCurrentTime(time);
     currentTimeRef.current = time;
+    lastTimeStateUpdateRef.current = 0; // Reset throttle so next update is immediate
   }, [songs, currentSongIndex]);
 
   const nextTrack = useCallback(() => {
@@ -576,7 +621,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
               hls.attachMedia(audio);
               hlsRef.current = hls;
               hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                if (isPlayingRef.current) audio.play();
+                if (isPlayingRef.current) audio.play().catch(() => {});
               });
             } else {
               audio.removeAttribute('crossorigin');
@@ -672,10 +717,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isPlaying, currentSongIndex, songs]);
 
-  const loadSongs = useCallback(async (query?: string, source?: string): Promise<Song[]> => {
+  const loadSongs = useCallback(async (query?: string, source?: string, signal?: AbortSignal): Promise<Song[]> => {
     try {
-      return await searchSongs(query, source);
+      return await searchSongs(query, source, signal);
     } catch (e) {
+      if (e instanceof DOMException && e.name === "AbortError") return [];
       console.error("loadSongs error:", e);
       return [];
     }
