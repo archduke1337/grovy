@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { search as apiSearch, getSongsByEntity } from "@/app/lib/api";
@@ -90,6 +90,8 @@ function HomeContent() {
   const [searchType, setSearchType] = useState<"song" | "artist" | "album" | "playlist">("song");
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const searchParams = useSearchParams();
+  const skipNextAutoSearchRef = useRef(false);
+  const [entityError, setEntityError] = useState<string | null>(null);
 
   // Hydrate search history
   useEffect(() => {
@@ -149,7 +151,9 @@ function HomeContent() {
 
   const handleManualSearch = useCallback(async () => {
     setIsSearching(true);
+    setEntityError(null);
     addToSearchHistory(searchQuery);
+    skipNextAutoSearchRef.current = true; // Prevent debounce from overwriting
     
     try {
       if (searchType === "song") {
@@ -166,22 +170,28 @@ function HomeContent() {
     }
   }, [searchQuery, isLocal, loadSongs, searchType, addToSearchHistory]);
 
-  const handleEntityClick = async (entity: any) => {
+  const handleEntityClick = useCallback(async (entity: any) => {
     setIsSearching(true);
+    setEntityError(null);
     try {
-       const songs = await getSongsByEntity(entity.type, entity.id);
+       const fetchedSongs = await getSongsByEntity(entity.type, entity.id);
        
-       if (songs.length > 0) {
-         setSearchResults(songs);
+       if (fetchedSongs.length > 0) {
+         // Guard: prevent the debounced auto-search from overwriting these results
+         skipNextAutoSearchRef.current = true;
+         setSearchResults(fetchedSongs);
          setSearchType("song");
-         setSelectedGenre(`${entity.type}: ${entity.name}`); 
+         setSelectedGenre(`${entity.type}: ${entity.name}`);
+       } else {
+         setEntityError(`No songs found for this ${entity.type}`);
        }
     } catch (e) {
        console.error(e);
+       setEntityError(`Failed to load ${entity.type}`);
     } finally {
        setIsSearching(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -191,12 +201,21 @@ function HomeContent() {
   }, []);
 
   // Debounced Auto-Search
+  // Only re-fires when the actual searchQuery text changes (not when searchType changes,
+  // since type-pill clicks trigger an immediate manual search instead).
   useEffect(() => {
+    // Skip if a manual action (entity click, genre click) just set results
+    if (skipNextAutoSearchRef.current) {
+      skipNextAutoSearchRef.current = false;
+      return;
+    }
+
     const controller = new AbortController();
 
     const handler = setTimeout(async () => {
       if (searchQuery.length > 2) {
         setIsSearching(true);
+        setEntityError(null);
         try {
           if (searchType === "song") {
             const results = await loadSongs(searchQuery, isLocal ? "local" : undefined, controller.signal);
@@ -211,17 +230,17 @@ function HomeContent() {
         } finally {
           if (!controller.signal.aborted) setIsSearching(false);
         }
-      } else if (!searchQuery && searchType === "song" && !isLocal) {
+      } else if (!searchQuery && !selectedGenre && searchType === "song" && !isLocal) {
         const results = await loadSongs("trending", undefined, controller.signal);
         if (!controller.signal.aborted) setSearchResults(results);
       }
-    }, 800);
+    }, 600);
 
     return () => {
       clearTimeout(handler);
       controller.abort();
     };
-  }, [searchQuery, searchType, isLocal, loadSongs]);
+  }, [searchQuery, isLocal, loadSongs]); // Intentionally excludes searchType — type switches use handleManualSearch
 
   const toggleLocal = () => {
      setIsLocal(!isLocal);
@@ -240,6 +259,7 @@ function HomeContent() {
   const clearGenre = () => {
     setSelectedGenre(null);
     setSearchQuery("");
+    setEntityError(null);
   };
 
   return (
@@ -325,7 +345,21 @@ function HomeContent() {
                 {(["song", "artist", "album", "playlist"] as const).map((type) => (
                   <button
                     key={type}
-                    onClick={() => setSearchType(type)}
+                    onClick={() => {
+                      setSearchType(type);
+                      setEntityError(null);
+                      // Immediately search with this type if there is a query
+                      if (searchQuery.length > 2) {
+                        setIsSearching(true);
+                        skipNextAutoSearchRef.current = true;
+                        (type === "song"
+                          ? loadSongs(searchQuery)
+                          : apiSearch(searchQuery, type)
+                        ).then(data => {
+                          setSearchResults(data);
+                        }).catch(console.error).finally(() => setIsSearching(false));
+                      }
+                    }}
                     className={`px-3 sm:px-4 py-1.5 rounded-lg sm:rounded-full text-[11px] sm:text-[12px] font-semibold capitalize transition-all duration-200 ${
                       searchType === type 
                         ? "bg-gray-900 dark:bg-white text-white dark:text-black shadow-sm" 
@@ -507,8 +541,12 @@ function HomeContent() {
                     <Music size={22} className="text-gray-300 dark:text-white/10" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-gray-500 dark:text-white/25 font-semibold text-[14px] sm:text-[15px]">No results yet</p>
-                    <p className="text-gray-400 dark:text-white/15 text-[12px] sm:text-[13px]">Try searching or pick a genre below</p>
+                    <p className="text-gray-500 dark:text-white/25 font-semibold text-[14px] sm:text-[15px]">
+                      {entityError || "No results yet"}
+                    </p>
+                    <p className="text-gray-400 dark:text-white/15 text-[12px] sm:text-[13px]">
+                      {entityError ? "Try a different search" : "Try searching or pick a genre below"}
+                    </p>
                   </div>
                 </div>
               )}

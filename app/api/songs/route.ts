@@ -59,16 +59,28 @@ export async function GET(request: NextRequest) {
       let songsList: any[] = [];
       
       if (isYT) {
-         songsList = data.tracks || data.songs || (Array.isArray(data) ? data : []);
-      } else if (data.success) {
+         // YouTube API returns different structures depending on the endpoint
+         songsList = data.tracks || data.songs || data.videos || data.results || (Array.isArray(data) ? data : []);
+         // For YT artists, songs may be nested under a property
+         if (songsList.length === 0 && data.songs?.results) {
+           songsList = data.songs.results;
+         }
+      } else if (data.success && data.data) {
         if (type === "artist") {
            songsList = data.data.topSongs || data.data.songs || [];
+           // Saavn artist endpoint sometimes nests songs differently
+           if (songsList.length === 0 && Array.isArray(data.data.singles)) {
+             songsList = data.data.singles;
+           }
         } else {
-           songsList = data.data.songs || [];
+           songsList = data.data.songs || data.data.list || [];
         }
+      } else if (Array.isArray(data)) {
+        // Some endpoints return a flat array
+        songsList = data;
       }
 
-      const rawSongs = songsList.map((item: any) => {
+      const rawSongs = songsList.filter((item: any) => item && (item.videoId || item.id)).map((item: any) => {
           if (isYT) {
              return {
                 id: `yt-${item.videoId}`,
