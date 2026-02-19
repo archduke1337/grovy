@@ -8,6 +8,7 @@ import { CommandPalette } from "@/app/components/CommandPalette";
 import { AmbientBackground } from "@/app/components/AmbientBackground";
 import SmoothScroll from "@/app/components/SmoothScroll";
 import { ToastProvider } from "@/app/components/Toast";
+import { KeyboardShortcuts } from "@/app/components/KeyboardShortcuts";
 
 const APP_NAME = "Grovy";
 const APP_DESCRIPTION = "A premium open-source music player built for the web. Stream, discover, and enjoy music with a beautiful interface.";
@@ -124,6 +125,7 @@ export default function RootLayout({
         <PlayerProvider>
           <ToastProvider>
           <AmbientBackground />
+          <KeyboardShortcuts />
           <SmoothScroll>
             <CommandPalette />
             <Navbar />

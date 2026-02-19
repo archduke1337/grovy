@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Timer, X, Moon } from "lucide-react";
 
@@ -88,22 +88,48 @@ export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sl
 
 export const SleepTimerButton: React.FC<{
   sleepMinutes: number | null;
+  sleepEndTime: number | null;
   onClick: () => void;
-}> = ({ sleepMinutes, onClick }) => (
-  <motion.button
-    whileHover={{ scale: 1.1 }}
-    whileTap={{ scale: 0.95 }}
-    onClick={(e) => { e.stopPropagation(); onClick(); }}
-    className={`p-2 rounded-full transition-all relative ${
-      sleepMinutes
-        ? "text-blue-400 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
-        : "text-white/40 hover:text-white"
-    }`}
-    title={sleepMinutes ? `Sleep in ${sleepMinutes}m` : "Sleep Timer"}
-  >
-    <Timer size={20} />
-    {sleepMinutes && (
-      <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-    )}
-  </motion.button>
-);
+}> = ({ sleepMinutes, sleepEndTime, onClick }) => {
+  const [remaining, setRemaining] = useState("");
+
+  useEffect(() => {
+    if (!sleepEndTime) { setRemaining(""); return; }
+    const tick = () => {
+      const diff = Math.max(0, sleepEndTime - Date.now());
+      if (diff <= 0) { setRemaining(""); return; }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setRemaining(m > 0 ? `${m}m ${s}s` : `${s}s`);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [sleepEndTime]);
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={(e) => { e.stopPropagation(); onClick(); }}
+      className={`p-2 rounded-full transition-all relative ${
+        sleepMinutes
+          ? "text-blue-400 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
+          : "text-white/40 hover:text-white"
+      }`}
+      title={remaining ? `Sleep in ${remaining}` : "Sleep Timer"}
+    >
+      <Timer size={20} />
+      {sleepMinutes && (
+        <>
+          <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+          {remaining && (
+            <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-blue-400/80 whitespace-nowrap">
+              {remaining}
+            </span>
+          )}
+        </>
+      )}
+    </motion.button>
+  );
+};

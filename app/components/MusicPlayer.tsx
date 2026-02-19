@@ -14,6 +14,7 @@ import NextImage from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 import { Equalizer } from "./Equalizer";
 import { ShareButton } from "./ShareButton";
+import { QueueHistory } from "./QueueHistory";
 
 const formatTime = (seconds: number): string => {
   if (!seconds || !isFinite(seconds)) return "0:00";
@@ -125,18 +126,26 @@ export const MusicPlayer: React.FC = () => {
                       className="relative w-full h-full rounded-[1rem] sm:rounded-[1.5rem] lg:rounded-[2rem] overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)] border border-white/10 bg-[#1a1a1a]"
                     >
                        {currentSong?.cover ? (
-                         <>
-                           <NextImage
+                         <AnimatePresence mode="wait">
+                           <motion.div
                              key={currentSong.cover}
-                             src={getHDThumbnail(currentSong.cover) || ""}
-                             alt={currentSong?.title}
-                             width={420}
-                             height={420}
-                             className="w-full h-full object-cover"
-                             priority
-                           />
-                           <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-50 pointer-events-none" />
-                         </>
+                             initial={{ opacity: 0 }}
+                             animate={{ opacity: 1 }}
+                             exit={{ opacity: 0 }}
+                             transition={{ duration: 0.5 }}
+                             className="w-full h-full"
+                           >
+                             <NextImage
+                               src={getHDThumbnail(currentSong.cover) || ""}
+                               alt={currentSong?.title}
+                               width={420}
+                               height={420}
+                               className="w-full h-full object-cover"
+                               priority
+                             />
+                             <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-50 pointer-events-none" />
+                           </motion.div>
+                         </AnimatePresence>
                        ) : (
                          <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
                            <Music className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 text-white/5" />
@@ -277,6 +286,7 @@ export const MusicPlayer: React.FC = () => {
                      <span className="text-xs font-bold text-white/30 uppercase tracking-widest">{songs.length} Tracks</span>
                   </div>
                   <Playlist />
+                  <QueueHistory />
                   <div className="pt-8 pb-10">
                     <RelatedTracks />
                   </div>
@@ -305,6 +315,7 @@ export const MusicPlayer: React.FC = () => {
              onWheel={(e) => e.stopPropagation()} 
            >
               <Playlist />
+              <QueueHistory />
            </div>
 
            <div className="pt-3 border-t border-white/5 shrink-0">

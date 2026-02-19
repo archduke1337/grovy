@@ -1,22 +1,75 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Music, Plus, PlayCircle, Folder } from "lucide-react";
+import { Music, Plus, PlayCircle, Folder, Download, Upload } from "lucide-react";
 import Image from "next/image";
 
 export default function PlaylistsPage() {
   const { playlists, colors, createPlaylist } = usePlayer();
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreate = () => {
     if (!newName.trim()) return;
     createPlaylist(newName);
     setNewName("");
     setIsCreating(false);
+  };
+
+  const handleExportAll = () => {
+    const data = JSON.stringify({ version: 1, playlists, exportedAt: new Date().toISOString() }, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `grovy-playlists-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = JSON.parse(reader.result as string);
+        const imported = parsed.playlists || (Array.isArray(parsed) ? parsed : []);
+        if (!Array.isArray(imported) || imported.length === 0) {
+          alert("No playlists found in file.");
+          return;
+        }
+        // Add imported playlists with new IDs to avoid collision
+        let count = 0;
+        for (const pl of imported) {
+          if (pl.name && Array.isArray(pl.songs)) {
+            // Store via localStorage to merge — createPlaylist only creates empty ones
+            const existing = JSON.parse(localStorage.getItem("grovy-playlists") || "[]");
+            existing.push({
+              id: crypto.randomUUID(),
+              name: pl.name,
+              songs: pl.songs,
+              createdAt: Date.now(),
+            });
+            localStorage.setItem("grovy-playlists", JSON.stringify(existing));
+            count++;
+          }
+        }
+        if (count > 0) {
+          alert(`Imported ${count} playlist(s). Reloading...`);
+          window.location.reload();
+        }
+      } catch (err) {
+        alert("Failed to parse playlist file.");
+      }
+    };
+    reader.readAsText(file);
+    // Reset input so same file can be re-imported
+    e.target.value = "";
   };
 
   return (
@@ -30,6 +83,32 @@ export default function PlaylistsPage() {
            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 dark:text-white tracking-[-0.03em]">
              Playlists<span className="text-gray-200 dark:text-white/10">.</span>
            </h1>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportAll}
+            disabled={playlists.length === 0}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-medium disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Export all playlists"
+          >
+            <Download size={14} />
+            <span className="hidden sm:inline">Export</span>
+          </button>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-medium"
+            title="Import playlists"
+          >
+            <Upload size={14} />
+            <span className="hidden sm:inline">Import</span>
+          </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept=".json"
+            onChange={handleImport}
+            className="hidden"
+          />
         </div>
       </header>
       

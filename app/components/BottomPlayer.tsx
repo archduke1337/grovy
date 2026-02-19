@@ -3,13 +3,15 @@
 import React, { useState } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music, Minimize2 } from "lucide-react";
 import { MusicPlayer } from "./MusicPlayer";
+import MiniPlayer from "./MiniPlayer";
 import NextImage from "next/image";
 
 export const BottomPlayer = () => {
   const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek } = usePlayer();
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMiniMode, setIsMiniMode] = useState(false);
 
   if (!songs || songs.length === 0) return null;
 
@@ -19,6 +21,7 @@ export const BottomPlayer = () => {
   return (
     <>
       {/* Mini Player Bar */}
+      {!isMiniMode && (
       <motion.div 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -51,13 +54,24 @@ export const BottomPlayer = () => {
               onClick={() => setIsExpanded(true)}
             >
               <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden relative shadow-lg border border-white/10 shrink-0">
+                <AnimatePresence mode="wait">
                 {currentSong?.cover ? (
-                  <NextImage src={currentSong.cover} alt={currentSong.title} width={48} height={48} className="w-full h-full object-cover animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                  <motion.div
+                    key={currentSong.cover}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 1.1 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full h-full"
+                  >
+                    <NextImage src={currentSong.cover} alt={currentSong.title} width={48} height={48} className="w-full h-full object-cover animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                  </motion.div>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-white/10">
+                  <motion.div key="no-cover" className="w-full h-full flex items-center justify-center bg-white/10">
                     <Music size={18} className="text-white" />
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                   <ChevronUp size={18} className="text-white" />
                 </div>
@@ -97,10 +111,20 @@ export const BottomPlayer = () => {
               >
                 <SkipForward size={20} fill="currentColor" strokeWidth={0} />
               </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setIsMiniMode(true); }}
+                className="p-1.5 text-white/30 hover:text-white transition-all hidden md:block"
+                aria-label="Mini player"
+                title="Mini player"
+              >
+                <Minimize2 size={16} />
+              </button>
             </div>
           </div>
         </div>
       </motion.div>
+      )}
+      <MiniPlayer visible={isMiniMode} onExpand={() => setIsMiniMode(false)} />
 
       {/* Expanded Player Modal */}
       <AnimatePresence>

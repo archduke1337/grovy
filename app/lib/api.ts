@@ -1,4 +1,5 @@
 import { Song } from "@/app/types/song";
+import { cacheSongs, cacheSearchResults, getCachedSearch } from "./offlineCache";
 
 const API_BASE = "";
 
@@ -28,7 +29,23 @@ export async function searchSongs(
   const params = new URLSearchParams();
   if (source) params.append("source", source);
   if (query) params.append("query", query);
-  return request<Song[]>(`/api/songs?${params}`, { signal });
+
+  try {
+    const songs = await request<Song[]>(`/api/songs?${params}`, { signal });
+    // Cache results in background
+    if (query && songs.length > 0) {
+      cacheSongs(songs).catch(() => {});
+      cacheSearchResults(`songs:${query}:${source || ""}`, songs).catch(() => {});
+    }
+    return songs;
+  } catch (e) {
+    // Attempt offline fallback
+    if (query && typeof window !== "undefined") {
+      const cached = await getCachedSearch(`songs:${query}:${source || ""}`).catch(() => null);
+      if (cached) return cached as Song[];
+    }
+    throw e;
+  }
 }
 
 export async function getSongsByEntity(
@@ -61,10 +78,22 @@ export async function search(
   type: string = "song",
   signal?: AbortSignal
 ): Promise<any[]> {
-  return request<any[]>(
-    `/api/search?type=${type}&query=${encodeURIComponent(query)}`,
-    { signal }
-  );
+  try {
+    const results = await request<any[]>(
+      `/api/search?type=${type}&query=${encodeURIComponent(query)}`,
+      { signal }
+    );
+    if (results.length > 0) {
+      cacheSearchResults(`search:${type}:${query}`, results).catch(() => {});
+    }
+    return results;
+  } catch (e) {
+    if (typeof window !== "undefined") {
+      const cached = await getCachedSearch(`search:${type}:${query}`).catch(() => null);
+      if (cached) return cached;
+    }
+    throw e;
+  }
 }
 
 export async function getSearchSuggestions(

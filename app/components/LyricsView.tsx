@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/app/context/PlayerContext";
+import { getLyrics } from "@/app/lib/api";
 import { X, Music } from "lucide-react";
 
 export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { songs, currentSongIndex, currentTime, colors, isCommandPaletteOpen } = usePlayer();
+  const { songs, currentSongIndex, currentTime, colors, isCommandPaletteOpen, seek } = usePlayer();
   const [lyrics, setLyrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -20,8 +21,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     const fetchLyrics = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/lyrics?title=${encodeURIComponent(currentSong.title)}&artist=${encodeURIComponent(currentSong.artist || "")}`, { signal: controller.signal });
-        const data = await res.json();
+        const data = await getLyrics(currentSong.title, currentSong.artist || "", controller.signal);
         if (!controller.signal.aborted) setLyrics(data);
       } catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError') return;
@@ -104,20 +104,31 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                  lyrics.lyrics.map((line: any, i: number) => {
                     const isActive = activeIndex === i;
                     const isNearby = activeIndex !== -1 && Math.abs(activeIndex - i) <= 3;
+                    const nextLine = lyrics.lyrics[i + 1];
+                    // Karaoke progress: how far through the active line
+                    const lineProgress = isActive && nextLine
+                      ? Math.min(100, Math.max(0, ((currentTime - line.time) / (nextLine.time - line.time)) * 100))
+                      : isActive ? 100 : 0;
                     
                     return (
                       <motion.div
                         key={i}
                         ref={isActive ? activeLineRef : null}
+                        onClick={() => line.time !== undefined && seek(line.time)}
                         initial={{ opacity: 0 }}
                         animate={{ 
                            opacity: isActive ? 1 : (isNearby ? 0.35 : 0.1),
                            scale: isActive ? 1.05 : 1,
-                           color: isActive ? colors.primary : "#fff",
                            filter: isActive ? "blur(0px)" : "blur(1px)"
                         }}
                         transition={{ duration: 0.5 }}
-                        className={`text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-relaxed transition-all px-2 ${isActive ? 'cursor-default' : ''}`}
+                        className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-relaxed transition-all px-2 cursor-pointer select-none"
+                        style={isActive ? {
+                          backgroundImage: `linear-gradient(90deg, #fff ${lineProgress}%, ${colors.primary} ${lineProgress}%)`,
+                          WebkitBackgroundClip: "text",
+                          WebkitTextFillColor: "transparent",
+                          backgroundClip: "text",
+                        } : { color: "#fff" }}
                       >
                         {line.text}
                       </motion.div>

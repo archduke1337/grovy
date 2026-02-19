@@ -30,7 +30,9 @@ export async function GET(request: NextRequest) {
         source: "YouTube"
     }));
 
-    return Response.json(radioSongs);
+    return Response.json(radioSongs, {
+      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" }
+    });
   } catch (error) {
     console.error("Radio API Error:", error);
     return Response.json([], { status: 200 });

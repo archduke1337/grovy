@@ -6,6 +6,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { Info, X, Users, Tag } from "lucide-react";
 import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
+import { getArtistInfo } from "@/app/lib/api";
 
 export const ArtistInfo: React.FC = () => {
   const { songs, currentSongIndex, colors, isCommandPaletteOpen } = usePlayer();
@@ -23,8 +24,7 @@ export const ArtistInfo: React.FC = () => {
     const fetchInfo = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/artist/info?artist=${encodeURIComponent(currentSong.artist || "")}`, { signal: controller.signal });
-        const data = await res.json();
+        const data = await getArtistInfo(currentSong.artist || "", controller.signal);
         if (!controller.signal.aborted) setInfo(data);
       } catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError') return;

@@ -16,7 +16,9 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "Upstream artist info API error" }, { status: res.status });
     }
     const data = await res.json();
-    return Response.json(data);
+    return Response.json(data, {
+      headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" }
+    });
   } catch (error) {
     console.error("Artist Info API Error:", error);
     return Response.json({ error: "Failed to fetch artist info" }, { status: 500 });

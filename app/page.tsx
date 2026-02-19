@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
+import { search as apiSearch, getSongsByEntity } from "@/app/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, 
@@ -90,6 +91,7 @@ function HomeContent() {
   
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(20);
   const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState("IN");
   const [isLocal, setIsLocal] = useState(false);
@@ -106,6 +108,11 @@ function HomeContent() {
       if (saved) setSearchHistory(JSON.parse(saved).slice(0, 8));
     } catch (e) {}
   }, []);
+
+  // Reset visible count when search changes
+  useEffect(() => {
+    setVisibleCount(20);
+  }, [searchQuery, searchType, selectedGenre]);
 
   // Handle shared song URL (?play=songId&title=...&artist=...)
   useEffect(() => {
@@ -159,8 +166,7 @@ function HomeContent() {
          const results = await loadSongs(searchQuery || "trending", isLocal ? "local" : undefined);
          setSearchResults(results);
       } else {
-         const res = await fetch(`/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`);
-         const data = await res.json();
+         const data = await apiSearch(searchQuery, searchType);
          setSearchResults(data);
       }
     } catch (e) {
@@ -173,8 +179,7 @@ function HomeContent() {
   const handleEntityClick = async (entity: any) => {
     setIsSearching(true);
     try {
-       const res = await fetch(`/api/songs?type=${entity.type}&id=${entity.id}`);
-       const songs = await res.json();
+       const songs = await getSongsByEntity(entity.type, entity.id);
        
        if (songs.length > 0) {
          setSearchResults(songs);
@@ -207,8 +212,7 @@ function HomeContent() {
             const results = await loadSongs(searchQuery, isLocal ? "local" : undefined);
             if (!controller.signal.aborted) setSearchResults(results);
           } else {
-            const res = await fetch(`/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`, { signal: controller.signal });
-            const data = await res.json();
+            const data = await apiSearch(searchQuery, searchType, controller.signal);
             if (!controller.signal.aborted) setSearchResults(data);
           }
         } catch (e) {
@@ -449,7 +453,7 @@ function HomeContent() {
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-              {searchResults.length > 0 ? searchResults.map((item, i) => {
+              {searchResults.length > 0 ? searchResults.slice(0, visibleCount).map((item, i) => {
                 if (searchType === "song") {
                   const isCurrent = songs[currentSongIndex]?.id === item.id;
                   return (
@@ -541,6 +545,18 @@ function HomeContent() {
                 </div>
               )}
             </div>
+
+            {/* Load More */}
+            {searchResults.length > visibleCount && (
+              <div className="flex justify-center pt-4">
+                <button
+                  onClick={() => setVisibleCount(prev => prev + 20)}
+                  className="px-6 py-2.5 rounded-xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-white/[0.08] text-[13px] font-semibold transition-all"
+                >
+                  Load More ({searchResults.length - visibleCount} remaining)
+                </button>
+              </div>
+            )}
           </section>
 
           {/* Genre Grid */}

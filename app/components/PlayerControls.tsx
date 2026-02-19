@@ -32,6 +32,7 @@ export const PlayerControls: React.FC = () => {
     setPlaybackSpeed,
     sleepTimerMinutes,
     setSleepTimer,
+    sleepTimerEndTime,
   } = usePlayer();
 
   const [isSleepTimerOpen, setIsSleepTimerOpen] = useState(false);
@@ -167,6 +168,7 @@ export const PlayerControls: React.FC = () => {
         {/* Sleep Timer */}
         <SleepTimerButton
           sleepMinutes={sleepTimerMinutes}
+          sleepEndTime={sleepTimerEndTime}
           onClick={() => setIsSleepTimerOpen(true)}
         />
       </div>

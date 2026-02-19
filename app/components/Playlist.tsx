@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, X, ChevronUp, ChevronDown } from "lucide-react";
+import { Music, X, ChevronUp, ChevronDown, GripVertical } from "lucide-react";
 import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export const Playlist: React.FC = () => {
   const { songs, currentSongIndex, setCurrentSongIndex, isPlaying, colors, removeFromQueue, moveSongInQueue } = usePlayer();
   const [showAll, setShowAll] = useState(false);
+  const dragItemRef = useRef<number | null>(null);
+  const dragOverItemRef = useRef<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   if (songs.length === 0) {
     return (
@@ -37,12 +40,30 @@ export const Playlist: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 10, height: 0 }}
             transition={{ delay: i * 0.03 }}
-            className={`group flex items-center gap-3 p-2.5 rounded-[1.25rem] transition-all duration-300 border border-transparent ${
+            draggable
+            onDragStart={() => { dragItemRef.current = index; }}
+            onDragEnter={() => { dragOverItemRef.current = index; setDragOverIndex(index); }}
+            onDragOver={(e) => e.preventDefault()}
+            onDragEnd={() => {
+              if (dragItemRef.current !== null && dragOverItemRef.current !== null && dragItemRef.current !== dragOverItemRef.current) {
+                moveSongInQueue(dragItemRef.current, dragOverItemRef.current);
+              }
+              dragItemRef.current = null;
+              dragOverItemRef.current = null;
+              setDragOverIndex(null);
+            }}
+            onDragLeave={() => { if (dragOverItemRef.current === index) setDragOverIndex(null); }}
+            className={`group flex items-center gap-2 p-2.5 rounded-[1.25rem] transition-all duration-300 border border-transparent ${
+              dragOverIndex === index ? "border-white/20 bg-white/[0.08]" :
               isCurrent 
                 ? "bg-white/10 shadow-[0_0_20px_-5px_rgba(255,255,255,0.1)] border-white/5" 
                 : "hover:bg-white/5 opacity-60 hover:opacity-100"
             }`}
           >
+            {/* Drag Handle */}
+            <div className="cursor-grab active:cursor-grabbing text-white/15 hover:text-white/40 transition-colors shrink-0 touch-none">
+              <GripVertical size={14} />
+            </div>
             {/* Cover Art */}
             <button
               onClick={() => setCurrentSongIndex(index)}
