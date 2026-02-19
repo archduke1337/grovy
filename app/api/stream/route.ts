@@ -28,70 +28,69 @@ export async function GET(request: NextRequest) {
     const data = await metaRes.json();
     const sources = data.streamingUrls || data.streams || (data.url ? [data] : []);
     
-    // Normalize all stream candidates — prefer directUrl (googlevideo CDN) over invidious proxy
+    // Normalize all stream candidates — keep BOTH proxy URL and directUrl.
+    // directUrl (googlevideo CDN) is IP-locked to the Invidious instance that generated it,
+    // so it will 403 when fetched from a different server (Vercel/local dev).
+    // The proxy URL (e.g. yt.omada.cafe/latest_version?id=...&itag=...) routes through
+    // the Invidious instance itself and works from any IP.
     const allStreams = (Array.isArray(sources) ? sources : [sources]).map(s => ({
-      url: s.directUrl || s.url || (typeof s === 'string' ? s : ""),
+      proxyUrl: s.url || (typeof s === 'string' ? s : ""),
+      directUrl: s.directUrl || "",
       mimeType: s.mimeType || s.type || "",
       bitrate: Number(s.bitrate || s.audioBitrate || 0),
       quality: s.quality || s.audioQuality || "",
-    })).filter(s => s.url);
+    })).filter(s => s.proxyUrl || s.directUrl);
 
     // Prefer highest quality audio streams
-    // Priority: audio/webm (opus) > audio/mp4 (aac) > audio/mpeg
-    // Within each type, prefer highest bitrate
     const audioStreams = allStreams
       .filter(s => 
         s.mimeType.startsWith("audio/") || 
-        s.url.includes("googlevideo") ||
-        s.url.startsWith("/")
+        s.proxyUrl.includes("latest_version") ||
+        s.directUrl.includes("googlevideo") ||
+        s.proxyUrl.startsWith("/")
       )
       .sort((a, b) => {
         // Prefer opus/webm for better quality at same bitrate
         const aIsOpus = a.mimeType.includes("webm") || a.mimeType.includes("opus") ? 1 : 0;
         const bIsOpus = b.mimeType.includes("webm") || b.mimeType.includes("opus") ? 1 : 0;
         if (aIsOpus !== bIsOpus) return bIsOpus - aIsOpus;
-        // Then sort by bitrate (highest first)
         return (b.bitrate || 0) - (a.bitrate || 0);
       });
 
     // Select quality tier
     let selectedStreams = audioStreams;
     if (quality === "low") {
-      selectedStreams = audioStreams.reverse(); // Lowest bitrate first
+      selectedStreams = [...audioStreams].reverse();
     } else if (quality === "medium") {
-      // Middle bitrate
       const mid = Math.floor(audioStreams.length / 2);
       selectedStreams = audioStreams.slice(mid);
     }
     
-    // Build candidate URLs — accept googlevideo, invidious proxy, and path-based URLs
-    const isValidStreamUrl = (u: string) => u && (
+    const resolveUrl = (u: string) => u.startsWith('/') ? `https://ytapi.gauravramyadav.workers.dev${u}` : u;
+    const isValidStreamUrl = (u: string) => !!u && (
       u.includes('googlevideo') ||
       u.includes('videoplayback') ||
       u.includes('latest_version') ||
       u.startsWith('/') ||
       u.startsWith('http')
     );
-    const candidates = selectedStreams
-      .map(s => s.url)
-      .filter(isValidStreamUrl)
-      .map(u => u.startsWith('/') ? `https://ytapi.gauravramyadav.workers.dev/${u}` : u);
 
-    // Fallback: if no audio-specific streams found, use all candidates
-    if (candidates.length === 0) {
-      const fallbackCandidates = allStreams
-        .map(s => s.url)
-        .filter(isValidStreamUrl)
-        .map(u => u.startsWith('/') ? `https://ytapi.gauravramyadav.workers.dev/${u}` : u);
-      candidates.push(...fallbackCandidates);
+    // Build candidate list: proxy URLs first (they work from any IP), then direct URLs as fallback
+    const candidates: string[] = [];
+    const streamsToUse = selectedStreams.length > 0 ? selectedStreams : allStreams;
+    for (const s of streamsToUse) {
+      if (s.proxyUrl && isValidStreamUrl(s.proxyUrl)) candidates.push(resolveUrl(s.proxyUrl));
+    }
+    for (const s of streamsToUse) {
+      if (s.directUrl && isValidStreamUrl(s.directUrl)) candidates.push(resolveUrl(s.directUrl));
     }
 
     if (candidates.length === 0) return Response.json({ error: "No streams" }, { status: 404 });
 
     const rangeHeader = request.headers.get("Range") || "bytes=0-";
 
-    // Attempt the top 3 candidates (increased from 2 for better reliability)
-    for (const targetUrl of candidates.slice(0, 3)) {
+    // Attempt the top 5 candidates (proxy URLs tried first, then direct)
+    for (const targetUrl of candidates.slice(0, 5)) {
       try {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000);
