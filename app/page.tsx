@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
@@ -69,6 +69,14 @@ const fadeUp = {
 };
 
 export default function Home() {
+  return (
+    <Suspense fallback={null}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const { 
     songs, 
     currentSongIndex, 
@@ -699,7 +707,7 @@ export default function Home() {
                 <span>Built with</span>
                 <Heart size={10} className="text-red-400 fill-red-400" />
                 <span>by</span>
-                <a href="https://archduke.is-a.dev" target="_blank" rel="noopener" className="font-semibold hover:text-gray-600 dark:hover:text-white/40 transition-colors">Archduke</a>
+                <a href="https://archduke.is-a.dev" target="_blank" rel="noopener noreferrer" className="font-semibold hover:text-gray-600 dark:hover:text-white/40 transition-colors">Archduke</a>
               </div>
             </div>
           </footer>

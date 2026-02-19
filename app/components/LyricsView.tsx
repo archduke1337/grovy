@@ -34,7 +34,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     fetchLyrics();
 
     return () => { controller.abort(); };
-  }, [isOpen, currentSong, onClose, isCommandPaletteOpen]);
+  }, [isOpen, currentSong]);
 
   // Separate effect for keyboard listener to ensure cleanup always runs
   useEffect(() => {

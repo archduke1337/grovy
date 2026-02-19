@@ -9,8 +9,7 @@ import React, {
   useEffect,
 } from "react";
 
-import { Song, SongSchema, Playlist } from "@/app/types/song";
-import { z } from "zod";
+import { Song, Playlist } from "@/app/types/song";
 import Hls from "hls.js";
 
 interface Colors {
@@ -64,10 +63,6 @@ interface PlayerContextType {
   setPlaybackSpeed: (speed: number) => void;
   sleepTimerMinutes: number | null;
   setSleepTimer: (minutes: number | null) => void;
-  crossfadeEnabled: boolean;
-  setCrossfadeEnabled: (enabled: boolean) => void;
-  crossfadeDuration: number;
-  setCrossfadeDuration: (seconds: number) => void;
   audioContext: AudioContext | null;
   sourceNode: MediaElementAudioSourceNode | null;
   eqFilters: BiquadFilterNode[];
@@ -128,8 +123,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [playbackSpeed, setPlaybackSpeedState] = useState(1);
   const [sleepTimerMinutes, setSleepTimerMinutesState] = useState<number | null>(null);
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [crossfadeEnabled, setCrossfadeEnabled] = useState(false);
-  const [crossfadeDuration, setCrossfadeDuration] = useState(5);
+  const songsRef = useRef<Song[]>([]);
+  const currentSongIndexRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
   const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
   const eqFiltersRef = useRef<BiquadFilterNode[]>([]);
@@ -165,18 +160,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // Restore playback speed
       const savedSpeed = localStorage.getItem("grovy-speed");
       if (savedSpeed) setPlaybackSpeedState(parseFloat(savedSpeed) || 1);
-
-      // Restore crossfade prefs
-      const savedCrossfade = localStorage.getItem("grovy-crossfade");
-      if (savedCrossfade) {
-        const cf = JSON.parse(savedCrossfade);
-        setCrossfadeEnabled(cf.enabled ?? false);
-        setCrossfadeDuration(cf.duration ?? 5);
-      }
     } catch (e) {}
 
-    // Check if script already exists
-    if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+    // Check if YT API is already loaded or script already injected
+    if (window.YT?.Player) {
+      // API already loaded, initialize player directly
+      if (!ytPlayerRef.current) {
+        window.onYouTubeIframeAPIReady();
+      }
+    } else if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
       const tag = document.createElement('script');
       tag.src = "https://www.youtube.com/iframe_api";
       const firstScriptTag = document.getElementsByTagName('script')[0];
@@ -231,8 +223,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     };
     
-    // No interval needed — quality is set on ready and state change
+    return () => {
+      // Destroy YT player on unmount to prevent leaks
+      try { ytPlayerRef.current?.destroy?.(); } catch (e) {}
+      ytPlayerRef.current = null;
+    };
   }, []);
+
+  // Keep songsRef and currentSongIndexRef in sync for use in Audio event handlers
+  useEffect(() => { songsRef.current = songs; }, [songs]);
+  useEffect(() => { currentSongIndexRef.current = currentSongIndex; }, [currentSongIndex]);
 
   // Sync Timer for both players
   useEffect(() => {
@@ -258,30 +258,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => clearInterval(interval);
   }, [songs, currentSongIndex]);
 
-  // 1. Initialize Audio Element (Saavn/Gaana)
+  // 1. Initialize Audio Element ONCE (Saavn/Gaana)
   useEffect(() => {
     if (typeof window === "undefined") return;
     
     const audio = new Audio();
-    audio.volume = volume;
+    audio.volume = volumeRef.current;
     audioRef.current = audio;
 
+    // Use refs inside handlers so they always read the latest state
     const updateTime = () => {
-      const currentSong = songs[currentSongIndex];
-      if (currentSong?.source !== "YouTube") {
+      const song = songsRef.current[currentSongIndexRef.current];
+      if (song?.source !== "YouTube") {
         setCurrentTime(audio.currentTime);
         currentTimeRef.current = audio.currentTime;
       }
     };
     const updateDuration = () => {
-      const currentSong = songs[currentSongIndex];
-      if (currentSong?.source !== "YouTube") {
+      const song = songsRef.current[currentSongIndexRef.current];
+      if (song?.source !== "YouTube") {
         setDuration(audio.duration);
       }
     };
     const handleEnded = () => {
-      const currentSong = songs[currentSongIndex];
-      if (currentSong?.source !== "YouTube") {
+      const song = songsRef.current[currentSongIndexRef.current];
+      if (song?.source !== "YouTube") {
         isLoopRef.current ? (audio.currentTime = 0, audio.play()) : nextTrackRef.current();
       }
     };
@@ -296,17 +297,20 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       audio.removeEventListener("ended", handleEnded);
       audio.pause();
     };
-  }, [songs, currentSongIndex]);
+  }, []); // Empty deps — Audio element is created once and reused
 
-  // Web Audio API setup (Equalizer)
+  // Web Audio API setup (Equalizer) — runs once after Audio element is created
   useEffect(() => {
-    if (typeof window === "undefined" || !audioRef.current) return;
+    if (typeof window === "undefined") return;
+    // Wait for audio element to exist, retry on next tick if needed
+    const audio = audioRef.current;
+    if (!audio) return;
     // Only create once
     if (audioContextRef.current) return;
 
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const source = ctx.createMediaElementSource(audioRef.current);
+      const source = ctx.createMediaElementSource(audio);
       audioContextRef.current = ctx;
       sourceNodeRef.current = source;
 
@@ -330,11 +334,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       eqFiltersRef.current = filters;
 
-      // Restore saved EQ
+      // Restore saved EQ — format is { bands: number[], preset: string }
       try {
         const savedEq = localStorage.getItem("grovy-eq");
         if (savedEq) {
-          const gains = JSON.parse(savedEq);
+          const parsed = JSON.parse(savedEq);
+          const gains = parsed?.bands ?? (Array.isArray(parsed) ? parsed : null);
           if (Array.isArray(gains)) {
             gains.forEach((g: number, i: number) => {
               if (filters[i]) filters[i].gain.value = g;
@@ -349,7 +354,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.warn("[PlayerContext] Web Audio API not available:", e);
     }
-  }, [songs, currentSongIndex]);
+  }, []); // Empty deps — same Audio element for the entire session
 
   // Sleep Timer logic
   useEffect(() => {
@@ -387,6 +392,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // Sync playback speed when source changes
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = playbackSpeed;
+    if (ytPlayerRef.current?.setPlaybackRate) ytPlayerRef.current.setPlaybackRate(playbackSpeed);
   }, [songs, currentSongIndex, playbackSpeed]);
 
   // Persist queue to localStorage
@@ -395,11 +401,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.setItem("grovy-queue", JSON.stringify({ songs, index: currentSongIndex }));
     }
   }, [songs, currentSongIndex]);
-
-  // Persist crossfade settings
-  useEffect(() => {
-    localStorage.setItem("grovy-crossfade", JSON.stringify({ enabled: crossfadeEnabled, duration: crossfadeDuration }));
-  }, [crossfadeEnabled, crossfadeDuration]);
 
   const seek = useCallback((time: number) => {
     const currentSong = songs[currentSongIndex];
@@ -414,7 +415,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const nextTrack = useCallback(() => {
     if (songs.length === 0) return;
-    setCurrentSongIndex((prev) => (isShuffle ? Math.floor(Math.random() * songs.length) : (prev + 1) % songs.length));
+    setCurrentSongIndex((prev) => {
+      if (isShuffle && songs.length > 1) {
+        let next;
+        do { next = Math.floor(Math.random() * songs.length); } while (next === prev);
+        return next;
+      }
+      return (prev + 1) % songs.length;
+    });
     setIsPlaying(true);
   }, [songs.length, isShuffle]);
 
@@ -486,8 +494,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         if (ytPlayerRef.current?.loadVideoById) {
            const videoId = currentSong.id.replace("yt-", "");
            console.log(`[PlayerContext] Switching to YT Player: ${videoId}`);
-           ytPlayerRef.current.loadVideoById(videoId);
-           // We'll let the onStateChange or the next useEffect handle play/pause
+           // Use cueVideoById when not playing to prevent auto-play on page load
+           if (isPlayingRef.current) {
+             ytPlayerRef.current.loadVideoById(videoId);
+           } else {
+             ytPlayerRef.current.cueVideoById(videoId);
+           }
         }
      } else {
        if (ytPlayerRef.current?.stopVideo) ytPlayerRef.current.stopVideo();
@@ -581,18 +593,27 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const startRadio = useCallback(async (id: string) => {
-    const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
-    const res = await fetch(`/api/songs/radio?videoId=${vId}`);
-    if (!res.ok) return;
-    const data = await res.json();
-    if (Array.isArray(data) && data.length > 0) setQueue(data, 0);
+    try {
+      const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
+      const res = await fetch(`/api/songs/radio?videoId=${vId}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) setQueue(data, 0);
+    } catch (e) {
+      console.error("startRadio error:", e);
+    }
   }, [setQueue]);
 
   const loadRelated = useCallback(async (id: string) => {
-    const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
-    const res = await fetch(`/api/songs/related?videoId=${vId}`);
-    if (!res.ok) return [];
-    return await res.json();
+    try {
+      const vId = id.startsWith("yt-") ? id.replace("yt-", "") : id;
+      const res = await fetch(`/api/songs/related?videoId=${vId}`);
+      if (!res.ok) return [];
+      return await res.json();
+    } catch (e) {
+      console.error("loadRelated error:", e);
+      return [];
+    }
   }, []);
 
   const createPlaylist = useCallback((name: string) => {
@@ -641,6 +662,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // Queue management
   const moveSongInQueue = useCallback((from: number, to: number) => {
     setSongs(prev => {
+      if (from < 0 || from >= prev.length || to < 0 || to >= prev.length || from === to) return prev;
       const updated = [...prev];
       const [moved] = updated.splice(from, 1);
       updated.splice(to, 0, moved);
@@ -807,10 +829,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setPlaybackSpeed,
     sleepTimerMinutes,
     setSleepTimer,
-    crossfadeEnabled,
-    setCrossfadeEnabled,
-    crossfadeDuration,
-    setCrossfadeDuration,
     audioContext: audioContextState,
     sourceNode: sourceNodeState,
     eqFilters: eqFiltersState,

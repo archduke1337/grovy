@@ -25,13 +25,8 @@ export const Navbar = () => {
     songs, 
     currentSongIndex 
   } = usePlayer();
-  const [isDark, setIsDark] = useState(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("theme");
-      return saved ? saved === "dark" : true;
-    }
-    return true;
-  });
+  const [isDark, setIsDark] = useState(true); // default dark, hydrate from localStorage in useEffect
+  const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -43,14 +38,18 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Hydrate theme from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
-    // Sync DOM class with state
-    if (isDark) {
+    setMounted(true);
+    const saved = localStorage.getItem("theme");
+    const prefersDark = saved ? saved === "dark" : true;
+    setIsDark(prefersDark);
+    if (prefersDark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, [isDark]);
+  }, []);
 
   const toggleTheme = () => {
     const next = !isDark;

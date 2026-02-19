@@ -87,7 +87,7 @@ export default function PlaylistsPage() {
               className="group aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800 w-full h-full"
             >
               {playlist.songs.length > 0 && playlist.songs[0].cover ? (
-                <img src={playlist.songs[0].cover} alt={playlist.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" loading="lazy" />
+                <Image src={playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
                   <Music size={36} className="text-gray-300 dark:text-gray-600 sm:w-12 sm:h-12" />

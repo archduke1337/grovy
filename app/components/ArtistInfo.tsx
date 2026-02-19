@@ -37,7 +37,7 @@ export const ArtistInfo: React.FC = () => {
     fetchInfo();
 
     return () => { controller.abort(); };
-  }, [isOpen, currentSong, isCommandPaletteOpen]);
+  }, [isOpen, currentSong]);
 
   // Separate effect for keyboard listener to ensure cleanup always runs
   useEffect(() => {
