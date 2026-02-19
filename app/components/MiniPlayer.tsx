@@ -41,9 +41,9 @@ export default function MiniPlayer({ visible, onExpand }: MiniPlayerProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 80, scale: 0.9 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="fixed bottom-4 right-4 z-[60] flex items-center gap-3 rounded-2xl
+          className="fixed bottom-4 right-4 z-[60] hidden sm:flex items-center gap-3 rounded-2xl
                      bg-black/80 backdrop-blur-xl border border-white/10 p-2 pr-4 shadow-2xl
-                     max-w-[340px]"
+                     max-w-[min(340px,calc(100vw-2rem))]"
         >
           {/* Progress ring around album art */}
           <div className="relative flex-shrink-0 w-12 h-12">

@@ -31,19 +31,25 @@ export const BottomPlayer = () => {
         <div 
           className="rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 relative backdrop-blur-3xl bg-black/70"
         >
-          {/* Progress Line */}
-          <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 cursor-pointer group/progress z-20 hover:h-1 transition-all"
-               onClick={(e) => {
-                 const rect = e.currentTarget.getBoundingClientRect();
-                 const x = e.clientX - rect.left;
-                 if (rect.width > 0) {
-                   seek((x / rect.width) * duration);
-                 }
-               }}>
-            <motion.div 
-              className="h-full relative rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]"
-              style={{ width: `${progress}%` }}
-            />
+          {/* Progress Line - with generous touch target on mobile */}
+          <div className="absolute top-0 left-0 right-0 z-20">
+            <div className="relative -top-3 pt-3 pb-1 cursor-pointer group/progress"
+                 onClick={(e) => {
+                   const bar = e.currentTarget.querySelector("[data-progress-bar]") as HTMLElement;
+                   if (!bar) return;
+                   const rect = bar.getBoundingClientRect();
+                   const x = e.clientX - rect.left;
+                   if (rect.width > 0) {
+                     seek((x / rect.width) * duration);
+                   }
+                 }}>
+              <div data-progress-bar className="h-[2px] bg-white/10 group-hover/progress:h-1 group-active/progress:h-1 transition-all">
+                <motion.div 
+                  className="h-full relative rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)]"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+            </div>
           </div>
 
           <div className="px-2.5 sm:px-3 md:px-5 py-2 sm:py-2.5 md:py-3 flex items-center justify-between gap-2.5 sm:gap-3 md:gap-4 relative z-20">

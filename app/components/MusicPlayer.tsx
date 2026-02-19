@@ -209,7 +209,7 @@ export const MusicPlayer: React.FC = () => {
                    </div>
 
                    {/* Action buttons */}
-                   <div className="flex items-center justify-center gap-3 sm:gap-4 lg:gap-6 pb-1">
+                   <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-3 md:gap-4 lg:gap-6 pb-1">
                        <motion.button 
                          whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.12)" }}
                          whileTap={{ scale: 0.95 }}

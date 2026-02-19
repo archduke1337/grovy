@@ -127,11 +127,11 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
             </div>
 
             {/* Bands */}
-            <div className="flex items-end justify-between gap-3 sm:gap-5 pt-4">
+            <div className="flex items-end justify-between gap-2 sm:gap-3 md:gap-5 pt-4">
               {bands.map((band, i) => (
-                <div key={band.frequency} className="flex flex-col items-center gap-3 flex-1">
+                <div key={band.frequency} className="flex flex-col items-center gap-3 flex-1 min-w-0">
                   <span className="text-[10px] font-bold text-white/30">{band.gain > 0 ? "+" : ""}{band.gain.toFixed(0)}dB</span>
-                  <div className="relative h-32 sm:h-40 w-full flex items-center justify-center">
+                  <div className="relative h-32 sm:h-40 w-full flex items-center justify-center px-1">
                     <input
                       type="range"
                       min="-12"
@@ -139,7 +139,7 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
                       step="1"
                       value={band.gain}
                       onChange={(e) => handleGainChange(i, parseFloat(e.target.value))}
-                      className="absolute h-full appearance-none bg-transparent cursor-pointer eq-slider"
+                      className="absolute h-full appearance-none bg-transparent cursor-pointer eq-slider touch-none"
                       style={{
                         writingMode: "vertical-lr" as any,
                         direction: "rtl",
