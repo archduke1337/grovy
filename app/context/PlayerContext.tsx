@@ -53,7 +53,7 @@ interface PlayerContextType {
   recentlyPlayed: Song[];
   clearHistory: () => void;
   playlists: Playlist[];
-  createPlaylist: (name: string) => void;
+  createPlaylist: (name: string, initialSongs?: Song[]) => string;
   deletePlaylist: (id: string) => void;
   addToPlaylist: (playlistId: string, song: Song) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
@@ -698,7 +698,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       loadNewSource();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [songs[currentSongIndex]?.id, songs[currentSongIndex]?.url, normalizationEnabled]);
+  }, [currentSongIndex, songs[currentSongIndex]?.id, songs[currentSongIndex]?.url]);
 
   // Gapless pre-buffer: prefetch next track's stream URL when near end
   const prefetchedUrlRef = useRef<string | null>(null);
@@ -806,14 +806,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, []);
 
-  const createPlaylist = useCallback((name: string) => {
+  const createPlaylist = useCallback((name: string, initialSongs?: Song[]): string => {
     const newPlaylist: Playlist = {
       id: crypto.randomUUID(),
       name,
-      songs: [],
+      songs: initialSongs || [],
       createdAt: Date.now()
     };
     setPlaylists(prev => [...prev, newPlaylist]);
+    return newPlaylist.id;
   }, []);
 
   const deletePlaylist = useCallback((id: string) => {
@@ -956,15 +957,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         case "ArrowUp":
           if (isCommandPaletteOpen) return;
           e.preventDefault();
-          changeVolume(volume + 0.1);
+          changeVolume(volumeRef.current + 0.1);
           break;
         case "ArrowDown":
           if (isCommandPaletteOpen) return;
           e.preventDefault();
-          changeVolume(volume - 0.1);
+          changeVolume(volumeRef.current - 0.1);
           break;
         case "KeyM":
-           changeVolume(volume === 0 ? 0.8 : 0);
+           changeVolume(volumeRef.current === 0 ? 0.8 : 0);
            break;
         case "KeyL":
            toggleLoop();
@@ -974,7 +975,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, volume, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
+  }, [isPlaying, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
   const toggleFavorite = useCallback((id: string) => setFavorites(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]), []);
@@ -1065,8 +1066,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     onPause: pause,
     onNextTrack: nextTrack,
     onPreviousTrack: previousTrack,
-    onSeekForward: () => seek(Math.min(currentTime + 10, duration)),
-    onSeekBackward: () => seek(Math.max(currentTime - 10, 0)),
+    onSeekForward: () => seek(Math.min(currentTimeRef.current + 10, durationRef.current)),
+    onSeekBackward: () => seek(Math.max(currentTimeRef.current - 10, 0)),
   });
 
   return (

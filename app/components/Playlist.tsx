@@ -67,13 +67,12 @@ export const Playlist: React.FC = () => {
     }
     return slice;
   })();
-  const startIndex = showAll ? 0 : currentSongIndex;
 
   return (
     <div className="space-y-2" ref={listRef}>
       <AnimatePresence initial={false}>
       {displaySongs.map((song, i) => {
-        const index = startIndex + i;
+        const index = showAll ? i : (currentSongIndex + i) % songs.length;
         const isCurrent = index === currentSongIndex;
         return (
           <motion.div

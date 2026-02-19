@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Play,
   Pause,
@@ -36,6 +36,7 @@ export const PlayerControls: React.FC = () => {
   } = usePlayer();
 
   const [isSleepTimerOpen, setIsSleepTimerOpen] = useState(false);
+  const prevVolumeRef = useRef(0.8);
 
   // Keyboard shortcuts are handled globally in PlayerContext — no duplicate handler here
 
@@ -100,7 +101,14 @@ export const PlayerControls: React.FC = () => {
         {/* Volume - icon toggles mute on mobile, full slider on desktop */}
         <div className="flex items-center gap-2 sm:gap-4 group/vol">
           <button 
-             onClick={() => setVolume(volume === 0 ? 1 : 0)}
+             onClick={() => {
+               if (volume === 0) {
+                 setVolume(prevVolumeRef.current || 0.8);
+               } else {
+                 prevVolumeRef.current = volume;
+                 setVolume(0);
+               }
+             }}
              className="text-white/60 hover:text-white active:text-white transition-colors p-1"
           >
             {volume === 0 ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}

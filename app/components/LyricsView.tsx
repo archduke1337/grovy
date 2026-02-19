@@ -7,7 +7,7 @@ import { getLyrics } from "@/app/lib/api";
 import { X, Music } from "lucide-react";
 
 export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
-  const { songs, currentSongIndex, currentTime, colors, isCommandPaletteOpen, seek } = usePlayer();
+  const { songs, currentSongIndex, currentTime, duration, colors, isCommandPaletteOpen, seek } = usePlayer();
   const [lyrics, setLyrics] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -106,8 +106,9 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                     const isNearby = activeIndex !== -1 && Math.abs(activeIndex - i) <= 3;
                     const nextLine = lyrics.lyrics[i + 1];
                     // Karaoke progress: how far through the active line
-                    const lineProgress = isActive && nextLine
-                      ? Math.min(100, Math.max(0, ((currentTime - line.time) / (nextLine.time - line.time)) * 100))
+                    const lineEndTime = nextLine ? nextLine.time : duration;
+                    const lineProgress = isActive && lineEndTime > line.time
+                      ? Math.min(100, Math.max(0, ((currentTime - line.time) / (lineEndTime - line.time)) * 100))
                       : isActive ? 100 : 0;
                     
                     return (

@@ -47,21 +47,12 @@ export default function PlaylistsPage() {
         let count = 0;
         for (const pl of imported) {
           if (pl.name && Array.isArray(pl.songs)) {
-            // Store via localStorage to merge — createPlaylist only creates empty ones
-            const existing = JSON.parse(localStorage.getItem("grovy-playlists") || "[]");
-            existing.push({
-              id: crypto.randomUUID(),
-              name: pl.name,
-              songs: pl.songs,
-              createdAt: Date.now(),
-            });
-            localStorage.setItem("grovy-playlists", JSON.stringify(existing));
+            createPlaylist(pl.name, pl.songs);
             count++;
           }
         }
         if (count > 0) {
-          alert(`Imported ${count} playlist(s). Reloading...`);
-          window.location.reload();
+          alert(`Imported ${count} playlist(s).`);
         }
       } catch (err) {
         alert("Failed to parse playlist file.");
