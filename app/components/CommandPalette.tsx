@@ -126,19 +126,25 @@ export const CommandPalette: React.FC = () => {
       return;
     }
 
+    const controller = new AbortController();
+
     const handler = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await loadSongs(query);
-        setApiResults(results || []);
+        const results = await loadSongs(query, undefined, controller.signal);
+        if (!controller.signal.aborted) setApiResults(results || []);
       } catch (e) {
-        setApiResults([]);
+        if (e instanceof DOMException && e.name === "AbortError") return;
+        if (!controller.signal.aborted) setApiResults([]);
       } finally {
-        setIsSearching(false);
+        if (!controller.signal.aborted) setIsSearching(false);
       }
     }, 400);
 
-    return () => clearTimeout(handler);
+    return () => {
+      clearTimeout(handler);
+      controller.abort();
+    };
   }, [query, loadSongs]);
 
   return (

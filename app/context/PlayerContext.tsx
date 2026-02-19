@@ -179,19 +179,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (savedSpeed) setPlaybackSpeedState(parseFloat(savedSpeed) || 1);
     } catch (e) {}
 
-    // Check if YT API is already loaded or script already injected
-    if (window.YT?.Player) {
-      // API already loaded, initialize player directly
-      if (!ytPlayerRef.current) {
-        window.onYouTubeIframeAPIReady();
-      }
-    } else if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    }
-
+    // Define the YT initialization function FIRST (before checking if API is loaded)
     window.onYouTubeIframeAPIReady = () => {
       if (ytPlayerRef.current) return; // Already initialized
       
@@ -239,6 +227,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       });
     };
+
+    // Check if YT API is already loaded or script already injected
+    if (window.YT?.Player) {
+      // API already loaded, initialize player directly
+      if (!ytPlayerRef.current) {
+        window.onYouTubeIframeAPIReady();
+      }
+    } else if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
+      const tag = document.createElement('script');
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
     
     return () => {
       // Destroy YT player on unmount to prevent leaks

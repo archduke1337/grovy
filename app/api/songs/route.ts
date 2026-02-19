@@ -82,10 +82,11 @@ export async function GET(request: NextRequest) {
 
       const rawSongs = songsList.filter((item: any) => item && (item.videoId || item.id)).map((item: any) => {
           if (isYT) {
+             const vid = item.videoId || item.id;
              return {
-                id: `yt-${item.videoId}`,
+                id: `yt-${vid}`,
                 title: item.title,
-                url: `/api/stream?id=${item.videoId}`,
+                url: `/api/stream?id=${vid}`,
                 artist: item.artists?.[0]?.name || "YT Artist",
                 cover: getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url),
                 genre: "YouTube",
@@ -102,13 +103,14 @@ export async function GET(request: NextRequest) {
           return {
             id: `saavn-${item.id}`,
             title: item.name || item.title,
-            url: downloadUrl,
+            url: downloadUrl || "",
             artist: artist,
             cover: cover,
             genre: "Unknown", 
             duration: item.duration,
+            source: "Saavn",
           };
-      });
+      }).filter((s: any) => s.url);
 
       return Response.json(rawSongs);
     }

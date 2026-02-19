@@ -3,6 +3,7 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/app/context/PlayerContext";
+import NextImage from "next/image";
 import {
   Play,
   Pause,
@@ -65,9 +66,11 @@ export default function MiniPlayer({ visible, onExpand }: MiniPlayerProps) {
                 className="text-white/70 transition-all duration-300"
               />
             </svg>
-            <img
-              src={currentSong.cover || "/icons/icon-192x192.png"}
+            <NextImage
+              src={currentSong.cover || "/icons/logo.png"}
               alt={currentSong.title}
+              width={40}
+              height={40}
               className="w-10 h-10 rounded-full object-cover absolute top-1 left-1"
             />
           </div>

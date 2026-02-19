@@ -58,7 +58,7 @@ export const ArtistInfo: React.FC = () => {
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(true)}
         title="Artist Info"
-        className="p-3 sm:p-4 lg:p-5 rounded-full shadow-lg transition-all text-gray-400 bg-white/5 dark:bg-white/5 hover:text-blue-500 hover:bg-blue-500/10"
+        className="p-2 sm:p-2.5 lg:p-3 rounded-full bg-white/5 backdrop-blur-md border border-white/5 text-white/50 hover:text-white transition-all"
       >
         <Info size={18} className="sm:w-5 sm:h-5 lg:w-6 lg:h-6" />
       </motion.button>

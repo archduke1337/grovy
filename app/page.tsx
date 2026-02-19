@@ -249,12 +249,12 @@ function HomeContent() {
      setSearchType("song");
   };
 
-  const handlePlaySong = (songId: string) => {
+  const handlePlaySong = useCallback((songId: string) => {
     const index = searchResults.findIndex(s => s.id === songId);
     if (index !== -1) {
       setQueue(searchResults, index);
     }
-  };
+  }, [searchResults, setQueue]);
 
   const clearGenre = () => {
     setSelectedGenre(null);
@@ -624,7 +624,7 @@ function HomeContent() {
                     key={`recent-${song.id}`}
                     whileHover={{ y: -4 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setQueue([song, ...songs], 0)}
+                    onClick={() => setQueue([song, ...songs.filter(s => s.id !== song.id)], 0)}
                     className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] group cursor-pointer snap-start"
                   >
                     <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
