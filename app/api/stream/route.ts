@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
     const data = await metaRes.json();
     const sources = data.streamingUrls || data.streams || (data.url ? [data] : []);
     
-    // Normalize all stream candidates
+    // Normalize all stream candidates — prefer directUrl (googlevideo CDN) over invidious proxy
     const allStreams = (Array.isArray(sources) ? sources : [sources]).map(s => ({
-      url: s.url || s.directUrl || (typeof s === 'string' ? s : ""),
+      url: s.directUrl || s.url || (typeof s === 'string' ? s : ""),
       mimeType: s.mimeType || s.type || "",
-      bitrate: s.bitrate || s.audioBitrate || 0,
+      bitrate: Number(s.bitrate || s.audioBitrate || 0),
       quality: s.quality || s.audioQuality || "",
     })).filter(s => s.url);
 
@@ -53,18 +53,25 @@ export async function GET(request: NextRequest) {
       selectedStreams = audioStreams.slice(mid);
     }
     
-    // Build candidate URLs
+    // Build candidate URLs — accept googlevideo, invidious proxy, and path-based URLs
+    const isValidStreamUrl = (u: string) => u && (
+      u.includes('googlevideo') ||
+      u.includes('videoplayback') ||
+      u.includes('latest_version') ||
+      u.startsWith('/') ||
+      u.startsWith('http')
+    );
     const candidates = selectedStreams
       .map(s => s.url)
-      .filter(u => u && (u.includes('googlevideo') || u.startsWith('/')))
-      .map(u => u.startsWith('/') ? `https://verome-api.deno.dev${u}` : u);
+      .filter(isValidStreamUrl)
+      .map(u => u.startsWith('/') ? `https://ytapi.gauravramyadav.workers.dev/${u}` : u);
 
     // Fallback: if no audio-specific streams found, use all candidates
     if (candidates.length === 0) {
       const fallbackCandidates = allStreams
         .map(s => s.url)
-        .filter(u => u && (u.includes('googlevideo') || u.startsWith('/')))
-        .map(u => u.startsWith('/') ? `https://verome-api.deno.dev${u}` : u);
+        .filter(isValidStreamUrl)
+        .map(u => u.startsWith('/') ? `https://ytapi.gauravramyadav.workers.dev/${u}` : u);
       candidates.push(...fallbackCandidates);
     }
 
@@ -113,10 +120,36 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // FINAL RESCUE: Use the Verome Proxy directly via Redirect
+    // FINAL RESCUE: Proxy through ytapi instead of redirect (avoids CORS issues)
     const lastResort = `https://ytapi.gauravramyadav.workers.dev/api/proxy?url=${encodeURIComponent(candidates[0])}`;
-    console.log(`[StreamAPI] Falling back to remote proxy redirect for ${id}`);
-    return Response.redirect(lastResort);
+    console.log(`[StreamAPI] Falling back to remote proxy fetch for ${id}`);
+    try {
+      const proxyController = new AbortController();
+      const proxyTimeout = setTimeout(() => proxyController.abort(), 10000);
+      const proxyRes = await fetch(lastResort, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Range": rangeHeader,
+          "Referer": "https://www.youtube.com/",
+        },
+        signal: proxyController.signal,
+      });
+      clearTimeout(proxyTimeout);
+      if (proxyRes.ok || proxyRes.status === 206) {
+        const proxyHeaders: Record<string, string> = {
+          "Content-Type": proxyRes.headers.get("Content-Type") || "audio/webm",
+          "Access-Control-Allow-Origin": "*",
+          "Accept-Ranges": "bytes",
+          "Cache-Control": "public, max-age=3600",
+        };
+        const cr = proxyRes.headers.get("Content-Range");
+        const cl = proxyRes.headers.get("Content-Length");
+        if (cr) proxyHeaders["Content-Range"] = cr;
+        if (cl) proxyHeaders["Content-Length"] = cl;
+        return new Response(proxyRes.body, { status: proxyRes.status, headers: proxyHeaders });
+      }
+    } catch { /* proxy fallback also failed */ }
+    return Response.json({ error: "Playback unavailable" }, { status: 500 });
 
   } catch (error: any) {
     console.error(`[StreamAPI] Critical Error:`, error.message);

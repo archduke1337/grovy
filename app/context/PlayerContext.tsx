@@ -519,6 +519,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const nextTrack = useCallback(() => {
     if (songs.length === 0) return;
+    if (audioContextRef.current?.state === "suspended") audioContextRef.current.resume();
     setCurrentSongIndex((prev) => {
       if (isShuffle && songs.length > 1) {
         let next;
@@ -538,6 +539,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const previousTrack = useCallback(() => {
     if (songs.length === 0) return;
+    if (audioContextRef.current?.state === "suspended") audioContextRef.current.resume();
     if (currentTimeRef.current > 3) {
        seek(0);
     } else {
@@ -547,6 +549,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [songs.length, seek]);
 
   const togglePlayPause = useCallback(() => {
+    // Resume AudioContext on user interaction (browser autoplay policy)
+    if (audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume();
+    }
     setIsPlaying((prev) => !prev);
   }, []);
 
@@ -606,6 +612,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           console.log(`[PlayerContext] Switching to YT Player: ${videoId}`);
           if (isPlayingRef.current) ytPlayerRef.current.loadVideoById(videoId);
           else ytPlayerRef.current.cueVideoById(videoId);
+        } else if (audio && currentSong.url) {
+          // Fallback: YT IFrame player not ready — use stream proxy via audio element
+          const streamUrl = currentSong.url.startsWith("http") 
+            ? currentSong.url 
+            : new URL(currentSong.url, window.location.origin).href;
+          console.warn(`[PlayerContext] YT IFrame unavailable, falling back to audio element: ${streamUrl}`);
+          audio.crossOrigin = "anonymous";
+          audio.src = streamUrl;
+          audio.load();
+          if (isPlayingRef.current) audio.play().catch(() => {});
         }
       } else {
         if (ytPlayerRef.current?.stopVideo) ytPlayerRef.current.stopVideo();
@@ -625,7 +641,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
                 if (isPlayingRef.current) audio.play().catch(() => {});
               });
             } else {
-              audio.removeAttribute('crossorigin');
+              audio.crossOrigin = "anonymous";
               audio.src = targetUrl;
               audio.load();
               if (isPlayingRef.current) audio.play().catch(() => {});
@@ -709,6 +725,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const currentSong = songs[currentSongIndex];
     if (!currentSong) return;
 
+    // Ensure AudioContext is running whenever playback starts
+    if (isPlaying && audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+
     if (currentSong.source === "YouTube") {
       if (isPlaying) ytPlayerRef.current?.playVideo?.();
       else ytPlayerRef.current?.pauseVideo?.();
@@ -729,6 +750,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const setQueue = useCallback((newSongs: Song[], index: number) => {
+    // Resume AudioContext on user interaction (browser autoplay policy)
+    if (audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume();
+    }
     setSongs(newSongs);
     setCurrentSongIndex(index);
     setIsPlaying(true);
