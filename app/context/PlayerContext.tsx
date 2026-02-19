@@ -135,6 +135,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [sleepTimerMinutes, setSleepTimerMinutesState] = useState<number | null>(null);
   const [sleepTimerEndTime, setSleepTimerEndTime] = useState<number | null>(null);
   const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const stallRetryCountRef = useRef(0);
   const songsRef = useRef<Song[]>([]);
   const currentSongIndexRef = useRef(0);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -326,11 +327,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     };
 
     // Error recovery: retry playback on stall/error
-    let stallRetryCount = 0;
     const handleStalled = () => {
+      // Ignore audio element errors when current song plays via YT IFrame
+      const song = songsRef.current[currentSongIndexRef.current];
+      if (song?.source === "YouTube") return;
+
       console.warn("[Audio] Playback stalled, attempting recovery...");
-      if (stallRetryCount < 3 && audio.src) {
-        stallRetryCount++;
+      if (stallRetryCountRef.current < 3 && audio.src) {
+        stallRetryCountRef.current++;
         const pos = audio.currentTime;
         audio.load();
         audio.currentTime = pos;
@@ -338,16 +342,20 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
     const handleError = () => {
+      // Ignore audio element errors when current song plays via YT IFrame
+      const song = songsRef.current[currentSongIndexRef.current];
+      if (song?.source === "YouTube") return;
+
       console.error("[Audio] Playback error");
-      if (stallRetryCount >= 3) {
-        stallRetryCount = 0;
+      if (stallRetryCountRef.current >= 3) {
+        stallRetryCountRef.current = 0;
         nextTrackRef.current();
       } else {
         handleStalled();
       }
     };
     const handlePlaying = () => {
-      stallRetryCount = 0;
+      stallRetryCountRef.current = 0;
     };
 
     audio.addEventListener("timeupdate", updateTime);
@@ -613,10 +621,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         gain.gain.value = normalizationEnabled ? 0.75 : 1.0;
       }
 
+      // Reset stall retry count on every source change
+      stallRetryCountRef.current = 0;
+
       if (currentSong.source === "YouTube") {
         if (audio) {
           audio.pause();
-          audio.src = "";
+          // Don't set audio.src = "" — browsers resolve it to the page URL,
+          // which fires error events that cascade into nextTrack() calls.
+          // Just pause is enough since YT songs play via the IFrame player.
           if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
         }
         if (ytPlayerRef.current?.loadVideoById) {
