@@ -15,6 +15,7 @@ export const RelatedTracks: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const currentSongId = songs[currentSongIndex]?.id;
+  const currentSong = songs[currentSongIndex];
 
   useEffect(() => {
     if (!currentSongId) return;
@@ -24,7 +25,10 @@ export const RelatedTracks: React.FC = () => {
     const fetchRelated = async () => {
       setIsLoading(true);
       try {
-        const tracks = await loadRelated(currentSongId);
+        const tracks = await loadRelated(currentSongId, {
+          title: currentSong?.title,
+          artist: currentSong?.artist,
+        });
         if (!controller.signal.aborted) setRelated(tracks.slice(0, 7));
       } catch (e) {
         // ignore abort errors
@@ -36,7 +40,7 @@ export const RelatedTracks: React.FC = () => {
     fetchRelated();
 
     return () => { controller.abort(); };
-  }, [currentSongId, loadRelated]);
+  }, [currentSongId, loadRelated, currentSong?.title, currentSong?.artist]);
 
   if (related.length === 0 && !isLoading) return null;
 

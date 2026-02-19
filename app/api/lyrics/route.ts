@@ -1,6 +1,12 @@
 
 import { NextRequest } from "next/server";
 
+function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const title = searchParams.get("title");
@@ -12,7 +18,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const url = `https://ytapi.gauravramyadav.workers.dev/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`;
-    const res = await fetch(url);
+    const res = await fetchWithTimeout(url);
     if (!res.ok) {
       return Response.json({ error: "Upstream lyrics API error" }, { status: res.status });
     }

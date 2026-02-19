@@ -78,19 +78,37 @@ export async function getSongsByEntity(
 }
 
 export async function getRadioSongs(
-  videoId: string,
+  songId: string,
+  opts?: { title?: string; artist?: string },
   signal?: AbortSignal
 ): Promise<Song[]> {
-  const vId = videoId.startsWith("yt-") ? videoId.replace("yt-", "") : videoId;
-  return request<Song[]>(`/api/songs/radio?videoId=${vId}`, { signal });
+  const params = new URLSearchParams();
+  params.append("songId", songId);
+  if (songId.startsWith("yt-")) {
+    params.append("videoId", songId.replace("yt-", ""));
+  } else if (!songId.startsWith("saavn-")) {
+    params.append("videoId", songId); // legacy raw YouTube ID
+  }
+  if (opts?.title) params.append("title", opts.title);
+  if (opts?.artist) params.append("artist", opts.artist);
+  return request<Song[]>(`/api/songs/radio?${params}`, { signal });
 }
 
 export async function getRelatedSongs(
-  videoId: string,
+  songId: string,
+  opts?: { title?: string; artist?: string },
   signal?: AbortSignal
 ): Promise<Song[]> {
-  const vId = videoId.startsWith("yt-") ? videoId.replace("yt-", "") : videoId;
-  return request<Song[]>(`/api/songs/related?videoId=${vId}`, { signal });
+  const params = new URLSearchParams();
+  params.append("songId", songId);
+  if (songId.startsWith("yt-")) {
+    params.append("videoId", songId.replace("yt-", ""));
+  } else if (!songId.startsWith("saavn-")) {
+    params.append("videoId", songId); // legacy raw YouTube ID
+  }
+  if (opts?.title) params.append("title", opts.title);
+  if (opts?.artist) params.append("artist", opts.artist);
+  return request<Song[]>(`/api/songs/related?${params}`, { signal });
 }
 
 // ─── Search ──────────────────────────────────────────────

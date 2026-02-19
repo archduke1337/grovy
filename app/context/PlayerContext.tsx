@@ -46,8 +46,8 @@ interface PlayerContextType {
   isFavorite: (id: string) => boolean;
   loadSongs: (query?: string, source?: string, signal?: AbortSignal) => Promise<Song[]>;
   setQueue: (newSongs: Song[], index: number) => void;
-  startRadio: (videoId: string) => Promise<void>;
-  loadRelated: (videoId: string) => Promise<Song[]>;
+  startRadio: (songId: string, opts?: { title?: string; artist?: string }) => Promise<void>;
+  loadRelated: (songId: string, opts?: { title?: string; artist?: string }) => Promise<Song[]>;
   isCommandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
   recentlyPlayed: Song[];
@@ -734,18 +734,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsPlaying(true);
   }, []);
 
-  const startRadio = useCallback(async (id: string) => {
+  const startRadio = useCallback(async (id: string, opts?: { title?: string; artist?: string }) => {
     try {
-      const data = await getRadioSongs(id);
+      const data = await getRadioSongs(id, opts);
       if (Array.isArray(data) && data.length > 0) setQueue(data, 0);
     } catch (e) {
       console.error("startRadio error:", e);
     }
   }, [setQueue]);
 
-  const loadRelated = useCallback(async (id: string) => {
+  const loadRelated = useCallback(async (id: string, opts?: { title?: string; artist?: string }) => {
     try {
-      return await getRelatedSongs(id);
+      return await getRelatedSongs(id, opts);
     } catch (e) {
       console.error("loadRelated error:", e);
       return [];

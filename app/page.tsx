@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useMemo, Suspense, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
-import { search as apiSearch, getSongsByEntity } from "@/app/lib/api";
+import { search as apiSearch, getSongsByEntity, getSearchSuggestions } from "@/app/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, 
@@ -92,6 +92,9 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const skipNextAutoSearchRef = useRef(false);
   const [entityError, setEntityError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Hydrate search history
   useEffect(() => {
@@ -99,6 +102,38 @@ function HomeContent() {
       const saved = localStorage.getItem("grovy-search-history");
       if (saved) setSearchHistory(JSON.parse(saved).slice(0, 8));
     } catch (e) {}
+  }, []);
+
+  // Fetch search suggestions with debounce
+  useEffect(() => {
+    if (!searchQuery || searchQuery.length < 2 || isLocal) {
+      setSuggestions([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const data = await getSearchSuggestions(searchQuery, controller.signal);
+        if (!controller.signal.aborted) {
+          const items = Array.isArray(data) ? data.slice(0, 6) : [];
+          setSuggestions(items.map((s: any) => (typeof s === "string" ? s : s.term || s.query || String(s))));
+        }
+      } catch {
+        // ignore
+      }
+    }, 250);
+    return () => { clearTimeout(timer); controller.abort(); };
+  }, [searchQuery, isLocal]);
+
+  // Close suggestions on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (suggestionsRef.current && !suggestionsRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, []);
 
   // Reset visible count when search changes
@@ -149,18 +184,19 @@ function HomeContent() {
     setIsSearching(false);
   }, [loadSongs]);
 
-  const handleManualSearch = useCallback(async () => {
+  const handleManualSearch = useCallback(async (overrideQuery?: string) => {
+    const query = overrideQuery ?? searchQuery;
     setIsSearching(true);
     setEntityError(null);
-    addToSearchHistory(searchQuery);
+    addToSearchHistory(query);
     skipNextAutoSearchRef.current = true; // Prevent debounce from overwriting
     
     try {
       if (searchType === "song") {
-         const results = await loadSongs(searchQuery || "trending", isLocal ? "local" : undefined);
+         const results = await loadSongs(query || "trending", isLocal ? "local" : undefined);
          setSearchResults(results);
       } else {
-         const data = await apiSearch(searchQuery, searchType);
+         const data = await apiSearch(query, searchType);
          setSearchResults(data);
       }
     } catch (e) {
@@ -303,8 +339,9 @@ function HomeContent() {
                   type="text"
                   placeholder={isLocal ? "Search your library..." : "Search songs, artists, albums..."}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleManualSearch()}
+                  onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") { setShowSuggestions(false); handleManualSearch(); } }}
+                  onFocus={() => setShowSuggestions(true)}
                   className="w-full bg-transparent border-none outline-none text-[14px] sm:text-[15px] text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-white/20 px-3 font-medium"
                 />
                 {isSearching && (
@@ -315,6 +352,37 @@ function HomeContent() {
                   />
                 )}
               </div>
+
+              {/* Search Suggestions Dropdown */}
+              <AnimatePresence>
+                {showSuggestions && suggestions.length > 0 && (
+                  <motion.div
+                    ref={suggestionsRef}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute top-full left-0 right-0 mt-1.5 z-50 bg-white dark:bg-[#1a1a1a] border border-gray-200/60 dark:border-white/[0.08] rounded-xl shadow-xl overflow-hidden"
+                  >
+                    {suggestions.map((s, i) => (
+                      <button
+                        key={`${s}-${i}`}
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setSearchQuery(s);
+                          setShowSuggestions(false);
+                          skipNextAutoSearchRef.current = true;
+                          handleManualSearch(s);
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-[13px] font-medium text-gray-700 dark:text-white/60 hover:bg-gray-50 dark:hover:bg-white/[0.05] transition-colors"
+                      >
+                        <Search size={13} className="text-gray-300 dark:text-white/20 shrink-0" />
+                        <span className="truncate">{s}</span>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Search History Chips */}
