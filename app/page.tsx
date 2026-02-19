@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -18,7 +18,6 @@ import {
 import Link from "next/link";
 import NextImage from "next/image";
 import { getHDThumbnail } from "./lib/thumbnail";
-import { Song } from "./types/song";
 
 const TRENDING_REGIONS = [
   { code: "IN", name: "India" },
