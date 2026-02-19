@@ -41,14 +41,21 @@ export async function GET(request: NextRequest) {
       quality: s.quality || s.audioQuality || "",
     })).filter(s => s.proxyUrl || s.directUrl);
 
+    console.log(`[StreamAPI] ${id}: ${allStreams.length} total streams, types: ${[...new Set(allStreams.map(s => s.mimeType))].join(', ')}`);
+
     // Prefer highest quality audio streams
     const audioStreams = allStreams
-      .filter(s => 
-        s.mimeType.startsWith("audio/") || 
-        s.proxyUrl.includes("latest_version") ||
-        s.directUrl.includes("googlevideo") ||
-        s.proxyUrl.startsWith("/")
-      )
+      .filter(s => {
+        // Exclude video-only streams (they have video mimeType but no audio)
+        if (s.mimeType.startsWith("video/") && !s.mimeType.includes("audio")) return false;
+        return (
+          s.mimeType.startsWith("audio/") ||
+          s.proxyUrl.includes("latest_version") ||
+          // Only include googlevideo URLs that don't have video-only itags
+          (s.directUrl.includes("googlevideo") && !s.mimeType.startsWith("video/")) ||
+          s.proxyUrl.startsWith("/")
+        );
+      })
       .sort((a, b) => {
         // Prefer opus/webm for better quality at same bitrate
         const aIsOpus = a.mimeType.includes("webm") || a.mimeType.includes("opus") ? 1 : 0;

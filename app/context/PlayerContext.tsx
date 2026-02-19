@@ -233,7 +233,22 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             
             lastStateRef.current = event.data;
           },
-          onError: (e: any) => console.error("[YTPlayer] Error:", e.data)
+          onError: (e: any) => {
+            console.error("[YTPlayer] Error:", e.data);
+            // Recover: try streaming via audio element fallback, or skip
+            const song = songsRef.current[currentSongIndexRef.current];
+            if (song?.source === "YouTube" && audioRef.current) {
+              const videoId = song.id.replace("yt-", "");
+              const streamUrl = new URL(`/api/stream?id=${videoId}`, window.location.origin).href;
+              console.warn(`[YTPlayer] Falling back to audio stream proxy: ${streamUrl}`);
+              const audio = audioRef.current;
+              audio.src = streamUrl;
+              audio.load();
+              if (isPlayingRef.current) audio.play().catch(() => nextTrackRef.current());
+            } else {
+              nextTrackRef.current();
+            }
+          }
         }
       });
     };
@@ -346,12 +361,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const song = songsRef.current[currentSongIndexRef.current];
       if (song?.source === "YouTube") return;
 
-      console.error("[Audio] Playback error");
+      console.error("[Audio] Playback error, retry:", stallRetryCountRef.current);
       if (stallRetryCountRef.current >= 3) {
         stallRetryCountRef.current = 0;
         nextTrackRef.current();
       } else {
-        handleStalled();
+        // Delay retry to avoid rapid-fire error cascade
+        setTimeout(() => handleStalled(), 500);
       }
     };
     const handlePlaying = () => {
@@ -669,7 +685,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
                 if (isPlayingRef.current) audio.play().catch(() => {});
               });
             } else {
-              audio.crossOrigin = "anonymous";
+              // Only set crossOrigin for same-origin URLs (e.g. /api/stream).
+              // External CDN URLs (Saavn) may not support CORS — setting crossOrigin
+              // would block playback entirely. The Web Audio EQ still processes
+              // the audio but the node output is silenced for cross-origin sources.
+              const isSameOrigin = targetUrl.startsWith(window.location.origin) || targetUrl.startsWith('/');
+              audio.crossOrigin = isSameOrigin ? "anonymous" : "";
               audio.src = targetUrl;
               audio.load();
               if (isPlayingRef.current) audio.play().catch(() => {});
