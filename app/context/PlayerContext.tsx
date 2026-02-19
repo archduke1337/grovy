@@ -47,7 +47,7 @@ interface PlayerContextType {
   loadSongs: (query?: string, source?: string, signal?: AbortSignal) => Promise<Song[]>;
   setQueue: (newSongs: Song[], index: number) => void;
   startRadio: (songId: string, opts?: { title?: string; artist?: string }) => Promise<void>;
-  loadRelated: (songId: string, opts?: { title?: string; artist?: string }) => Promise<Song[]>;
+  loadRelated: (songId: string, opts?: { title?: string; artist?: string }, signal?: AbortSignal) => Promise<Song[]>;
   isCommandPaletteOpen: boolean;
   setCommandPaletteOpen: (open: boolean) => void;
   recentlyPlayed: Song[];
@@ -460,6 +460,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setSleepTimerMinutesState(minutes);
     setSleepTimerEndTime(Date.now() + minutes * 60 * 1000);
     sleepTimerRef.current = setTimeout(() => {
+      // Directly pause audio to avoid delay via React render cycle
+      if (audioRef.current) audioRef.current.pause();
+      if (ytPlayerRef.current?.pauseVideo) ytPlayerRef.current.pauseVideo();
       setIsPlaying(false);
       setSleepTimerMinutesState(null);
       setSleepTimerEndTime(null);
@@ -669,7 +672,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       loadNewSource();
     }
-  }, [currentSongIndex, songs, normalizationEnabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [songs[currentSongIndex]?.id, songs[currentSongIndex]?.url, normalizationEnabled]);
 
   // Gapless pre-buffer: prefetch next track's stream URL when near end
   const prefetchedUrlRef = useRef<string | null>(null);
@@ -768,9 +772,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [setQueue]);
 
-  const loadRelated = useCallback(async (id: string, opts?: { title?: string; artist?: string }) => {
+  const loadRelated = useCallback(async (id: string, opts?: { title?: string; artist?: string }, signal?: AbortSignal) => {
     try {
-      return await getRelatedSongs(id, opts);
+      return await getRelatedSongs(id, opts, signal);
     } catch (e) {
       console.error("loadRelated error:", e);
       return [];
@@ -860,7 +864,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     let isMounted = true;
-    const img = new Image();
+    const img = new window.Image();
     img.crossOrigin = "Anonymous";
     img.src = song.cover;
     img.onload = async () => {
@@ -873,12 +877,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         const rgbToHex = (r: number, g: number, b: number) => 
           "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
         
-        if (isMounted) {
+        if (isMounted && palette && palette.length >= 3) {
           setColors({
             primary: rgbToHex(palette[0][0], palette[0][1], palette[0][2]),
             secondary: rgbToHex(palette[1][0], palette[1][1], palette[1][2]),
             accent: rgbToHex(palette[2][0], palette[2][1], palette[2][2]),
           });
+        } else if (isMounted && palette && palette.length >= 1) {
+          const hex = rgbToHex(palette[0][0], palette[0][1], palette[0][2]);
+          setColors({ primary: hex, secondary: hex, accent: hex });
+        } else if (isMounted) {
+          setColors(DEFAULT_COLORS);
         }
       } catch (e) {
         if (isMounted) setColors(DEFAULT_COLORS);
@@ -887,7 +896,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     img.onerror = () => {
       if (isMounted) setColors(DEFAULT_COLORS);
     };
-    return () => { isMounted = false; };
+    return () => { isMounted = false; img.src = ""; };
   }, [currentSongIndex, songs]);
 
   // Global Keyboard Shortcuts

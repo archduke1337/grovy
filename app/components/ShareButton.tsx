@@ -27,13 +27,16 @@ export const ShareButton: React.FC<ShareButtonProps> = ({ song, className = "", 
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback
+      // Fallback for older browsers
       const input = document.createElement("input");
       input.value = shareUrl;
       document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
+      try {
+        input.select();
+        document.execCommand("copy");
+      } finally {
+        document.body.removeChild(input);
+      }
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }

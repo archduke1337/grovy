@@ -34,7 +34,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     fetchLyrics();
 
     return () => { controller.abort(); };
-  }, [isOpen, currentSong]);
+  }, [isOpen, currentSong?.title, currentSong?.artist]);
 
   // Separate effect for keyboard listener to ensure cleanup always runs
   useEffect(() => {
@@ -50,11 +50,11 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
   const activeLineRef = useRef<HTMLDivElement>(null);
 
-  // Sync lyrics with current time
-  const activeIndex = lyrics?.lyrics?.findIndex((line: any, i: number) => {
+  // Sync lyrics with current time (memoized to avoid recomputing on every render)
+  const activeIndex = React.useMemo(() => lyrics?.lyrics?.findIndex((line: any, i: number) => {
     const nextLine = lyrics.lyrics[i + 1];
     return currentTime >= line.time && (!nextLine || currentTime < nextLine.time);
-  });
+  }), [lyrics, currentTime]);
 
   useEffect(() => {
     if (activeLineRef.current) {

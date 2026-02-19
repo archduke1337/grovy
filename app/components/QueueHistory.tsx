@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
 import { Music, History, Play } from "lucide-react";
@@ -10,8 +10,8 @@ import { getHDThumbnail } from "@/app/lib/thumbnail";
 export const QueueHistory: React.FC = () => {
   const { recentlyPlayed, songs, currentSongIndex, setQueue, colors } = usePlayer();
 
-  // Filter out songs already in the current queue
-  const currentIds = new Set(songs.map((s) => s.id));
+  // Memoize the set of current queue IDs to avoid recreation on every render
+  const currentIds = useMemo(() => new Set(songs.map((s) => s.id)), [songs]);
   const currentSong = songs[currentSongIndex];
   const history = recentlyPlayed.filter(
     (s) => !currentIds.has(s.id) && s.id !== currentSong?.id
@@ -40,7 +40,7 @@ export const QueueHistory: React.FC = () => {
             <div className="w-9 h-9 rounded-lg overflow-hidden shrink-0 relative bg-white/5">
               {song.cover ? (
                 <Image
-                  src={getHDThumbnail(song.cover) || ""}
+                  src={getHDThumbnail(song.cover) || song.cover}
                   alt={song.title}
                   width={36}
                   height={36}

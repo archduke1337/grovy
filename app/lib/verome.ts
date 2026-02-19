@@ -14,7 +14,7 @@ export interface VeromeTrack {
 
 export async function searchYouTubeMusic(query: string) {
   try {
-    const res = await fetch(`${BASE_URL}/search?q=${encodeURIComponent(query)}&filter=songs`);
+    const res = await fetch(`${BASE_URL}/api/search?q=${encodeURIComponent(query)}&filter=songs`);
     const data = await res.json();
     return data as VeromeTrack[];
   } catch (error) {
@@ -25,7 +25,7 @@ export async function searchYouTubeMusic(query: string) {
 
 export async function getStreamUrl(videoId: string) {
   try {
-    const res = await fetch(`${BASE_URL}/stream?id=${videoId}`);
+    const res = await fetch(`${BASE_URL}/api/stream?id=${videoId}`);
     const data = await res.json();
     return data;
   } catch (error) {
@@ -36,7 +36,7 @@ export async function getStreamUrl(videoId: string) {
 
 export async function getLyrics(title: string, artist: string) {
   try {
-    const res = await fetch(`${BASE_URL}/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`);
+    const res = await fetch(`${BASE_URL}/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`);
     const data = await res.json();
     return data;
   } catch (error) {

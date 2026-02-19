@@ -26,6 +26,7 @@ export const Playlist: React.FC = () => {
 
   const handleTouchMove = useCallback((e: React.TouchEvent) => {
     if (dragItemRef.current === null || !listRef.current) return;
+    e.preventDefault(); // Prevent page scroll while dragging
     const touchY = e.touches[0].clientY;
     const items = listRef.current.querySelectorAll("[data-queue-index]");
     for (let i = 0; i < items.length; i++) {
@@ -58,7 +59,14 @@ export const Playlist: React.FC = () => {
     );
   }
 
-  const displaySongs = showAll ? songs : songs.slice(currentSongIndex, currentSongIndex + 12);
+  // Wrap around if near end of queue so we always show up to 12 songs
+  const displaySongs = showAll ? songs : (() => {
+    const slice = songs.slice(currentSongIndex, currentSongIndex + 12);
+    if (slice.length < 12 && songs.length > 12) {
+      return [...slice, ...songs.slice(0, 12 - slice.length)];
+    }
+    return slice;
+  })();
   const startIndex = showAll ? 0 : currentSongIndex;
 
   return (

@@ -12,7 +12,11 @@ const STORES = {
   searches: "searches",  // Cached search results by query
 } as const;
 
+// Singleton DB connection to prevent connection leaks
+let _dbInstance: IDBDatabase | null = null;
+
 function openDB(): Promise<IDBDatabase> {
+  if (_dbInstance) return Promise.resolve(_dbInstance);
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
@@ -25,7 +29,12 @@ function openDB(): Promise<IDBDatabase> {
         store.createIndex("timestamp", "timestamp");
       }
     };
-    req.onsuccess = () => resolve(req.result);
+    req.onsuccess = () => {
+      _dbInstance = req.result;
+      // Reset singleton if the DB is closed externally
+      _dbInstance.onclose = () => { _dbInstance = null; };
+      resolve(_dbInstance);
+    };
     req.onerror = () => reject(req.error);
   });
 }

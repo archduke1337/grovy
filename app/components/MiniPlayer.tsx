@@ -4,6 +4,7 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/app/context/PlayerContext";
 import NextImage from "next/image";
+import { getHDThumbnail } from "@/app/lib/thumbnail";
 import {
   Play,
   Pause,
@@ -67,7 +68,7 @@ export default function MiniPlayer({ visible, onExpand }: MiniPlayerProps) {
               />
             </svg>
             <NextImage
-              src={currentSong.cover || "/icons/logo.png"}
+              src={getHDThumbnail(currentSong.cover) || currentSong.cover || "/icons/logo.png"}
               alt={currentSong.title}
               width={40}
               height={40}

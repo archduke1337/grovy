@@ -2,6 +2,17 @@ import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+// CORS preflight handler
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Range, Content-Type",
+};
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}
+
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
   const quality = request.nextUrl.searchParams.get("quality") || "high"; // 'high', 'medium', 'low'

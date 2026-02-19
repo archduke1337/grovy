@@ -28,7 +28,7 @@ export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sl
     if (!sleepEndTime || !isOpen) { setRemainingDisplay(""); return; }
     const tick = () => {
       const diff = Math.max(0, sleepEndTime - Date.now());
-      if (diff <= 0) { setRemainingDisplay(""); return; }
+      if (diff <= 0) { setRemainingDisplay(""); clearInterval(interval); return; }
       const m = Math.floor(diff / 60000);
       const s = Math.floor((diff % 60000) / 1000);
       setRemainingDisplay(m > 0 ? `${m}m ${s}s` : `${s}s`);
@@ -116,7 +116,7 @@ export const SleepTimerButton: React.FC<{
     if (!sleepEndTime) { setRemaining(""); return; }
     const tick = () => {
       const diff = Math.max(0, sleepEndTime - Date.now());
-      if (diff <= 0) { setRemaining(""); return; }
+      if (diff <= 0) { setRemaining(""); clearInterval(interval); return; }
       const m = Math.floor(diff / 60000);
       const s = Math.floor((diff % 60000) / 1000);
       setRemaining(m > 0 ? `${m}m ${s}s` : `${s}s`);

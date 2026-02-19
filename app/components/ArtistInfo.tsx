@@ -37,7 +37,7 @@ export const ArtistInfo: React.FC = () => {
     fetchInfo();
 
     return () => { controller.abort(); };
-  }, [isOpen, currentSong]);
+  }, [isOpen, currentSong?.artist]);
 
   // Separate effect for keyboard listener to ensure cleanup always runs
   useEffect(() => {
@@ -98,13 +98,19 @@ export const ArtistInfo: React.FC = () => {
                 <div className="flex-1 overflow-y-auto custom-scrollbar sm:overflow-visible pr-0 sm:pr-2 space-y-8 md:space-y-10 pt-10 sm:pt-0">
                   <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6 sm:gap-8 text-center sm:text-left">
                     <div className="w-40 h-40 md:w-48 md:h-48 rounded-3xl overflow-hidden shadow-2xl flex-shrink-0 border-2 border-white/10 sm:rotate-3 transition-transform hover:rotate-0 duration-500 bg-zinc-900">
-                       <Image 
-                         src={getHDThumbnail(currentSong?.cover) || ""} 
-                         alt={info.artist.name} 
-                         width={200}
-                         height={200}
-                         className="w-full h-full object-cover" 
-                       />
+                       {(getHDThumbnail(currentSong?.cover) || currentSong?.cover) ? (
+                         <Image 
+                           src={getHDThumbnail(currentSong?.cover) || currentSong?.cover || ""} 
+                           alt={info.artist.name} 
+                           width={200}
+                           height={200}
+                           className="w-full h-full object-cover" 
+                         />
+                       ) : (
+                         <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                           <Users size={48} className="text-white/10" />
+                         </div>
+                       )}
                     </div>
                     <div className="space-y-3 sm:space-y-4">
                        <h2 className="text-3xl md:text-5xl lg:text-6xl font-black tracking-tighter leading-[0.9] text-white" 

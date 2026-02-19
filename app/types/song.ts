@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 export const SongSchema = z.object({
-  id: z.string(),
-  title: z.string(),
-  url: z.string(),
+  id: z.string().min(1),
+  title: z.string().min(1),
+  url: z.string().min(1),
   artist: z.string().optional().default("Unknown Artist"),
   cover: z.string().optional(),
   genre: z.string().optional().default("Unknown"),

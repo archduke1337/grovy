@@ -28,7 +28,7 @@ export const RelatedTracks: React.FC = () => {
         const tracks = await loadRelated(currentSongId, {
           title: currentSong?.title,
           artist: currentSong?.artist,
-        });
+        }, controller.signal);
         if (!controller.signal.aborted) setRelated(tracks.slice(0, 7));
       } catch (e) {
         // ignore abort errors
