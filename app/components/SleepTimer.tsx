@@ -8,6 +8,7 @@ interface SleepTimerProps {
   isOpen: boolean;
   onClose: () => void;
   sleepMinutes: number | null;
+  sleepEndTime: number | null;
   onSetTimer: (minutes: number | null) => void;
 }
 
@@ -20,7 +21,23 @@ const PRESETS = [
   { label: "2 hours", value: 120 },
 ];
 
-export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sleepMinutes, onSetTimer }) => {
+export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sleepMinutes, sleepEndTime, onSetTimer }) => {
+  const [remainingDisplay, setRemainingDisplay] = useState("");
+
+  useEffect(() => {
+    if (!sleepEndTime || !isOpen) { setRemainingDisplay(""); return; }
+    const tick = () => {
+      const diff = Math.max(0, sleepEndTime - Date.now());
+      if (diff <= 0) { setRemainingDisplay(""); return; }
+      const m = Math.floor(diff / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setRemainingDisplay(m > 0 ? `${m}m ${s}s` : `${s}s`);
+    };
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [sleepEndTime, isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -51,7 +68,9 @@ export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sl
             {sleepMinutes && (
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 text-center">
                 <p className="text-sm font-bold text-blue-400">Timer Active</p>
-                <p className="text-xs text-blue-400/60 mt-1">Playback will pause in {sleepMinutes} min</p>
+                <p className="text-xs text-blue-400/60 mt-1">
+                  {remainingDisplay ? `Playback will pause in ${remainingDisplay}` : `Playback will pause in ${sleepMinutes} min`}
+                </p>
               </div>
             )}
 

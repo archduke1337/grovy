@@ -4,7 +4,7 @@
 import React, { useEffect, useState } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
-import { Play, Sparkles } from "lucide-react";
+import { Play, Sparkles, Music } from "lucide-react";
 import { Song } from "@/app/types/song";
 import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
@@ -66,13 +66,19 @@ export const RelatedTracks: React.FC = () => {
               className="min-w-[140px] sm:min-w-[160px] text-left group relative"
             >
               <div className="aspect-square rounded-[2rem] overflow-hidden mb-4 relative bg-zinc-900 shadow-xl group-hover:shadow-2xl transition-all duration-500 border border-white/5">
+                {song.cover ? (
                 <Image 
-                  src={getHDThumbnail(song.cover) || ""} 
+                  src={getHDThumbnail(song.cover) || song.cover} 
                   alt={song.title} 
                   width={160}
                   height={160}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" 
                 />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Music size={28} className="text-white/10" />
+                  </div>
+                )}
                 
                 {/* Overlay Gradient */}
                 <div 

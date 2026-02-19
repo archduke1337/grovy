@@ -392,7 +392,7 @@ function HomeContent() {
         <motion.section variants={fadeUp} className="relative z-10">
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button 
-              onClick={() => { setSearchQuery("trending"); fetchTrending(); }}
+              onClick={() => { skipNextAutoSearchRef.current = true; setSearchQuery("trending"); fetchTrending(); }}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all ${
                 searchQuery === "trending" 
                   ? "bg-orange-500/10 text-orange-500 dark:text-orange-400 ring-1 ring-orange-500/20" 
@@ -403,7 +403,7 @@ function HomeContent() {
               Trending
             </button>
             <button 
-              onClick={() => { setSearchQuery("charts"); fetchCharts(); }}
+              onClick={() => { skipNextAutoSearchRef.current = true; setSearchQuery("charts"); fetchCharts(); }}
               className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-[11px] sm:text-[12px] font-semibold transition-all ${
                 searchQuery === "charts" 
                   ? "bg-blue-500/10 text-blue-500 dark:text-blue-400 ring-1 ring-blue-500/20" 
@@ -581,6 +581,7 @@ function HomeContent() {
                     onClick={() => {
                       setSearchType("song");
                       setSelectedGenre(name);
+                      skipNextAutoSearchRef.current = true;
                       loadSongs(`${name} hits`).then(setSearchResults);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}

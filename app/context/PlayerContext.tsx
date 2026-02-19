@@ -883,7 +883,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           if (e.metaKey || e.ctrlKey) {
              nextTrack();
           } else {
-             seek(Math.min(currentTime + 5, duration));
+             seek(Math.min(currentTimeRef.current + 5, durationRef.current));
           }
           break;
         case "ArrowLeft":
@@ -891,7 +891,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           if (e.metaKey || e.ctrlKey) {
              previousTrack();
           } else {
-             seek(Math.max(currentTime - 5, 0));
+             seek(Math.max(currentTimeRef.current - 5, 0));
           }
           break;
         case "ArrowUp":
@@ -915,7 +915,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, volume, currentTime, duration, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
+  }, [isPlaying, volume, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
   const toggleFavorite = useCallback((id: string) => setFavorites(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]), []);

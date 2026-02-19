@@ -147,6 +147,15 @@ export const CommandPalette: React.FC = () => {
     };
   }, [query, loadSongs]);
 
+  // Reset state when palette closes
+  useEffect(() => {
+    if (!isOpen) {
+      setQuery("");
+      setApiResults([]);
+      setSelectedIndex(0);
+    }
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (

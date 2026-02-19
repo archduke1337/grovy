@@ -179,6 +179,7 @@ export const PlayerControls: React.FC = () => {
         isOpen={isSleepTimerOpen}
         onClose={() => setIsSleepTimerOpen(false)}
         sleepMinutes={sleepTimerMinutes}
+        sleepEndTime={sleepTimerEndTime}
         onSetTimer={setSleepTimer}
       />
     </div>
