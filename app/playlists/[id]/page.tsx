@@ -196,7 +196,7 @@ export default function PlaylistDetailPage() {
                         </button>
                         <button 
                           onClick={(e) => { e.stopPropagation(); removeFromPlaylist(playlist.id, song.id); }}
-                          className="p-2 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-full"
+                          className="p-2 rounded-full text-gray-300 hover:text-red-500 hover:bg-red-500/10 transition-all"
                           title="Remove from Playlist"
                         >
                           <X size={16} />

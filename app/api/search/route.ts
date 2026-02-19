@@ -1,19 +1,5 @@
 import { NextRequest } from "next/server";
-import { z } from "zod";
 import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
-
-const ResultSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  image: z.union([
-    z.string(),
-    z.array(z.object({ quality: z.string(), url: z.string() })),
-    z.boolean() // Handle rare 'false' case
-  ]).optional(),
-  type: z.string().optional(),
-  url: z.string().optional(),
-});
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

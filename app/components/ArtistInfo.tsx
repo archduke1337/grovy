@@ -18,30 +18,38 @@ export const ArtistInfo: React.FC = () => {
   useEffect(() => {
     if (!isOpen || !currentSong) return;
 
+    const controller = new AbortController();
+
     const fetchInfo = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/artist/info?artist=${encodeURIComponent(currentSong.artist || "")}`);
+        const res = await fetch(`/api/artist/info?artist=${encodeURIComponent(currentSong.artist || "")}`, { signal: controller.signal });
         const data = await res.json();
-        setInfo(data);
+        if (!controller.signal.aborted) setInfo(data);
       } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return;
         console.error("Info fetch failed", e);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchInfo();
 
+    return () => { controller.abort(); };
+  }, [isOpen, currentSong, isCommandPaletteOpen]);
+
+  // Separate effect for keyboard listener to ensure cleanup always runs
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isCommandPaletteOpen) setIsOpen(false);
     };
-    
-    if (typeof window !== "undefined") {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [isOpen, currentSong, isCommandPaletteOpen]);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isCommandPaletteOpen]);
 
   return (
     <>
@@ -106,10 +114,12 @@ export const ArtistInfo: React.FC = () => {
                          {info.artist.name}
                        </h2>
                        <div className="flex justify-center sm:justify-start gap-4">
+                          {info.artist?.stats?.listeners && (
                           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-gray-400 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
                              <Users size={12} />
                              <span>{parseInt(info.artist.stats.listeners).toLocaleString()} Listeners</span>
                           </div>
+                          )}
                        </div>
                     </div>
                   </div>
@@ -120,10 +130,13 @@ export const ArtistInfo: React.FC = () => {
                        Biography
                        <div className="flex-1 h-px bg-white/5" />
                      </h3>
-                     <div 
+                     {info.artist?.bio?.summary && (
+                     <p 
                        className="text-base md:text-lg lg:text-xl leading-relaxed font-medium text-gray-300 max-h-[300px] overflow-y-auto custom-scrollbar pr-4 text-justify mix-blend-plus-lighter"
-                       dangerouslySetInnerHTML={{ __html: info.artist.bio.summary }}
-                     />
+                     >
+                       {info.artist.bio.summary.replace(/<[^>]*>/g, '')}
+                     </p>
+                     )}
                   </div>
 
                   {info.artist.tags?.tag && (

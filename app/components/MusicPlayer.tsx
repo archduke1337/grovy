@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { PlayerControls } from "./PlayerControls";
 import { Playlist } from "./Playlist";
@@ -36,6 +36,14 @@ export const MusicPlayer: React.FC = () => {
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
   const [showQueueOnMobile, setShowQueueOnMobile] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+    checkDesktop();
+    window.addEventListener("resize", checkDesktop);
+    return () => window.removeEventListener("resize", checkDesktop);
+  }, []);
 
   const currentSong = songs[currentSongIndex];
   const favorite = currentSong ? isFavorite(currentSong.id) : false;
@@ -81,7 +89,7 @@ export const MusicPlayer: React.FC = () => {
 
         {/* Center: Art & Controls (Hidden when Queue is shown on mobile) */}
         <AnimatePresence mode="wait">
-          {!showQueueOnMobile || typeof window !== 'undefined' && window.innerWidth >= 1024 ? (
+          {!showQueueOnMobile || isDesktop ? (
             <motion.div 
               key="player-main"
               initial={{ opacity: 0, x: -20 }}

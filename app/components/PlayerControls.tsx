@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import {
   Play,
   Pause,
@@ -29,42 +29,7 @@ export const PlayerControls: React.FC = () => {
     setVolume,
   } = usePlayer();
 
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      // Ignore if typing in a text input or textarea
-      const target = e.target as HTMLElement;
-      if (
-        (target.tagName === 'INPUT' && (
-          (target as HTMLInputElement).type === 'text' || 
-          (target as HTMLInputElement).type === 'search' || 
-          (target as HTMLInputElement).type === 'password' || 
-          (target as HTMLInputElement).type === 'email'
-        )) || 
-        target.tagName === 'TEXTAREA'
-      ) return;
-
-      if (e.code === "Space") {
-        e.preventDefault();
-        togglePlayPause();
-      } else if (e.code === "ArrowRight") {
-        e.preventDefault();
-        nextTrack();
-      } else if (e.code === "ArrowLeft") {
-        e.preventDefault();
-        previousTrack();
-      } else if (e.code === "ArrowUp") {
-        e.preventDefault();
-        setVolume(Math.min(1, volume + 0.1));
-      } else if (e.code === "ArrowDown") {
-        e.preventDefault();
-        setVolume(Math.max(0, volume - 0.1));
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyPress);
-    return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [togglePlayPause, nextTrack, previousTrack, volume, setVolume]);
+  // Keyboard shortcuts are handled globally in PlayerContext — no duplicate handler here
 
   return (
     <div className="flex flex-col items-center gap-8">

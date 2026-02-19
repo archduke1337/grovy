@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
   try {
     const url = `https://ytapi.gauravramyadav.workers.dev/api/related/${videoId}`;
     const res = await fetch(url);
+    if (!res.ok) {
+      return Response.json([], { status: 200 });
+    }
     const data = await res.json();
     
     const rawData = Array.isArray(data) ? data : (data.tracks || data.results || data.songs || []);

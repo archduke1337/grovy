@@ -7,7 +7,7 @@ import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music } from "lucide-rea
 import { MusicPlayer } from "./MusicPlayer";
 
 export const BottomPlayer = () => {
-  const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek, colors } = usePlayer();
+  const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek } = usePlayer();
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (!songs || songs.length === 0) return null;

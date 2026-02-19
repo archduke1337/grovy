@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
   try {
     const url = `https://ytapi.gauravramyadav.workers.dev/api/track/info?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`;
     const res = await fetch(url);
+    if (!res.ok) {
+      return Response.json({ error: "Upstream track info API error" }, { status: res.status });
+    }
     const data = await res.json();
     return Response.json(data);
   } catch (error) {

@@ -25,7 +25,13 @@ export const Navbar = () => {
     songs, 
     currentSongIndex 
   } = usePlayer();
-  const [isDark, setIsDark] = useState(true); // Default true to match html class="dark"
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("theme");
+      return saved ? saved === "dark" : true;
+    }
+    return true;
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -38,16 +44,13 @@ export const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // Sync with saved theme preference
-    const savedTheme = localStorage.getItem("theme");
-    const dark = savedTheme ? savedTheme === "dark" : true; 
-    setIsDark(dark);
-    if (dark) {
+    // Sync DOM class with state
+    if (isDark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
-  }, []);
+  }, [isDark]);
 
   const toggleTheme = () => {
     const next = !isDark;

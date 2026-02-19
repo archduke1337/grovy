@@ -72,29 +72,36 @@ export async function GET(request: NextRequest) {
     // Attempt the top 3 candidates (increased from 2 for better reliability)
     for (const targetUrl of candidates.slice(0, 3)) {
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const relayRes = await fetch(targetUrl, { 
            headers: { 
              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
              "Range": rangeHeader,
              "Referer": "https://www.youtube.com/",
            },
-           signal: (AbortSignal as any).timeout(8000) // Increased timeout for better reliability
+           signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         const contentType = relayRes.headers.get("Content-Type") || "";
         if ((relayRes.ok || relayRes.status === 206) && (contentType.includes("audio") || contentType.includes("video") || contentType.includes("octet-stream"))) {
           console.log(`[StreamAPI] Relaying ${id} (${contentType}, bitrate: best available)`);
           
-          return new Response(relayRes.body, {
-             status: relayRes.status,
-             headers: {
+          const responseHeaders: Record<string, string> = {
                "Content-Type": contentType.includes("audio") ? contentType : "audio/webm",
                "Access-Control-Allow-Origin": "*",
                "Accept-Ranges": "bytes",
-               "Content-Range": relayRes.headers.get("Content-Range") || "",
-               "Content-Length": relayRes.headers.get("Content-Length") || "",
                "Cache-Control": "public, max-age=3600"
-             }
+          };
+          const contentRange = relayRes.headers.get("Content-Range");
+          const contentLength = relayRes.headers.get("Content-Length");
+          if (contentRange) responseHeaders["Content-Range"] = contentRange;
+          if (contentLength) responseHeaders["Content-Length"] = contentLength;
+
+          return new Response(relayRes.body, {
+             status: relayRes.status,
+             headers: responseHeaders
           });
         }
         console.warn(`[StreamAPI] Candidate failed: status=${relayRes.status}, type=${contentType}`);

@@ -112,10 +112,8 @@ export const CommandPalette: React.FC = () => {
       }
     };
 
-    if (typeof window !== "undefined") {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, setCommandPaletteOpen, filteredItems, selectedIndex]);
 
   useEffect(() => {

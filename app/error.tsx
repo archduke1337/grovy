@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { RefreshCw, Home, AlertTriangle } from "lucide-react";
-import { motion } from "framer-motion";
 
 export default function Error({
   error,
@@ -14,8 +12,7 @@ export default function Error({
   const [dots, setDots] = useState(".");
 
   useEffect(() => {
-    // Log the error to an error reporting service
-    console.error("Global Error Boundary Caught:", error);
+    console.error("Error Boundary Caught:", error);
     
     const interval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? "." : prev + ".");
@@ -24,48 +21,41 @@ export default function Error({
   }, [error]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center space-y-8">
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring", bounce: 0.5 }}
-        className="w-24 h-24 rounded-full bg-red-50 dark:bg-red-900/10 flex items-center justify-center relative overflow-hidden"
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "80vh", padding: "1.5rem", textAlign: "center", gap: "2rem" }}>
+      <div
+        style={{ width: 96, height: 96, borderRadius: "50%", background: "rgba(239,68,68,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 48 }}
       >
-         <div className="absolute inset-0 bg-red-500/10 animate-pulse" />
-         <AlertTriangle size={48} className="text-red-500 relative z-10" />
-      </motion.div>
+        ⚠️
+      </div>
 
-      <div className="space-y-4 max-w-md">
-        <h2 className="text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+      <div style={{ maxWidth: 420 }}>
+        <h2 style={{ fontSize: "1.875rem", fontWeight: 900, marginBottom: "1rem" }}>
           Oops, something went wrong{dots}
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 font-medium leading-relaxed">
-          We encountered an unexpected error. Don't worry, your music queue is safe. 
-          Let's try getting you back on track.
+        <p style={{ color: "#6b7280", lineHeight: 1.6 }}>
+          We encountered an unexpected error. Don&apos;t worry, your music queue is safe.
+          Let&apos;s try getting you back on track.
         </p>
-        {process.env.NODE_ENV === 'development' && (
-          <div className="p-4 bg-gray-100 dark:bg-white/5 rounded-xl text-left overflow-auto max-h-48 text-xs font-mono text-red-500">
+        {process.env.NODE_ENV === "development" && (
+          <div style={{ marginTop: "1rem", padding: "1rem", background: "rgba(0,0,0,0.05)", borderRadius: 12, textAlign: "left", overflow: "auto", maxHeight: 192, fontSize: 12, fontFamily: "monospace", color: "#ef4444" }}>
             {error.message}
-            <br/>
-            {error.digest && <span className="text-gray-400">Digest: {error.digest}</span>}
+            {error.digest && <><br /><span style={{ color: "#9ca3af" }}>Digest: {error.digest}</span></>}
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-4">
+      <div style={{ display: "flex", gap: "1rem" }}>
         <button
           onClick={() => reset()}
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-blue-600 text-white font-bold hover:bg-blue-700 hover:scale-105 active:scale-95 transition-all shadow-lg shadow-blue-500/30"
+          style={{ padding: "0.75rem 1.5rem", borderRadius: 9999, background: "#2563eb", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}
         >
-          <RefreshCw size={18} />
-          Try Again
+          ↻ Try Again
         </button>
         <button
-          onClick={() => window.location.href = "/"}
-          className="flex items-center gap-2 px-6 py-3 rounded-full bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 font-bold hover:bg-gray-200 dark:hover:bg-white/10 hover:scale-105 active:scale-95 transition-all"
+          onClick={() => (window.location.href = "/")}
+          style={{ padding: "0.75rem 1.5rem", borderRadius: 9999, background: "#f3f4f6", color: "#4b5563", fontWeight: 700, border: "none", cursor: "pointer" }}
         >
-          <Home size={18} />
-          Go Home
+          🏠 Go Home
         </button>
       </div>
     </div>

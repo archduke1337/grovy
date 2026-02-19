@@ -35,6 +35,8 @@ export const AddToPlaylistModal: React.FC = () => {
     closePlaylistModal();
   };
 
+  const primaryColorStyle = { '--color-primary': colors.primary } as React.CSSProperties;
+
   return (
     <AnimatePresence>
       {isPlaylistModalOpen && (
@@ -88,10 +90,7 @@ export const AddToPlaylistModal: React.FC = () => {
                 <button
                   onClick={() => setIsCreating(!isCreating)}
                   className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-all group"
-                  style={{ 
-                    // @ts-ignore
-                    '--color-primary': colors.primary 
-                  }}
+                  style={primaryColorStyle}
                 >
                   <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
                     <Plus size={20} />
@@ -114,10 +113,7 @@ export const AddToPlaylistModal: React.FC = () => {
                         onChange={(e) => setNewPlaylistName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleCreate()}
                         className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-transparent focus:border-[var(--color-primary)] outline-none transition-all font-medium text-sm"
-                        style={{ 
-                          // @ts-ignore
-                          '--color-primary': colors.primary 
-                        }}
+                        style={primaryColorStyle}
                         autoFocus
                       />
                       <button

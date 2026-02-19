@@ -15,30 +15,38 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   useEffect(() => {
     if (!isOpen || !currentSong) return;
 
+    const controller = new AbortController();
+
     const fetchLyrics = async () => {
       setIsLoading(true);
       try {
-        const res = await fetch(`/api/lyrics?title=${encodeURIComponent(currentSong.title)}&artist=${encodeURIComponent(currentSong.artist || "")}`);
+        const res = await fetch(`/api/lyrics?title=${encodeURIComponent(currentSong.title)}&artist=${encodeURIComponent(currentSong.artist || "")}`, { signal: controller.signal });
         const data = await res.json();
-        setLyrics(data);
+        if (!controller.signal.aborted) setLyrics(data);
       } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return;
         console.error("Lyrics fetch failed", e);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchLyrics();
 
+    return () => { controller.abort(); };
+  }, [isOpen, currentSong, onClose, isCommandPaletteOpen]);
+
+  // Separate effect for keyboard listener to ensure cleanup always runs
+  useEffect(() => {
+    if (!isOpen) return;
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isCommandPaletteOpen) onClose();
     };
-    
-    if (typeof window !== "undefined") {
-      window.addEventListener("keydown", handleKeyDown);
-      return () => window.removeEventListener("keydown", handleKeyDown);
-    }
-  }, [isOpen, currentSong, onClose, isCommandPaletteOpen]);
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, isCommandPaletteOpen, onClose]);
 
   const activeLineRef = useRef<HTMLDivElement>(null);
 

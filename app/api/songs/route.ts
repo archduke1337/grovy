@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
       }
 
       const response = await fetch(endpoint);
+      if (!response.ok) {
+        return Response.json([], { status: 200 });
+      }
       const data = await response.json();
 
       let songsList: any[] = [];
@@ -173,7 +176,9 @@ export async function GET(request: NextRequest) {
       return Response.json([]);
     }
 
-    const country = searchParams.get("country") || "IN";
+    const VALID_COUNTRIES = ["IN", "US", "GB", "KR", "JP", "BR", "DE", "FR", "CA", "AU"];
+    const rawCountry = searchParams.get("country") || "IN";
+    const country = VALID_COUNTRIES.includes(rawCountry) ? rawCountry : "IN";
     
     // Parallel fetch from both sources
     const saavnUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=15`;
@@ -228,7 +233,7 @@ export async function GET(request: NextRequest) {
         artist: item.artists?.[0]?.name || item.artist || "YouTube Artist",
         cover,
         genre: "YouTube",
-        duration: item.duration || item.duration_ms / 1000 || 180,
+        duration: item.duration ?? (item.duration_ms != null ? item.duration_ms / 1000 : 180),
         source: "YouTube"
       };
     }).filter(Boolean);
@@ -246,7 +251,9 @@ export async function GET(request: NextRequest) {
     
     if (!result.success) {
       console.error("Zod Validation Failed:", result.error.format());
-      return Response.json(cleanSongs);
+      // Return only the items that individually pass validation
+      const validSongs = cleanSongs.filter(s => SongSchema.safeParse(s).success);
+      return Response.json(validSongs);
     }
 
     return Response.json(result.data);

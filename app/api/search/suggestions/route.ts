@@ -12,6 +12,9 @@ export async function GET(request: NextRequest) {
   try {
     const url = `https://ytapi.gauravramyadav.workers.dev/api/search/suggestions?q=${encodeURIComponent(query)}`;
     const res = await fetch(url);
+    if (!res.ok) {
+      return Response.json([]);
+    }
     const data = await res.json();
     return Response.json(data);
   } catch (error) {

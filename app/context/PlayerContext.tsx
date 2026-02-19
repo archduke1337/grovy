@@ -89,6 +89,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const ytPlayerRef = useRef<any>(null);
   const currentTimeRef = useRef(0);
   const lastStateRef = useRef<number>(-1);
+  const isLoopRef = useRef(false);
+  const nextTrackRef = useRef<() => void>(() => {});
+  const volumeRef = useRef(0.8);
+  const isPlayingRef = useRef(false);
 
   const [songs, setSongs] = useState<Song[]>([]);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
@@ -151,7 +155,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         },
         events: {
           onReady: (event: any) => {
-            event.target.setVolume(volume * 100);
+            event.target.setVolume(volumeRef.current * 100);
             // Request highest available quality for best audio
             try {
               event.target.setPlaybackQuality('hd1080');
@@ -160,10 +164,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           onStateChange: (event: any) => {
             // YT.PlayerState.ENDED = 0
             if (event.data === 0) {
-              if (isLoop) {
+              if (isLoopRef.current) {
                 event.target.playVideo();
               } else {
-                nextTrack();
+                nextTrackRef.current();
               }
             }
             // YT.PlayerState.PLAYING = 1
@@ -203,7 +207,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }, 500);
     return () => clearInterval(interval);
-  }, [songs, currentSongIndex, duration, currentTime]);
+  }, [songs, currentSongIndex]);
 
   // 1. Initialize Audio Element (Saavn/Gaana)
   useEffect(() => {
@@ -229,7 +233,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     const handleEnded = () => {
       const currentSong = songs[currentSongIndex];
       if (currentSong?.source !== "YouTube") {
-        isLoop ? (audio.currentTime = 0, audio.play()) : nextTrack();
+        isLoopRef.current ? (audio.currentTime = 0, audio.play()) : nextTrackRef.current();
       }
     };
 
@@ -243,7 +247,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       audio.removeEventListener("ended", handleEnded);
       audio.pause();
     };
-  }, [songs, currentSongIndex, isLoop]);
+  }, [songs, currentSongIndex]);
 
   const seek = useCallback((time: number) => {
     const currentSong = songs[currentSongIndex];
@@ -261,6 +265,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setCurrentSongIndex((prev) => (isShuffle ? Math.floor(Math.random() * songs.length) : (prev + 1) % songs.length));
     setIsPlaying(true);
   }, [songs.length, isShuffle]);
+
+  // Keep refs in sync with state so event callbacks always read current values
+  useEffect(() => { isLoopRef.current = isLoop; }, [isLoop]);
+  useEffect(() => { nextTrackRef.current = nextTrack; }, [nextTrack]);
+  useEffect(() => { volumeRef.current = volume; }, [volume]);
+  useEffect(() => { isPlayingRef.current = isPlaying; }, [isPlaying]);
 
   const previousTrack = useCallback(() => {
     if (songs.length === 0) return;
@@ -342,13 +352,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
                hls.attachMedia(audio);
                hlsRef.current = hls;
                hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                  if (isPlaying) audio.play();
+                  if (isPlayingRef.current) audio.play();
                });
             } else {
                audio.removeAttribute('crossorigin');
                audio.src = targetUrl;
                audio.load();
-               if (isPlaying) audio.play().catch(() => {});
+               if (isPlayingRef.current) audio.play().catch(() => {});
             }
          }
        }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -18,6 +18,7 @@ import {
 import Link from "next/link";
 import NextImage from "next/image";
 import { getHDThumbnail } from "./lib/thumbnail";
+import { Song } from "./types/song";
 
 const TRENDING_REGIONS = [
   { code: "IN", name: "India" },
@@ -150,17 +151,37 @@ export default function Home() {
 
   // Debounced Auto-Search
   useEffect(() => {
+    const controller = new AbortController();
+
     const handler = setTimeout(async () => {
       if (searchQuery.length > 2) {
-         handleManualSearch();
+        setIsSearching(true);
+        try {
+          if (searchType === "song") {
+            const results = await loadSongs(searchQuery, isLocal ? "local" : undefined);
+            if (!controller.signal.aborted) setSearchResults(results);
+          } else {
+            const res = await fetch(`/api/search?type=${searchType}&query=${encodeURIComponent(searchQuery)}`, { signal: controller.signal });
+            const data = await res.json();
+            if (!controller.signal.aborted) setSearchResults(data);
+          }
+        } catch (e) {
+          if (e instanceof DOMException && e.name === "AbortError") return;
+          console.error(e);
+        } finally {
+          if (!controller.signal.aborted) setIsSearching(false);
+        }
       } else if (!searchQuery && searchType === "song" && !isLocal) {
-         const results = await loadSongs("trending");
-         setSearchResults(results);
+        const results = await loadSongs("trending");
+        if (!controller.signal.aborted) setSearchResults(results);
       }
     }, 800);
 
-    return () => clearTimeout(handler);
-  }, [searchQuery, searchType, isLocal, handleManualSearch, loadSongs]);
+    return () => {
+      clearTimeout(handler);
+      controller.abort();
+    };
+  }, [searchQuery, searchType, isLocal, loadSongs]);
 
   const toggleLocal = () => {
      setIsLocal(!isLocal);
