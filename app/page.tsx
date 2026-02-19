@@ -36,6 +36,14 @@ const GENRE_CONFIG: Record<string, { color: string; accent: string }> = {
   "Party":      { color: "from-fuchsia-500/40 to-pink-500/30",  accent: "#d946ef" },
 };
 
+/** Convert ARGB integer (from YT Music API) to hex color */
+function argbToHex(argb: number): string {
+  const r = (argb >> 16) & 0xff;
+  const g = (argb >> 8) & 0xff;
+  const b = argb & 0xff;
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+}
+
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: { 
@@ -95,6 +103,8 @@ function HomeContent() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const suggestionsRef = useRef<HTMLDivElement>(null);
+  const [topArtists, setTopArtists] = useState<{ name: string; browseId: string; thumbnail: string }[]>([]);
+  const [dynamicMoods, setDynamicMoods] = useState<{ title: string; color: number }[]>([]);
 
   // Hydrate search history
   useEffect(() => {
@@ -234,6 +244,28 @@ function HomeContent() {
     if (hour < 12) setGreeting("Good Morning");
     else if (hour < 18) setGreeting("Good Afternoon");
     else setGreeting("Good Evening");
+  }, []);
+
+  // Fetch top artists + moods from YT API on mount
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const [artistsRes, moodsRes] = await Promise.all([
+          fetch("https://ytapi.gauravramyadav.workers.dev/api/top/artists?country=IN", { signal: controller.signal }).then(r => r.json()).catch(() => null),
+          fetch("https://ytapi.gauravramyadav.workers.dev/api/moods", { signal: controller.signal }).then(r => r.json()).catch(() => null),
+        ]);
+        if (!controller.signal.aborted && artistsRes?.artists) {
+          setTopArtists(artistsRes.artists.slice(0, 12));
+        }
+        if (!controller.signal.aborted && Array.isArray(moodsRes)) {
+          // First group = moods, second group = genres — take moods
+          const moods = moodsRes[0]?.items || [];
+          setDynamicMoods(moods.slice(0, 12));
+        }
+      } catch { /* ignore */ }
+    })();
+    return () => controller.abort();
   }, []);
 
   // Debounced Auto-Search
@@ -666,6 +698,72 @@ function HomeContent() {
                         Explore →
                       </span>
                     </div>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Dynamic Moods from YouTube Music */}
+          {!isLocal && searchType === "song" && !selectedGenre && !searchQuery && dynamicMoods.length > 0 && (
+            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                Moods & Vibes
+              </h2>
+              <div className="flex gap-2 sm:gap-2.5 overflow-x-auto pb-3 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+                {dynamicMoods.map((mood) => {
+                  const hex = argbToHex(mood.color);
+                  return (
+                    <motion.button
+                      key={mood.title}
+                      whileHover={{ y: -2, scale: 1.03 }}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => {
+                        setSearchType("song");
+                        setSelectedGenre(mood.title);
+                        skipNextAutoSearchRef.current = true;
+                        loadSongs(`${mood.title} music`).then(setSearchResults);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      className="relative shrink-0 rounded-xl sm:rounded-2xl px-5 sm:px-6 py-3 sm:py-4 snap-start border border-white/[0.04] overflow-hidden group"
+                    >
+                      <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity" style={{ backgroundColor: hex }} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                      <span className="relative z-10 text-[13px] sm:text-[14px] font-bold text-white whitespace-nowrap drop-shadow-sm">{mood.title}</span>
+                    </motion.button>
+                  );
+                })}
+              </div>
+            </motion.section>
+          )}
+
+          {/* Top Artists */}
+          {!isLocal && searchType === "song" && !selectedGenre && !searchQuery && topArtists.length > 0 && (
+            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
+              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                Top Artists
+              </h2>
+              <div className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+                {topArtists.map((artist) => (
+                  <motion.button
+                    key={artist.browseId}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.96 }}
+                    onClick={() => {
+                      handleEntityClick({ type: "artist", id: `yt-${artist.browseId}`, name: artist.name });
+                    }}
+                    className="min-w-[100px] sm:min-w-[120px] group cursor-pointer snap-start flex flex-col items-center gap-2.5"
+                  >
+                    <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] relative rounded-full overflow-hidden bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500 ring-2 ring-transparent group-hover:ring-white/10">
+                      {artist.thumbnail ? (
+                        <NextImage src={artist.thumbnail} alt={artist.name} width={100} height={100} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Music size={22} className="text-gray-300 dark:text-white/10" /></div>
+                      )}
+                    </div>
+                    <span className="text-[11px] sm:text-[12px] font-semibold text-gray-600 dark:text-white/40 group-hover:text-gray-900 dark:group-hover:text-white/70 transition-colors truncate max-w-[100px] text-center">
+                      {artist.name}
+                    </span>
                   </motion.button>
                 ))}
               </div>

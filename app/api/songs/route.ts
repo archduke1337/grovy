@@ -210,7 +210,7 @@ export async function GET(request: NextRequest) {
     } else if (query === "charts") {
       ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/charts?region=${country}`;
     } else {
-      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/search?q=${encodeURIComponent(query)}`;
+      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/search?q=${encodeURIComponent(query)}&filter=songs`;
     }
 
     const [saavnRes, ytRes] = await Promise.all([
