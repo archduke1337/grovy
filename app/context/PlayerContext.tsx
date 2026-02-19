@@ -208,6 +208,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             } catch (e) {}
           },
           onStateChange: (event: any) => {
+            // Only process YT state changes when the current song is a YouTube song.
+            // stopVideo() can fire PAUSED/ENDED events that would incorrectly
+            // pause or skip non-YouTube songs (the "playlist loop" bug).
+            const currentSong = songsRef.current[currentSongIndexRef.current];
+            if (!currentSong || currentSong.source !== "YouTube") {
+              lastStateRef.current = event.data;
+              return;
+            }
+
             // YT.PlayerState.ENDED = 0
             if (event.data === 0) {
               if (isLoopRef.current) {
@@ -627,7 +636,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           if (isPlayingRef.current) audio.play().catch(() => {});
         }
       } else {
-        if (ytPlayerRef.current?.stopVideo) ytPlayerRef.current.stopVideo();
+        // Only stop YT player if it was actually playing/cued (avoid spurious state events)
+        if (ytPlayerRef.current?.stopVideo && lastStateRef.current !== -1 && lastStateRef.current !== 5) {
+          ytPlayerRef.current.stopVideo();
+        }
         if (audio) {
           const targetUrl = new URL(currentSong.url, window.location.origin).href;
           const isHLS = targetUrl.includes(".m3u8");
@@ -741,7 +753,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (isPlaying) audioRef.current?.play().catch(() => {});
       else audioRef.current?.pause();
     }
-  }, [isPlaying, currentSongIndex, songs]);
+  }, [isPlaying, currentSongIndex, songs[currentSongIndex]?.id]);
 
   const loadSongs = useCallback(async (query?: string, source?: string, signal?: AbortSignal): Promise<Song[]> => {
     try {
