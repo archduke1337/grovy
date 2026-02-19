@@ -59,6 +59,20 @@ interface PlayerContextType {
   playlistModalSong: Song | null;
   openPlaylistModal: (song: Song) => void;
   closePlaylistModal: () => void;
+  // New features
+  playbackSpeed: number;
+  setPlaybackSpeed: (speed: number) => void;
+  sleepTimerMinutes: number | null;
+  setSleepTimer: (minutes: number | null) => void;
+  crossfadeEnabled: boolean;
+  setCrossfadeEnabled: (enabled: boolean) => void;
+  crossfadeDuration: number;
+  setCrossfadeDuration: (seconds: number) => void;
+  audioContext: AudioContext | null;
+  sourceNode: MediaElementAudioSourceNode | null;
+  eqFilters: BiquadFilterNode[];
+  moveSongInQueue: (from: number, to: number) => void;
+  removeFromQueue: (index: number) => void;
 }
 
 const DEFAULT_COLORS: Colors = {
@@ -110,6 +124,19 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
   const [playlistModalSong, setPlaylistModalSong] = useState<Song | null>(null);
 
+  // New feature state
+  const [playbackSpeed, setPlaybackSpeedState] = useState(1);
+  const [sleepTimerMinutes, setSleepTimerMinutesState] = useState<number | null>(null);
+  const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [crossfadeEnabled, setCrossfadeEnabled] = useState(false);
+  const [crossfadeDuration, setCrossfadeDuration] = useState(5);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const sourceNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+  const eqFiltersRef = useRef<BiquadFilterNode[]>([]);
+  const [audioContextState, setAudioContextState] = useState<AudioContext | null>(null);
+  const [sourceNodeState, setSourceNodeState] = useState<MediaElementAudioSourceNode | null>(null);
+  const [eqFiltersState, setEqFiltersState] = useState<BiquadFilterNode[]>([]);
+
   // Initialize YouTube IFrame API and Hydrate History
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -124,6 +151,28 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       const savedPlaylists = localStorage.getItem("grovy-playlists");
       if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
+
+      // Restore persistent queue
+      const savedQueue = localStorage.getItem("grovy-queue");
+      if (savedQueue) {
+        const { songs: savedSongs, index } = JSON.parse(savedQueue);
+        if (Array.isArray(savedSongs) && savedSongs.length > 0) {
+          setSongs(savedSongs);
+          setCurrentSongIndex(Math.min(index || 0, savedSongs.length - 1));
+        }
+      }
+
+      // Restore playback speed
+      const savedSpeed = localStorage.getItem("grovy-speed");
+      if (savedSpeed) setPlaybackSpeedState(parseFloat(savedSpeed) || 1);
+
+      // Restore crossfade prefs
+      const savedCrossfade = localStorage.getItem("grovy-crossfade");
+      if (savedCrossfade) {
+        const cf = JSON.parse(savedCrossfade);
+        setCrossfadeEnabled(cf.enabled ?? false);
+        setCrossfadeDuration(cf.duration ?? 5);
+      }
     } catch (e) {}
 
     // Check if script already exists
@@ -249,6 +298,109 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, [songs, currentSongIndex]);
 
+  // Web Audio API setup (Equalizer)
+  useEffect(() => {
+    if (typeof window === "undefined" || !audioRef.current) return;
+    // Only create once
+    if (audioContextRef.current) return;
+
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const source = ctx.createMediaElementSource(audioRef.current);
+      audioContextRef.current = ctx;
+      sourceNodeRef.current = source;
+
+      // Create 5-band EQ filters
+      const frequencies = [60, 230, 910, 4000, 14000];
+      const filters = frequencies.map((freq, i) => {
+        const filter = ctx.createBiquadFilter();
+        filter.type = i === 0 ? "lowshelf" : i === frequencies.length - 1 ? "highshelf" : "peaking";
+        filter.frequency.value = freq;
+        filter.gain.value = 0;
+        filter.Q.value = 1;
+        return filter;
+      });
+
+      // Chain: source → filter[0] → filter[1] → ... → destination
+      source.connect(filters[0]);
+      for (let i = 0; i < filters.length - 1; i++) {
+        filters[i].connect(filters[i + 1]);
+      }
+      filters[filters.length - 1].connect(ctx.destination);
+
+      eqFiltersRef.current = filters;
+
+      // Restore saved EQ
+      try {
+        const savedEq = localStorage.getItem("grovy-eq");
+        if (savedEq) {
+          const gains = JSON.parse(savedEq);
+          if (Array.isArray(gains)) {
+            gains.forEach((g: number, i: number) => {
+              if (filters[i]) filters[i].gain.value = g;
+            });
+          }
+        }
+      } catch (e) {}
+
+      setAudioContextState(ctx);
+      setSourceNodeState(source);
+      setEqFiltersState(filters);
+    } catch (e) {
+      console.warn("[PlayerContext] Web Audio API not available:", e);
+    }
+  }, [songs, currentSongIndex]);
+
+  // Sleep Timer logic
+  useEffect(() => {
+    return () => {
+      if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+    };
+  }, []);
+
+  const setSleepTimer = useCallback((minutes: number | null) => {
+    if (sleepTimerRef.current) {
+      clearTimeout(sleepTimerRef.current);
+      sleepTimerRef.current = null;
+    }
+    if (minutes === null) {
+      setSleepTimerMinutesState(null);
+      return;
+    }
+    setSleepTimerMinutesState(minutes);
+    sleepTimerRef.current = setTimeout(() => {
+      setIsPlaying(false);
+      setSleepTimerMinutesState(null);
+      sleepTimerRef.current = null;
+    }, minutes * 60 * 1000);
+  }, []);
+
+  // Playback speed
+  const setPlaybackSpeed = useCallback((speed: number) => {
+    const clamped = Math.max(0.25, Math.min(2, speed));
+    setPlaybackSpeedState(clamped);
+    if (audioRef.current) audioRef.current.playbackRate = clamped;
+    if (ytPlayerRef.current?.setPlaybackRate) ytPlayerRef.current.setPlaybackRate(clamped);
+    localStorage.setItem("grovy-speed", clamped.toString());
+  }, []);
+
+  // Sync playback speed when source changes
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = playbackSpeed;
+  }, [songs, currentSongIndex, playbackSpeed]);
+
+  // Persist queue to localStorage
+  useEffect(() => {
+    if (songs.length > 0) {
+      localStorage.setItem("grovy-queue", JSON.stringify({ songs, index: currentSongIndex }));
+    }
+  }, [songs, currentSongIndex]);
+
+  // Persist crossfade settings
+  useEffect(() => {
+    localStorage.setItem("grovy-crossfade", JSON.stringify({ enabled: crossfadeEnabled, duration: crossfadeDuration }));
+  }, [crossfadeEnabled, crossfadeDuration]);
+
   const seek = useCallback((time: number) => {
     const currentSong = songs[currentSongIndex];
     if (currentSong?.source === "YouTube" && ytPlayerRef.current?.seekTo) {
@@ -286,7 +438,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsPlaying((prev) => !prev);
   }, []);
 
-  const play = useCallback(() => setIsPlaying(true), []);
+  const play = useCallback(() => {
+    // Resume AudioContext if suspended (browser autoplay policy)
+    if (audioContextRef.current?.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+    setIsPlaying(true);
+  }, []);
   const pause = useCallback(() => setIsPlaying(false), []);
 
 
@@ -480,6 +638,36 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setPlaylistModalSong(null);
   }, []);
 
+  // Queue management
+  const moveSongInQueue = useCallback((from: number, to: number) => {
+    setSongs(prev => {
+      const updated = [...prev];
+      const [moved] = updated.splice(from, 1);
+      updated.splice(to, 0, moved);
+      // Adjust currentSongIndex to keep the currently playing song correct
+      setCurrentSongIndex(prevIdx => {
+        if (prevIdx === from) return to;
+        if (from < prevIdx && to >= prevIdx) return prevIdx - 1;
+        if (from > prevIdx && to <= prevIdx) return prevIdx + 1;
+        return prevIdx;
+      });
+      return updated;
+    });
+  }, []);
+
+  const removeFromQueue = useCallback((index: number) => {
+    setSongs(prev => {
+      if (prev.length <= 1) return prev;
+      const updated = prev.filter((_, i) => i !== index);
+      setCurrentSongIndex(prevIdx => {
+        if (index < prevIdx) return prevIdx - 1;
+        if (index === prevIdx) return Math.min(prevIdx, updated.length - 1);
+        return prevIdx;
+      });
+      return updated;
+    });
+  }, []);
+
   // Palette Sync
   useEffect(() => {
     const song = songs[currentSongIndex];
@@ -614,6 +802,20 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     playlistModalSong,
     openPlaylistModal,
     closePlaylistModal,
+    // New features
+    playbackSpeed,
+    setPlaybackSpeed,
+    sleepTimerMinutes,
+    setSleepTimer,
+    crossfadeEnabled,
+    setCrossfadeEnabled,
+    crossfadeDuration,
+    setCrossfadeDuration,
+    audioContext: audioContextState,
+    sourceNode: sourceNodeState,
+    eqFilters: eqFiltersState,
+    moveSongInQueue,
+    removeFromQueue,
   };
 
   return (

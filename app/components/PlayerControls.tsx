@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import {
   Play,
   Pause,
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
+import { SleepTimerButton, SleepTimerModal } from "@/app/components/SleepTimer";
 
 export const PlayerControls: React.FC = () => {
   const {
@@ -27,7 +28,13 @@ export const PlayerControls: React.FC = () => {
     toggleShuffle,
     volume,
     setVolume,
+    playbackSpeed,
+    setPlaybackSpeed,
+    sleepTimerMinutes,
+    setSleepTimer,
   } = usePlayer();
+
+  const [isSleepTimerOpen, setIsSleepTimerOpen] = useState(false);
 
   // Keyboard shortcuts are handled globally in PlayerContext — no duplicate handler here
 
@@ -132,7 +139,45 @@ export const PlayerControls: React.FC = () => {
         >
           {isLoop ? <Repeat1 size={20} /> : <Repeat size={20} />}
         </motion.button>
+
+        <div className="w-px h-6 bg-white/10" />
+
+        {/* Playback Speed */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+            const idx = speeds.indexOf(playbackSpeed);
+            setPlaybackSpeed(speeds[(idx + 1) % speeds.length]);
+          }}
+          className={`px-2 py-1 rounded-full text-xs font-mono font-bold transition-all ${
+            playbackSpeed !== 1
+              ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+              : "text-white/40 hover:text-white"
+          }`}
+          title={`Playback speed: ${playbackSpeed}x`}
+        >
+          {playbackSpeed}x
+        </motion.button>
+
+        <div className="w-px h-6 bg-white/10" />
+
+        {/* Sleep Timer */}
+        <SleepTimerButton
+          sleepMinutes={sleepTimerMinutes}
+          onClick={() => setIsSleepTimerOpen(true)}
+        />
       </div>
+
+      {/* Sleep Timer Modal */}
+      <SleepTimerModal
+        isOpen={isSleepTimerOpen}
+        onClose={() => setIsSleepTimerOpen(false)}
+        sleepMinutes={sleepTimerMinutes}
+        onSetTimer={setSleepTimer}
+      />
     </div>
   );
 };

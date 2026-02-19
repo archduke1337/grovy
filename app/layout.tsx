@@ -7,6 +7,7 @@ import { BottomPlayer } from "@/app/components/BottomPlayer";
 import { CommandPalette } from "@/app/components/CommandPalette";
 import { AmbientBackground } from "@/app/components/AmbientBackground";
 import SmoothScroll from "@/app/components/SmoothScroll";
+import { ToastProvider } from "@/app/components/Toast";
 
 const APP_NAME = "Grovy";
 const APP_DESCRIPTION = "A premium open-source music player built for the web. Stream, discover, and enjoy music with a beautiful interface.";
@@ -121,6 +122,7 @@ export default function RootLayout({
       </head>
       <body className="bg-[#f5f5f7] dark:bg-black min-h-screen min-h-dvh overflow-x-hidden antialiased" suppressHydrationWarning>
         <PlayerProvider>
+          <ToastProvider>
           <AmbientBackground />
           <SmoothScroll>
             <CommandPalette />
@@ -130,6 +132,7 @@ export default function RootLayout({
             </main>
             <BottomPlayer />
           </SmoothScroll>
+          </ToastProvider>
           <Analytics />
         </PlayerProvider>
       </body>

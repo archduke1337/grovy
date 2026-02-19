@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -87,6 +88,43 @@ export default function Home() {
   const [greeting, setGreeting] = useState("Hello");
   const [isSearching, setIsSearching] = useState(false);
   const [searchType, setSearchType] = useState<"song" | "artist" | "album" | "playlist">("song");
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const searchParams = useSearchParams();
+
+  // Hydrate search history
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("grovy-search-history");
+      if (saved) setSearchHistory(JSON.parse(saved).slice(0, 8));
+    } catch (e) {}
+  }, []);
+
+  // Handle shared song URL (?play=songId&title=...&artist=...)
+  useEffect(() => {
+    const playId = searchParams.get("play");
+    if (!playId) return;
+    const title = searchParams.get("title") || "";
+    const artist = searchParams.get("artist") || "";
+    // Search for the song and auto-play it
+    loadSongs(title || playId).then((results) => {
+      const match = results.find((s: any) => s.id === playId) || results[0];
+      if (match) {
+        setQueue([match, ...results.filter((s: any) => s.id !== match.id)], 0);
+      }
+    });
+    // Clean URL
+    window.history.replaceState({}, "", "/");
+  }, [searchParams, loadSongs, setQueue]);
+
+  const addToSearchHistory = useCallback((query: string) => {
+    if (!query || query.length < 2) return;
+    setSearchHistory(prev => {
+      const filtered = prev.filter(q => q !== query);
+      const updated = [query, ...filtered].slice(0, 8);
+      localStorage.setItem("grovy-search-history", JSON.stringify(updated));
+      return updated;
+    });
+  }, []);
 
   const fetchTrending = useCallback(async (region = selectedRegion) => {
     setIsSearching(true);
@@ -106,6 +144,7 @@ export default function Home() {
 
   const handleManualSearch = useCallback(async () => {
     setIsSearching(true);
+    addToSearchHistory(searchQuery);
     
     try {
       if (searchType === "song") {
@@ -121,7 +160,7 @@ export default function Home() {
     } finally {
       setIsSearching(false);
     }
-  }, [searchQuery, isLocal, loadSongs, searchType]);
+  }, [searchQuery, isLocal, loadSongs, searchType, addToSearchHistory]);
 
   const handleEntityClick = async (entity: any) => {
     setIsSearching(true);
@@ -255,6 +294,28 @@ export default function Home() {
                 )}
               </div>
             </div>
+
+            {/* Search History Chips */}
+            {searchHistory.length > 0 && !searchQuery && (
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-semibold text-gray-400 dark:text-white/20 uppercase tracking-wider mr-1">Recent:</span>
+                {searchHistory.map((q) => (
+                  <button
+                    key={q}
+                    onClick={() => { setSearchQuery(q); }}
+                    className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-gray-100 dark:bg-white/[0.04] text-gray-600 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-colors truncate max-w-[120px]"
+                  >
+                    {q}
+                  </button>
+                ))}
+                <button
+                  onClick={() => { setSearchHistory([]); localStorage.removeItem("grovy-search-history"); }}
+                  className="text-[10px] text-gray-400 dark:text-white/15 hover:text-red-400 transition-colors ml-1"
+                >
+                  Clear
+                </button>
+              </div>
+            )}
 
             {/* Search Type Pills */}
             {!isLocal && (
@@ -447,7 +508,7 @@ export default function Home() {
                       item.type === 'artist' ? 'rounded-full' : 'rounded-xl sm:rounded-2xl'
                     }`}>
                       {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
+                        <NextImage src={item.image} alt={item.name} width={200} height={200} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center">
                           <Music size={28} className="text-gray-300 dark:text-white/10" />
@@ -538,7 +599,7 @@ export default function Home() {
                   >
                     <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
                       {song.cover ? (
-                        <img src={song.cover} alt={song.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
+                        <NextImage src={song.cover} alt={song.title} width={160} height={160} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center"><Music size={22} className="text-gray-300 dark:text-white/10" /></div>
                       )}
@@ -591,7 +652,7 @@ export default function Home() {
               {/* Brand Column */}
               <div className="col-span-2 sm:col-span-1 space-y-3">
                 <div className="flex items-center gap-2">
-                  <img src="/icons/logo.png" alt="Grovy" className="w-7 h-7" />
+                  <NextImage src="/icons/logo.png" alt="Grovy" width={28} height={28} className="w-7 h-7" />
                   <span className="font-bold text-gray-900 dark:text-white" style={{ fontFamily: "'Silkscreen', cursive" }}>Grovy</span>
                 </div>
                 <p className="text-[12px] sm:text-[13px] text-gray-400 dark:text-white/25 leading-relaxed max-w-[240px]">

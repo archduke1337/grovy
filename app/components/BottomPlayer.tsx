@@ -5,6 +5,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music } from "lucide-react";
 import { MusicPlayer } from "./MusicPlayer";
+import NextImage from "next/image";
 
 export const BottomPlayer = () => {
   const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek } = usePlayer();
@@ -51,7 +52,7 @@ export const BottomPlayer = () => {
             >
               <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden relative shadow-lg border border-white/10 shrink-0">
                 {currentSong?.cover ? (
-                  <img src={currentSong.cover} alt={currentSong.title} className="w-full h-full object-cover animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }} />
+                  <NextImage src={currentSong.cover} alt={currentSong.title} width={48} height={48} className="w-full h-full object-cover animate-[spin_8s_linear_infinite]" style={{ animationPlayState: isPlaying ? 'running' : 'paused' }} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-white/10">
                     <Music size={18} className="text-white" />
