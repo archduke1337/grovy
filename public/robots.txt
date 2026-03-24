@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /*.json$
+Disallow: /*.js$
+Disallow: /*.css$
+
+Sitemap: https://grovy.vercel.app/sitemap.xml
+
+# Crawl delay
+Crawl-delay: 0
+
+# Fast crawling
+Request-rate: 60/1m

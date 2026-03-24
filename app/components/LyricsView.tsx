@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { getLyrics } from "@/app/lib/api";
 import { X, Music } from "lucide-react";
+import NextImage from "next/image";
+import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { songs, currentSongIndex, currentTime, duration, colors, isCommandPaletteOpen, seek } = usePlayer();
