@@ -301,6 +301,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Sync Timer for both players (throttled to ~1Hz to reduce re-renders)
   useEffect(() => {
+    if (!isPlaying) return;
+
     const interval = setInterval(() => {
       const currentSong = songs[currentSongIndex];
       if (!currentSong) return;
