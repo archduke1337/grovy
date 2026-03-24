@@ -527,6 +527,52 @@ function HomeContent() {
           variants={containerVariants} 
           className="space-y-12 sm:space-y-16 relative z-10"
         >
+          {/* Recently Played */}
+          {recentlyPlayed.length > 0 && !searchQuery && !selectedGenre && (
+            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
+                  Recently Played
+                </h2>
+                <button 
+                  onClick={clearHistory} 
+                  className="text-[11px] sm:text-[12px] font-semibold text-gray-400 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
+                >
+                  Clear All
+                </button>
+              </div>
+              
+              <div className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+                {recentlyPlayed.map((song) => (
+                  <motion.div
+                    key={`recent-${song.id}`}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setQueue([song, ...songs.filter(s => s.id !== song.id)], 0)}
+                    className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] group cursor-pointer snap-start"
+                  >
+                    <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+                      {song.cover ? (
+                        <NextImage src={song.cover} alt={song.title} width={160} height={160} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"><Music size={22} className="text-gray-300 dark:text-white/10" /></div>
+                      )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-9 sm:w-10 h-9 sm:h-10 bg-white/90 dark:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl">
+                          <Play size={13} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-0.5">
+                      <h4 className="font-semibold text-gray-900 dark:text-white truncate text-[12px] sm:text-[13px]">{song.title}</h4>
+                      <p className="text-gray-500 dark:text-white/25 text-[10px] sm:text-[11px] font-medium truncate mt-0.5">{song.artist}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.section>
+          )}
+
           {/* Results Grid */}
           <section className="space-y-5 sm:space-y-6">
             <div className="flex items-center justify-between">
@@ -544,7 +590,7 @@ function HomeContent() {
                     ? selectedGenre 
                     : searchQuery 
                       ? `"${searchQuery}"` 
-                      : "For You"}
+                      : "Listen Now"}
                 </h2>
               </div>
               {searchResults.length > 0 && (
@@ -765,52 +811,6 @@ function HomeContent() {
                       {artist.name}
                     </span>
                   </motion.button>
-                ))}
-              </div>
-            </motion.section>
-          )}
-
-          {/* Recently Played */}
-          {recentlyPlayed.length > 0 && searchType === "song" && (
-            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                  Jump Back In
-                </h2>
-                <button 
-                  onClick={clearHistory} 
-                  className="text-[11px] sm:text-[12px] font-semibold text-gray-400 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                >
-                  Clear All
-                </button>
-              </div>
-              
-              <div className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
-                {recentlyPlayed.map((song) => (
-                  <motion.div
-                    key={`recent-${song.id}`}
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    onClick={() => setQueue([song, ...songs.filter(s => s.id !== song.id)], 0)}
-                    className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] group cursor-pointer snap-start"
-                  >
-                    <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-                      {song.cover ? (
-                        <NextImage src={song.cover} alt={song.title} width={160} height={160} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Music size={22} className="text-gray-300 dark:text-white/10" /></div>
-                      )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                        <div className="w-9 sm:w-10 h-9 sm:h-10 bg-white/90 dark:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl">
-                          <Play size={13} fill="currentColor" className="text-black dark:text-white ml-0.5" />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="px-0.5">
-                      <h4 className="font-semibold text-gray-900 dark:text-white truncate text-[12px] sm:text-[13px]">{song.title}</h4>
-                      <p className="text-gray-500 dark:text-white/25 text-[10px] sm:text-[11px] font-medium truncate mt-0.5">{song.artist}</p>
-                    </div>
-                  </motion.div>
                 ))}
               </div>
             </motion.section>

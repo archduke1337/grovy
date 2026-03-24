@@ -20,13 +20,103 @@ export const BottomPlayer = () => {
 
   return (
     <>
-      {/* Mini Player Bar */}
+      {/* Integrated Player Bar (Desktop/LG) */}
+      {!isMiniMode && (
+        <motion.div 
+          initial={{ y: 100 }}
+          animate={{ y: 0 }}
+          className="fixed bottom-0 left-0 lg:left-64 right-0 z-[50] bg-white/80 dark:bg-[#121212]/90 backdrop-blur-2xl border-t border-black/[0.05] dark:border-white/[0.05] hidden lg:block"
+        >
+          <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between gap-8">
+            {/* Song Info */}
+            <div className="flex items-center gap-4 w-1/4 min-w-0 group cursor-pointer" onClick={() => setIsExpanded(true)}>
+              <div className="w-14 h-14 rounded-lg overflow-hidden shadow-lg border border-black/5 dark:border-white/5 relative shrink-0">
+                {currentSong?.cover ? (
+                  <NextImage src={currentSong.cover} alt={currentSong.title} width={56} height={56} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-white/10">
+                    <Music size={20} className="text-gray-400 dark:text-white/40" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <ChevronUp size={20} className="text-white" />
+                </div>
+              </div>
+              <div className="flex flex-col min-w-0">
+                <h4 className="font-bold text-[14px] text-gray-900 dark:text-white truncate">
+                  {currentSong?.title}
+                </h4>
+                <p className="text-[12px] text-gray-500 dark:text-white/40 truncate font-medium">
+                  {currentSong?.artist}
+                </p>
+              </div>
+            </div>
+
+            {/* Controls & Progress */}
+            <div className="flex flex-col items-center gap-2 flex-1 max-w-2xl">
+              <div className="flex items-center gap-6">
+                <button onClick={previousTrack} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  <SkipBack size={20} fill="currentColor" strokeWidth={0} />
+                </button>
+                <motion.button 
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={togglePlayPause}
+                  className="w-10 h-10 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black flex items-center justify-center shadow-md hover:brightness-110"
+                >
+                  {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
+                </motion.button>
+                <button onClick={nextTrack} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                  <SkipForward size={20} fill="currentColor" strokeWidth={0} />
+                </button>
+              </div>
+
+              <div className="w-full flex items-center gap-3">
+                <span className="text-[10px] tabular-nums text-gray-400 font-medium w-8 text-right">
+                  {Math.floor(currentTime / 60)}:{Math.floor(currentTime % 60).toString().padStart(2, '0')}
+                </span>
+                <div 
+                  className="flex-1 h-1 bg-black/[0.05] dark:bg-white/10 rounded-full cursor-pointer group relative"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    seek(((e.clientX - rect.left) / rect.width) * duration);
+                  }}
+                >
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 left-0 h-full bg-pink-500 dark:bg-pink-400 rounded-full"
+                    style={{ width: `${progress}%` }}
+                  />
+                  <div 
+                    className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-white border border-black/10 rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+                    style={{ left: `${progress}%`, marginLeft: '-6px' }}
+                  />
+                </div>
+                <span className="text-[10px] tabular-nums text-gray-400 font-medium w-8">
+                  {Math.floor(duration / 60)}:{Math.floor(duration % 60).toString().padStart(2, '0')}
+                </span>
+              </div>
+            </div>
+
+            {/* Extra Controls */}
+            <div className="flex items-center gap-4 w-1/4 justify-end">
+              <button
+                onClick={() => setIsMiniMode(true)}
+                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
+                title="Mini player"
+              >
+                <Minimize2 size={18} />
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Floating Pill Player (Mobile/Tablet) */}
       {!isMiniMode && (
       <motion.div 
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        style={{ willChange: "transform" }}
-        className="fixed bottom-2 sm:bottom-4 md:bottom-6 left-2 right-2 sm:left-4 sm:right-4 md:left-1/2 md:-translate-x-1/2 md:max-w-[680px] z-50 safe-bottom"
+        className="fixed bottom-4 left-4 right-4 z-50 lg:hidden"
       >
         <div 
           className="rounded-2xl sm:rounded-[2.5rem] md:rounded-[3rem] overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 relative backdrop-blur-3xl bg-black/70"

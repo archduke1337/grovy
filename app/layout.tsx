@@ -3,6 +3,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { PlayerProvider } from "@/app/context/PlayerContext";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
+import { Sidebar } from "@/app/components/Sidebar";
 import { BottomPlayer } from "@/app/components/BottomPlayer";
 import { CommandPalette } from "@/app/components/CommandPalette";
 import { AmbientBackground } from "@/app/components/AmbientBackground";
@@ -126,14 +127,19 @@ export default function RootLayout({
           <ToastProvider>
           <AmbientBackground />
           <KeyboardShortcuts />
-          <SmoothScroll>
-            <CommandPalette />
-            <Navbar />
-            <main className="min-h-screen min-h-dvh pt-14 sm:pt-16 md:pt-20 pb-28 sm:pb-32 safe-bottom">
-              {children}
-            </main>
-            <BottomPlayer />
-          </SmoothScroll>
+          <div className="flex">
+            <Sidebar />
+            <div className="flex-1 lg:ml-64 relative min-h-screen min-h-dvh flex flex-col">
+              <SmoothScroll>
+                <CommandPalette />
+                <Navbar />
+                <main className="flex-1 pt-14 sm:pt-16 md:pt-20 pb-28 sm:pb-32 safe-bottom">
+                  {children}
+                </main>
+                <BottomPlayer />
+              </SmoothScroll>
+            </div>
+          </div>
           </ToastProvider>
           <Analytics />
         </PlayerProvider>

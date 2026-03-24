@@ -10,6 +10,9 @@ const DB_VERSION = 1;
 const STORES = {
   songs: "songs",        // Cached song metadata by ID
   searches: "searches",  // Cached search results by query
+  playlists: "playlists", // User playlists
+  favorites: "favorites", // Favorite song IDs
+  history: "history",     // Recently played songs
 } as const;
 
 // Singleton DB connection to prevent connection leaks
@@ -26,6 +29,16 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains(STORES.searches)) {
         const store = db.createObjectStore(STORES.searches, { keyPath: "query" });
+        store.createIndex("timestamp", "timestamp");
+      }
+      if (!db.objectStoreNames.contains(STORES.playlists)) {
+        db.createObjectStore(STORES.playlists, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(STORES.favorites)) {
+        db.createObjectStore(STORES.favorites, { keyPath: "id" });
+      }
+      if (!db.objectStoreNames.contains(STORES.history)) {
+        const store = db.createObjectStore(STORES.history, { keyPath: "id" });
         store.createIndex("timestamp", "timestamp");
       }
     };
@@ -104,6 +117,96 @@ export async function getCachedSearch(query: string, maxAge = 5 * 60 * 1000): Pr
     });
   } catch (e) {
     return null;
+  }
+}
+
+// ─── User Playlists ───
+
+export async function savePlaylists(playlists: any[]): Promise<void> {
+  try {
+    const db = await openDB();
+    const store = tx(db, STORES.playlists, "readwrite");
+    // Clear and re-save is simplest for small sets
+    store.clear();
+    for (const pl of playlists) {
+      store.put(pl);
+    }
+  } catch (e) {}
+}
+
+export async function getPlaylists(): Promise<any[]> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const req = tx(db, STORES.playlists, "readonly").getAll();
+      req.onsuccess = () => resolve(req.result || []);
+      req.onerror = () => resolve([]);
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+// ─── Favorites ───
+
+export async function saveFavorites(favoriteIds: string[]): Promise<void> {
+  try {
+    const db = await openDB();
+    const store = tx(db, STORES.favorites, "readwrite");
+    store.clear();
+    for (const id of favoriteIds) {
+      store.put({ id });
+    }
+  } catch (e) {}
+}
+
+export async function getFavorites(): Promise<string[]> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const req = tx(db, STORES.favorites, "readonly").getAll();
+      req.onsuccess = () => resolve((req.result || []).map((f: any) => f.id));
+      req.onerror = () => resolve([]);
+    });
+  } catch (e) {
+    return [];
+  }
+}
+
+// ─── History ───
+
+export async function addToHistory(song: any): Promise<void> {
+  try {
+    const db = await openDB();
+    const store = tx(db, STORES.history, "readwrite");
+    store.put({ ...song, timestamp: Date.now() });
+    
+    // Limit history to 50 items
+    const countReq = store.count();
+    countReq.onsuccess = () => {
+      if (countReq.result > 50) {
+        const idx = store.index("timestamp");
+        idx.openCursor().onsuccess = (e: any) => {
+          const cursor = e.target.result;
+          if (cursor) cursor.delete();
+        };
+      }
+    };
+  } catch (e) {}
+}
+
+export async function getHistory(): Promise<any[]> {
+  try {
+    const db = await openDB();
+    return new Promise((resolve) => {
+      const store = tx(db, STORES.history, "readonly");
+      const idx = store.index("timestamp");
+      const req = idx.getAll(); // get all sorted by timestamp
+      req.onsuccess = () => resolve((req.result || []).reverse()); // Newest first
+      req.onerror = () => resolve([]);
+    });
+  } catch (e) {
+    return [];
   }
 }
 

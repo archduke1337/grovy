@@ -12,6 +12,14 @@ import React, {
 
 import { Song, Playlist } from "@/app/types/song";
 import { searchSongs, getRadioSongs, getRelatedSongs } from "@/app/lib/api";
+import { 
+  getPlaylists, 
+  savePlaylists, 
+  getFavorites, 
+  saveFavorites, 
+  getHistory, 
+  addToHistory 
+} from "@/app/lib/offlineCache";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
 import Hls from "hls.js";
 
@@ -154,31 +162,45 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Hydrate history
-    try {
-      const saved = localStorage.getItem("grovy-history");
-      if (saved) setRecentlyPlayed(JSON.parse(saved).slice(0, 20));
-      
-      const favs = localStorage.getItem("grovy-favorites");
-      if (favs) setFavorites(JSON.parse(favs));
-
-      const savedPlaylists = localStorage.getItem("grovy-playlists");
-      if (savedPlaylists) setPlaylists(JSON.parse(savedPlaylists));
-
-      // Restore persistent queue
-      const savedQueue = localStorage.getItem("grovy-queue");
-      if (savedQueue) {
-        const { songs: savedSongs, index } = JSON.parse(savedQueue);
-        if (Array.isArray(savedSongs) && savedSongs.length > 0) {
-          setSongs(savedSongs);
-          setCurrentSongIndex(Math.min(index || 0, savedSongs.length - 1));
+    // Hydrate from IndexedDB & LocalStorage
+    (async () => {
+      try {
+        const hist = await getHistory();
+        if (hist && hist.length > 0) setRecentlyPlayed(hist);
+        else {
+          const saved = localStorage.getItem("grovy-history");
+          if (saved) setRecentlyPlayed(JSON.parse(saved).slice(0, 20));
         }
-      }
+        
+        const favs = await getFavorites();
+        if (favs && favs.length > 0) setFavorites(favs);
+        else {
+          const savedFavs = localStorage.getItem("grovy-favorites");
+          if (savedFavs) setFavorites(JSON.parse(savedFavs));
+        }
 
-      // Restore playback speed
-      const savedSpeed = localStorage.getItem("grovy-speed");
-      if (savedSpeed) setPlaybackSpeedState(parseFloat(savedSpeed) || 1);
-    } catch (e) {}
+        const savedPlaylists = await getPlaylists();
+        if (savedPlaylists && savedPlaylists.length > 0) setPlaylists(savedPlaylists);
+        else {
+          const localPlaylists = localStorage.getItem("grovy-playlists");
+          if (localPlaylists) setPlaylists(JSON.parse(localPlaylists));
+        }
+
+        // Restore persistent queue
+        const savedQueue = localStorage.getItem("grovy-queue");
+        if (savedQueue) {
+          const { songs: savedSongs, index } = JSON.parse(savedQueue);
+          if (Array.isArray(savedSongs) && savedSongs.length > 0) {
+            setSongs(savedSongs);
+            setCurrentSongIndex(Math.min(index || 0, savedSongs.length - 1));
+          }
+        }
+
+        // Restore playback speed
+        const savedSpeed = localStorage.getItem("grovy-speed");
+        if (savedSpeed) setPlaybackSpeedState(parseFloat(savedSpeed) || 1);
+      } catch (e) {}
+    })();
 
     // Define the YT initialization function FIRST (before checking if API is loaded)
     window.onYouTubeIframeAPIReady = () => {
@@ -755,19 +777,22 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setRecentlyPlayed((prev) => {
       const filtered = prev.filter((s) => s.id !== song.id);
       const updated = [song, ...filtered].slice(0, 20);
+      addToHistory(song); // IndexedDB
       localStorage.setItem("grovy-history", JSON.stringify(updated));
       return updated;
     });
   }, [currentSongIndex, songs]);
 
-  // Sync Favorites to LocalStorage
+  // Sync Favorites to LocalStorage & IndexedDB
   useEffect(() => {
     localStorage.setItem("grovy-favorites", JSON.stringify(favorites));
+    saveFavorites(favorites);
   }, [favorites]);
 
-  // Sync Playlists to LocalStorage
+  // Sync Playlists to LocalStorage & IndexedDB
   useEffect(() => {
     localStorage.setItem("grovy-playlists", JSON.stringify(playlists));
+    savePlaylists(playlists);
   }, [playlists]);
 
   // Sync Play/Pause Global Action

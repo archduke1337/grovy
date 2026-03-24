@@ -117,6 +117,26 @@ body {
   background: rgba(30, 30, 30, 0.8);
 }
 
+/* Apple Music Style Glass */
+.apple-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+:is(.dark) .apple-glass {
+  background: rgba(25, 25, 25, 0.75);
+}
+
+/* Soft Apple Shadows */
+.apple-shadow {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+:is(.dark) .apple-shadow {
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
 /* ──────────────────────────────────────────────
    Player Range Inputs
    ────────────────────────────────────────────── */

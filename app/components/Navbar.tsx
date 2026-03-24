@@ -126,7 +126,7 @@ export const Navbar = () => {
           </div>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden md:flex lg:hidden items-center gap-2">
             <div className="flex items-center gap-0.5 p-1 bg-black/[0.03] dark:bg-white/[0.04] rounded-xl">
               {navItems.map((item) => {
                 const isActive = pathname === item.path;
@@ -170,6 +170,24 @@ export const Navbar = () => {
                 <Github size={16} className="group-hover:scale-110 transition-transform" />
               </Link>
             </div>
+          </div>
+
+          <div className="hidden lg:flex items-center gap-1">
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                aria-label="Toggle theme"
+                suppressHydrationWarning
+              >
+                {isDark ? <Sun size={16} className="group-hover:rotate-45 transition-transform" /> : <Moon size={16} className="group-hover:-rotate-12 transition-transform" />}
+              </button>
+              <Link
+                href="https://github.com/archduke1337/grovy"
+                target="_blank"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+              >
+                <Github size={16} className="group-hover:scale-110 transition-transform" />
+              </Link>
           </div>
 
           {/* Mobile Actions */}
