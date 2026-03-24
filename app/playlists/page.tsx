@@ -2,9 +2,9 @@
 
 import React, { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Music, Plus, PlayCircle, Folder, Download, Upload } from "lucide-react";
+import { Music, Plus, PlayCircle, Folder, Download, Upload, Trash2, X } from "lucide-react";
 import Image from "next/image";
 
 export default function PlaylistsPage() {
@@ -43,7 +43,6 @@ export default function PlaylistsPage() {
           alert("No playlists found in file.");
           return;
         }
-        // Add imported playlists with new IDs to avoid collision
         let count = 0;
         for (const pl of imported) {
           if (pl.name && Array.isArray(pl.songs)) {
@@ -51,131 +50,126 @@ export default function PlaylistsPage() {
             count++;
           }
         }
-        if (count > 0) {
-          alert(`Imported ${count} playlist(s).`);
-        }
+        if (count > 0) alert(`Imported ${count} playlist(s).`);
       } catch (err) {
         alert("Failed to parse playlist file.");
       }
     };
     reader.readAsText(file);
-    // Reset input so same file can be re-imported
     e.target.value = "";
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8 pt-8 sm:pt-12 pb-32 sm:pb-40 space-y-8 sm:space-y-10">
-      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4 sm:gap-6">
-        <div className="space-y-3 sm:space-y-4">
-           <div className="flex items-center gap-2 font-bold uppercase text-[10px] sm:text-[11px] tracking-[0.2em] text-gray-400 dark:text-white/20">
-             <Folder size={14} />
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+    >
+      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
+        <div className="space-y-4">
+           <div className="flex items-center gap-3 font-black uppercase text-[11px] sm:text-[12px] tracking-[0.25em] text-blue-500">
+             <Folder size={16} />
              <span>Your Library</span>
            </div>
-           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-gray-900 dark:text-white tracking-[-0.03em]">
-             Playlists<span className="text-gray-200 dark:text-white/10">.</span>
+           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
+             Playlists<span className="text-blue-500/20">.</span>
            </h1>
         </div>
-        <div className="flex items-center gap-2">
+        
+        <div className="flex items-center gap-3">
           <button
             onClick={handleExportAll}
             disabled={playlists.length === 0}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-medium disabled:opacity-30 disabled:cursor-not-allowed"
-            title="Export all playlists"
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-all disabled:opacity-20 active:scale-95"
           >
-            <Download size={14} />
-            <span className="hidden sm:inline">Export</span>
+            <Download size={16} />
+            <span>Export</span>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/10 transition-all text-xs font-medium"
-            title="Import playlists"
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-all active:scale-95"
           >
-            <Upload size={14} />
-            <span className="hidden sm:inline">Import</span>
+            <Upload size={16} />
+            <span>Import</span>
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-          />
+          <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
         </div>
       </header>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 md:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
         {/* Create New Card */}
         <motion.div
-          onClick={() => setIsCreating(true)}
-          role="button"
-          tabIndex={0}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setIsCreating(true);
-            }
-          }}
-          whileHover={{ scale: 1.02 }}
+          onClick={() => !isCreating && setIsCreating(true)}
+          whileHover={{ scale: 1.02, y: -4 }}
           whileTap={{ scale: 0.98 }}
-          className="aspect-square rounded-xl sm:rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/[0.06] hover:border-gray-400 dark:hover:border-white/15 flex flex-col items-center justify-center gap-3 sm:gap-4 group transition-all w-full h-full cursor-pointer"
+          className="aspect-square rounded-[2rem] sm:rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/[0.06] hover:border-blue-500/50 dark:hover:border-blue-500/30 flex flex-col items-center justify-center gap-4 group transition-all cursor-pointer relative overflow-hidden bg-gray-50 dark:bg-white/[0.01]"
         >
           {isCreating ? (
-            <div className="w-full px-4 sm:px-6 space-y-2 sm:space-y-3" onClick={(e) => e.stopPropagation()}>
-               <input
-                 autoFocus
-                 type="text"
-                 placeholder="Name..."
-                 value={newName}
-                 onChange={(e) => setNewName(e.target.value)}
-                 onKeyDown={(e) => {
-                    if (e.key === "Enter") handleCreate();
-                    if (e.key === "Escape") setIsCreating(false);
-                 }}
-                 className="w-full text-center bg-transparent border-b border-gray-300 dark:border-white/15 focus:border-gray-500 dark:focus:border-white/30 outline-none py-2 font-bold text-base sm:text-lg text-gray-900 dark:text-white"
-               />
-               <div className="flex gap-3 justify-center">
-                 <button onClick={handleCreate} className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-blue-500 hover:text-blue-600 transition-colors">Create</button>
-                 <button onClick={() => setIsCreating(false)} className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-400 hover:text-gray-500 transition-colors">Cancel</button>
+            <div className="w-full px-6 space-y-4 text-center z-10" onClick={(e) => e.stopPropagation()}>
+               <div className="space-y-1">
+                 <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">New Playlist</p>
+                 <input
+                   autoFocus
+                   type="text"
+                   placeholder="My Mix..."
+                   value={newName}
+                   onChange={(e) => setNewName(e.target.value)}
+                   onKeyDown={(e) => {
+                      if (e.key === "Enter") handleCreate();
+                      if (e.key === "Escape") setIsCreating(false);
+                   }}
+                   className="w-full text-center bg-transparent border-none outline-none font-black text-xl sm:text-2xl text-gray-900 dark:text-white placeholder:text-gray-300 dark:placeholder:text-white/10"
+                 />
+               </div>
+               <div className="flex gap-2 justify-center">
+                 <button onClick={handleCreate} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform">Create</button>
+                 <button onClick={() => setIsCreating(false)} className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-white/40 text-[11px] font-black uppercase tracking-widest hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">Cancel</button>
                </div>
             </div>
           ) : (
             <>
-              <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 rounded-full bg-gray-100 dark:bg-white/[0.04] group-hover:bg-gray-200 dark:group-hover:bg-white/[0.08] flex items-center justify-center transition-colors">
-                <Plus size={24} className="text-gray-400 dark:text-white/25 sm:w-7 sm:h-7" />
+              <div className="w-16 h-16 rounded-3xl bg-blue-500/10 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-blue-500 group-hover:shadow-2xl group-hover:shadow-blue-500/40">
+                <Plus size={32} className="text-blue-500 group-hover:text-white transition-colors" />
               </div>
-              <span className="font-semibold text-[13px] sm:text-[14px] text-gray-400 dark:text-white/25 group-hover:text-gray-600 dark:group-hover:text-white/40 transition-colors">Create Playlist</span>
+              <span className="font-black text-[13px] sm:text-[14px] text-gray-400 dark:text-white/20 uppercase tracking-widest">New Playlist</span>
             </>
           )}
         </motion.div>
 
         {/* Existing Playlists */}
-        {playlists.map((playlist) => (
-          <Link href={`/playlists/${playlist.id}`} key={playlist.id}>
-            <motion.div
-              whileHover={{ scale: 1.02, y: -5 }}
-              whileTap={{ scale: 0.98 }}
-              className="group aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden shadow-lg bg-gray-100 dark:bg-gray-800 w-full h-full"
-            >
-              {playlist.songs.length > 0 && playlist.songs[0].cover ? (
-                <Image src={playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-700 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900">
-                  <Music size={36} className="text-gray-300 dark:text-gray-600 sm:w-12 sm:h-12" />
+        <AnimatePresence>
+          {playlists.map((playlist) => (
+            <Link href={`/playlists/${playlist.id}`} key={playlist.id}>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.02, y: -8 }}
+                whileTap={{ scale: 0.98 }}
+                className="group aspect-square relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-xl bg-gray-100 dark:bg-white/[0.03]"
+              >
+                {playlist.songs.length > 0 && playlist.songs[0].cover ? (
+                  <Image src={playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/[0.02] dark:to-white/[0.05]">
+                    <Music size={48} className="text-gray-300 dark:text-white/10" />
+                  </div>
+                )}
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                   <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate leading-tight">{playlist.name}</h3>
+                   <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">{playlist.songs.length} Tracks</p>
+                   
+                   <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                      <div className="w-14 h-14 rounded-full bg-white/95 dark:bg-white/10 backdrop-blur-2xl flex items-center justify-center shadow-2xl">
+                        <PlayCircle size={32} className="text-black dark:text-white" />
+                      </div>
+                   </div>
                 </div>
-              )}
-              
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4 sm:p-6">
-                 <h3 className="text-base sm:text-xl font-bold text-white tracking-tight truncate">{playlist.name}</h3>
-                 <p className="text-[10px] sm:text-xs font-medium text-white/50 uppercase tracking-wider">{playlist.songs.length} Tracks</p>
-                 
-                 <div className="absolute top-3 sm:top-4 right-3 sm:right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <PlayCircle size={36} className="text-white fill-white/20 backdrop-blur-md rounded-full sm:w-12 sm:h-12" />
-                 </div>
-              </div>
-            </motion.div>
-          </Link>
-        ))}
+              </motion.div>
+            </Link>
+          ))}
+        </AnimatePresence>
       </div>
-    </div>
+    </motion.div>
   );
 }
