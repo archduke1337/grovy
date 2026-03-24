@@ -11,7 +11,8 @@ import {
   Clock, 
   Heart, 
   Plus, 
-  Music
+  Music,
+  Radio
 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import Image from "next/image";
@@ -19,14 +20,12 @@ import Image from "next/image";
 const mainNav = [
   { name: "Home", path: "/", icon: Home },
   { name: "Browse", path: "/browse", icon: Music2 },
-  { name: "Radio", path: "/radio", icon: Search }, // Using Search as placeholder for Radio icon
+  { name: "Radio", path: "/radio", icon: Radio },
 ];
 
 const libraryNav = [
   { name: "Recently Played", path: "/history", icon: Clock },
   { name: "Favorite Songs", path: "/favorites", icon: Heart },
-  { name: "Albums", path: "/albums", icon: Library },
-  { name: "Artists", path: "/artists", icon: Music },
 ];
 
 export const Sidebar = () => {

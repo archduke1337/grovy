@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Music, Moon, Sun, Menu, X, Github, Code } from "lucide-react";
+import { Home, Music, Moon, Sun, Menu, X, Github, Code, Music2, Radio, Library } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
@@ -12,8 +12,9 @@ import { AddToPlaylistModal } from "./AddToPlaylistModal";
 
 const navItems = [
   { name: "Home", path: "/", icon: Home },
-  { name: "Playlists", path: "/playlists", icon: Music },
-  { name: "Open Source", path: "/opensource", icon: Code },
+  { name: "Browse", path: "/browse", icon: Music2 },
+  { name: "Radio", path: "/radio", icon: Radio },
+  { name: "Library", path: "/playlists", icon: Library },
 ];
 
 export const Navbar = () => {

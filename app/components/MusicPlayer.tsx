@@ -5,7 +5,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { PlayerControls } from "./PlayerControls";
 import { Playlist } from "./Playlist";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, Heart, ListPlus, LayoutList, ChevronDown } from "lucide-react";
+import { Music, Heart, ListPlus, LayoutList, ChevronDown, Settings2, Plus } from "lucide-react";
 import { LyricsView } from "./LyricsView";
 import { RelatedTracks } from "./RelatedTracks";
 import { ArtistInfo } from "./ArtistInfo";
@@ -159,14 +159,33 @@ export const MusicPlayer: React.FC = () => {
                   </div>
 
                   <div className="flex items-center justify-center lg:justify-start gap-6">
-                      <button onClick={() => toggleFavorite(currentSong?.id || "")} className={favorite ? "text-pink-500" : "text-white/40 hover:text-white"}>
+                      <button 
+                        onClick={() => toggleFavorite(currentSong?.id || "")} 
+                        className={`transition-all ${favorite ? "text-pink-500 scale-110" : "text-white/40 hover:text-white"}`}
+                        title="Favorite"
+                      >
                         <Heart size={22} fill={favorite ? "currentColor" : "none"} />
                       </button>
-                      <button onClick={() => setIsLyricsOpen(true)} className="text-white/40 hover:text-white">
+                      <button 
+                        onClick={() => setIsLyricsOpen(true)} 
+                        className="text-white/40 hover:text-white transition-all hover:scale-110"
+                        title="Lyrics"
+                      >
                         <Music size={22} />
                       </button>
-                      <button onClick={() => setIsEqOpen(true)} className="text-white/40 hover:text-white">
-                        <ListPlus size={22} />
+                      <button 
+                        onClick={() => currentSong && openPlaylistModal(currentSong)} 
+                        className="text-white/40 hover:text-white transition-all hover:scale-110"
+                        title="Add to Playlist"
+                      >
+                        <Plus size={22} />
+                      </button>
+                      <button 
+                        onClick={() => setIsEqOpen(true)} 
+                        className="text-white/40 hover:text-white transition-all hover:scale-110"
+                        title="Equalizer"
+                      >
+                        <Settings2 size={22} />
                       </button>
                       {currentSong && <ShareButton song={currentSong} />}
                   </div>
