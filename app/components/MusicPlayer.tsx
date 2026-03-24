@@ -60,266 +60,139 @@ export const MusicPlayer: React.FC = () => {
       
       {/* Immersive Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-         <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[80%] h-[60%] bg-white/[0.04] blur-[80px] sm:blur-[120px] rounded-full mix-blend-screen pointer-events-none" />
          <motion.div 
            animate={{ 
-             background: `radial-gradient(circle at 50% 120%, ${colors.primary}15, transparent 70%)`,
+             background: `radial-gradient(circle at 50% 50%, ${colors.primary}30, #000 100%)`,
            }}
            transition={{ duration: 2 }}
-           className="absolute inset-0 opacity-50 mix-blend-screen"
+           className="absolute inset-0 opacity-60 mix-blend-screen"
          />
-         <AmbientBackground className="absolute opacity-15 saturate-150 mix-blend-plus-lighter" />
-         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,#000000_100%)]" />
+         <AmbientBackground className="absolute opacity-20 saturate-150 mix-blend-plus-lighter" />
+         <div className="absolute inset-0 bg-black/40 backdrop-blur-3xl" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="w-full h-full max-w-[1400px] flex flex-col lg:flex-row items-center justify-center gap-3 sm:gap-4 lg:gap-10 z-10 p-3 pt-10 sm:p-6 sm:pt-10 lg:p-10 relative"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="w-full h-full max-w-6xl flex flex-col lg:flex-row items-center justify-center gap-12 z-10 p-6 relative"
       >
-        {/* Mobile-Only Header toggle */}
-        <div className="lg:hidden absolute top-6 left-0 right-0 flex justify-between px-6 z-30">
-           <button 
-             onClick={() => setShowQueueOnMobile(false)} 
-             className={`p-2 rounded-full transition-all ${!showQueueOnMobile ? "text-white bg-white/10" : "text-white/30"}`}
-           >
-              <Music size={20} />
+        {/* Mobile Header */}
+        <div className="lg:hidden absolute top-6 left-0 right-0 flex justify-between px-8 z-30">
+           <button onClick={() => setShowQueueOnMobile(false)} className={`p-2 transition-all ${!showQueueOnMobile ? "text-white" : "text-white/30"}`}>
+              <Music size={22} />
            </button>
-           <button 
-             onClick={() => setShowQueueOnMobile(true)} 
-             className={`p-2 rounded-full transition-all ${showQueueOnMobile ? "text-white bg-white/10" : "text-white/30"}`}
-           >
-              <LayoutList size={20} />
+           <button onClick={() => setShowQueueOnMobile(true)} className={`p-2 transition-all ${showQueueOnMobile ? "text-white" : "text-white/30"}`}>
+              <LayoutList size={22} />
            </button>
         </div>
 
-        {/* Center: Art & Controls (Hidden when Queue is shown on mobile) */}
         <AnimatePresence mode="wait">
           {!showQueueOnMobile || isDesktop ? (
             <motion.div 
               key="player-main"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="w-full lg:w-1/2 flex flex-col items-center justify-center gap-2 sm:gap-3 lg:gap-5 flex-1 lg:h-full min-h-0 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="w-full lg:w-1/2 flex flex-col items-center gap-8"
             >
-               {/* Album Art */}
-               <div className="flex-1 flex items-center justify-center min-h-0 w-full max-h-[35vh] sm:max-h-[40vh] lg:max-h-[50vh]">
-                 <motion.div
-                  layoutId={`art-${currentSongIndex}`}
-                  className="relative aspect-square h-full max-h-[200px] sm:max-h-[280px] md:max-h-[340px] lg:max-h-[420px] w-auto group z-20"
-                 >
-                    <motion.div 
-                      animate={{ 
-                        opacity: isPlaying ? 0.4 : 0.15,
-                        scale: isPlaying ? 1.05 : 1,
-                        background: `linear-gradient(180deg, ${colors.primary}, ${colors.secondary})`
-                      }}
-                      transition={{ duration: 4, repeat: Infinity, repeatType: "mirror" }}
-                      className="absolute inset-0 blur-[40px] sm:blur-[60px] rounded-full opacity-20" 
-                    />
-                    
-                    <motion.div 
-                      whileHover={{ scale: 1.02 }}
-                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      className="relative w-full h-full rounded-[1rem] sm:rounded-[1.5rem] lg:rounded-[2rem] overflow-hidden shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)] border border-white/10 bg-[#1a1a1a]"
-                    >
-                       {currentSong?.cover ? (
-                         <AnimatePresence mode="wait">
-                           <motion.div
-                             key={currentSong.cover}
-                             initial={{ opacity: 0 }}
-                             animate={{ opacity: 1 }}
-                             exit={{ opacity: 0 }}
-                             transition={{ duration: 0.5 }}
-                             className="w-full h-full"
-                           >
-                             <NextImage
-                               src={getHDThumbnail(currentSong.cover) || ""}
-                               alt={currentSong?.title}
-                               width={420}
-                               height={420}
-                               className="w-full h-full object-cover"
-                               priority
-                             />
-                             <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-50 pointer-events-none" />
-                           </motion.div>
-                         </AnimatePresence>
-                       ) : (
-                         <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
-                           <Music className="w-12 h-12 sm:w-16 sm:h-16 lg:w-24 lg:h-24 text-white/5" />
-                         </div>
-                       )}
-                    </motion.div>
-                 </motion.div>
-               </div>
+               {/* Large Album Art */}
+               <motion.div
+                layoutId={`art-${currentSongIndex}`}
+                className="relative aspect-square w-full max-w-[320px] sm:max-w-[400px] lg:max-w-[480px] group apple-shadow"
+               >
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    className="w-full h-full rounded-2xl lg:rounded-3xl overflow-hidden border border-white/10"
+                  >
+                     {currentSong?.cover ? (
+                        <NextImage
+                          src={getHDThumbnail(currentSong.cover) || ""}
+                          alt={currentSong?.title}
+                          width={600}
+                          height={600}
+                          className="w-full h-full object-cover"
+                          priority
+                        />
+                     ) : (
+                       <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
+                         <Music size={64} className="text-white/10" />
+                       </div>
+                     )}
+                  </motion.div>
+               </motion.div>
 
-               {/* Song Info & Progress */}
-               <div className="w-full max-w-md space-y-1.5 sm:space-y-2 lg:space-y-3 text-center shrink-0 px-3 sm:px-4">
-                  <div className="space-y-0.5 overflow-hidden">
-                     <motion.h2 
-                        key={currentSong?.title}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-tight truncate leading-tight"
-                        title={currentSong?.title}
-                      >
-                        {currentSong?.title || "Choose a Vibe"}
-                      </motion.h2>
-                      <motion.div
-                        initial={{ opacity: 0, y: 5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.1 }}
-                      >
-                        <span className="text-[13px] sm:text-sm md:text-base lg:text-lg font-medium text-white/50 truncate block max-w-full">
-                          {currentSong?.artist || "Grovy Music"}
-                        </span>
-                      </motion.div>
+               {/* Info & Controls */}
+               <div className="w-full space-y-6">
+                  <div className="text-center lg:text-left space-y-1">
+                    <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight truncate">
+                      {currentSong?.title || "Not Playing"}
+                    </h2>
+                    <p className="text-lg sm:text-xl text-white/50 font-medium truncate">
+                      {currentSong?.artist || "Grovy"}
+                    </p>
                   </div>
 
                   {/* Progress Bar */}
-                   <div className="space-y-1 sm:space-y-1.5 group/progress w-full">
-                     <div className="relative h-1 sm:h-1.5 w-full bg-white/10 rounded-full cursor-pointer transition-all duration-300 hover:h-2 overflow-visible">
-                       <div className="absolute -inset-2 bg-white/5 rounded-full opacity-0 group-hover/progress:opacity-100 blur-md transition-opacity" />
-                       <div 
-                         className="absolute inset-y-0 left-0 rounded-full bg-white shadow-[0_0_12px_rgba(255,255,255,0.4)] transition-[width] duration-1000 ease-linear"
-                         style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
-                       >
-                         <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full shadow-[0_0_8px_rgba(255,255,255,0.7)] scale-100 transition-transform" />
-                       </div>
-                       <input
-                         type="range"
-                         min="0"
-                         max={duration || 0}
-                         value={currentTime}
-                         onChange={(e) => seek(parseFloat(e.target.value))}
-                         className="absolute inset-0 w-full opacity-0 cursor-pointer z-20"
-                         style={{ touchAction: 'none' }}
-                       />
-                     </div>
-                     <div className="flex justify-between text-[9px] sm:text-[10px] font-medium text-white/25 tracking-wider px-0.5">
-                       <span>{formatTime(currentTime)}</span>
-                       <span>{formatTime(duration)}</span>
-                     </div>
-                   </div>
+                  <div className="space-y-2 group/progress">
+                    <div className="relative h-1.5 w-full bg-white/10 rounded-full cursor-pointer">
+                      <div 
+                        className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-1000 ease-linear"
+                        style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+                      />
+                      <input
+                        type="range"
+                        min="0"
+                        max={duration || 0}
+                        value={currentTime}
+                        onChange={(e) => seek(parseFloat(e.target.value))}
+                        className="absolute inset-0 w-full opacity-0 cursor-pointer z-20"
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs font-medium text-white/30 tabular-nums">
+                      <span>{formatTime(currentTime)}</span>
+                      <span>{formatTime(duration)}</span>
+                    </div>
+                  </div>
 
-                   <div className="flex justify-center pt-0.5 sm:pt-1">
-                      <PlayerControls />
-                   </div>
+                  <div className="flex justify-center lg:justify-start">
+                     <PlayerControls />
+                  </div>
 
-                   {/* Action buttons */}
-                   <div className="flex items-center justify-center flex-wrap gap-2 sm:gap-3 md:gap-4 lg:gap-6 pb-1">
-                       <motion.button 
-                         whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.12)" }}
-                         whileTap={{ scale: 0.95 }}
-                         onClick={() => currentSong && toggleFavorite(currentSong.id)} 
-                         className={`p-2 sm:p-2.5 lg:p-3 rounded-full backdrop-blur-md border border-white/5 transition-all duration-300 ${
-                           favorite 
-                             ? "bg-red-500/20 text-red-500 border-red-500/30" 
-                             : "bg-white/5 text-white/50 hover:text-white"
-                         }`}
-                       >
-                         <Heart size={16} className="sm:w-[18px] sm:h-[18px]" fill={favorite ? "currentColor" : "none"} strokeWidth={2} />
-                       </motion.button>
-                       
-                       <motion.button 
-                         whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.12)" }}
-                         whileTap={{ scale: 0.95 }}
-                         onClick={() => setIsLyricsOpen(true)} 
-                         className="p-2 sm:p-2.5 lg:p-3 rounded-full bg-white/5 backdrop-blur-md border border-white/5 text-white/50 hover:text-white transition-all"
-                       >
-                          <Music size={16} className="sm:w-[18px] sm:h-[18px]" strokeWidth={2} />
-                       </motion.button>
-                       
-                       <div className="scale-100">
-                         <ArtistInfo />
-                       </div>
-                       
-                       <motion.button 
-                         whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.12)" }}
-                         whileTap={{ scale: 0.95 }}
-                         onClick={() => currentSong && openPlaylistModal(currentSong)} 
-                         className="p-2 sm:p-2.5 lg:p-3 rounded-full bg-white/5 backdrop-blur-md border border-white/5 text-white/50 hover:text-white transition-all"
-                       >
-                          <ListPlus size={16} className="sm:w-[18px] sm:h-[18px]" strokeWidth={2} />
-                       </motion.button>
-
-                       {/* Equalizer */}
-                       <motion.button
-                         whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.12)" }}
-                         whileTap={{ scale: 0.95 }}
-                         onClick={() => setIsEqOpen(true)}
-                         className="p-2 sm:p-2.5 lg:p-3 rounded-full bg-white/5 backdrop-blur-md border border-white/5 text-white/50 hover:text-white transition-all"
-                         title="Equalizer"
-                       >
-                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-[18px] sm:h-[18px]">
-                           <line x1="4" y1="21" x2="4" y2="14" /><line x1="4" y1="10" x2="4" y2="3" />
-                           <line x1="12" y1="21" x2="12" y2="12" /><line x1="12" y1="8" x2="12" y2="3" />
-                           <line x1="20" y1="21" x2="20" y2="16" /><line x1="20" y1="12" x2="20" y2="3" />
-                           <line x1="1" y1="14" x2="7" y2="14" /><line x1="9" y1="8" x2="15" y2="8" />
-                           <line x1="17" y1="16" x2="23" y2="16" />
-                         </svg>
-                       </motion.button>
-
-                       {/* Share */}
-                       {currentSong && (
-                         <ShareButton song={currentSong} />
-                       )}
-                   </div>
+                  <div className="flex items-center justify-center lg:justify-start gap-6">
+                      <button onClick={() => toggleFavorite(currentSong?.id || "")} className={favorite ? "text-pink-500" : "text-white/40 hover:text-white"}>
+                        <Heart size={22} fill={favorite ? "currentColor" : "none"} />
+                      </button>
+                      <button onClick={() => setIsLyricsOpen(true)} className="text-white/40 hover:text-white">
+                        <Music size={22} />
+                      </button>
+                      <button onClick={() => setIsEqOpen(true)} className="text-white/40 hover:text-white">
+                        <ListPlus size={22} />
+                      </button>
+                      {currentSong && <ShareButton song={currentSong} />}
+                  </div>
                </div>
             </motion.div>
           ) : (
             <motion.div 
               key="player-queue"
-              initial={{ opacity: 0, x: 20 }}
+              initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
-              className="lg:hidden w-full flex-1 flex flex-col gap-4 overflow-hidden pt-12"
+              className="lg:hidden w-full h-full pt-16"
             >
-               <div className="flex-1 overflow-y-auto custom-scrollbar px-2">
-                  <div className="flex items-center justify-between pb-4 border-b border-white/5 mb-4">
-                     <h3 className="text-xl font-bold text-white flex items-center gap-3">
-                        <LayoutList size={22} style={{ color: colors.primary }} />
-                        Queue
-                     </h3>
-                     <span className="text-xs font-bold text-white/30 uppercase tracking-widest">{songs.length} Tracks</span>
-                  </div>
+               <div className="h-full overflow-y-auto custom-scrollbar">
                   <Playlist />
                   <QueueHistory />
-                  <div className="pt-8 pb-10">
-                    <RelatedTracks />
-                  </div>
                </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Desktop View: Right Panel (Always visible on LG) */}
-        <div 
-          className="hidden lg:flex lg:w-1/2 h-full lg:max-h-[80vh] flex-col gap-3 rounded-[2rem] p-6 backdrop-blur-3xl transition-colors duration-1000 bg-white/[0.03] border border-white/[0.04] overflow-hidden w-full"
-          style={{ boxShadow: `0 20px 60px -10px rgba(0,0,0,0.5)` }}
-        >
-           <div className="flex items-center justify-between pb-3 border-b border-white/5 shrink-0">
-              <h3 className="text-lg font-bold tracking-tight text-white flex items-center gap-2.5">
-                <span className="w-1.5 h-6 rounded-full shadow-[0_0_8px_currentColor]" style={{ background: colors.primary, color: colors.primary }} />
-                Up Next
-              </h3>
-              <div className="px-2.5 py-1 rounded-full bg-white/5 border border-white/5 text-[10px] lg:text-xs font-bold text-white/40">
-                {songs.length} Tracks
-              </div>
-           </div>
-
-           <div 
-             className="flex-1 overflow-y-auto custom-scrollbar -mr-1 pr-1 touch-pan-y"
-             onWheel={(e) => e.stopPropagation()} 
-           >
+        {/* Right Panel (Desktop) */}
+        <div className="hidden lg:flex flex-col w-1/3 h-[70vh] apple-glass rounded-3xl p-8 border border-white/5">
+           <h3 className="text-xl font-bold text-white mb-6">Up Next</h3>
+           <div className="flex-1 overflow-y-auto custom-scrollbar">
               <Playlist />
               <QueueHistory />
-           </div>
-
-           <div className="pt-3 border-t border-white/5 shrink-0">
-              <RelatedTracks />
            </div>
         </div>
       </motion.div>

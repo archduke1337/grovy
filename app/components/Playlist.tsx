@@ -147,20 +147,17 @@ export const Playlist: React.FC = () => {
                )}
             </button>
 
-            {/* Song info */}
             <button
               onClick={() => setCurrentSongIndex(index)}
               className="text-left min-w-0 flex-1 cursor-pointer"
             >
               <h4 
-                style={{ color: isCurrent ? "white" : undefined }}
-                className={`text-[13px] font-bold truncate ${isCurrent ? "" : "text-white"}`}
+                className={`text-[13px] font-bold truncate ${isCurrent ? "text-pink-500 dark:text-pink-400" : "text-white"}`}
               >
                 {song.title}
               </h4>
               <p 
-                className="text-[11px] font-medium truncate transition-colors mt-0.5"
-                style={{ color: isCurrent ? colors.primary : "rgba(255,255,255,0.5)" }}
+                className={`text-[11px] font-medium truncate transition-colors mt-0.5 ${isCurrent ? "text-pink-500/70 dark:text-pink-400/70" : "text-white/50"}`}
               >
                 {song.artist}
               </p>

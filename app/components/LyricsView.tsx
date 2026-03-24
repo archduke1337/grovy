@@ -79,17 +79,30 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
             <X size={24} />
           </button>
 
-          <div className="w-full max-w-4xl h-full flex flex-col px-6 py-12 md:px-12 md:py-16">
-            <header className="mb-6 sm:mb-12 text-center shrink-0 pt-8 sm:pt-0">
-               <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tighter mb-1 sm:mb-2 truncate max-w-full px-4">
+          <div className="w-full max-w-6xl h-full flex flex-col lg:flex-row px-6 py-12 md:px-12 md:py-16 gap-12">
+            {/* Left side on desktop: Song info */}
+            <header className="lg:w-1/3 flex flex-col justify-center text-center lg:text-left shrink-0 pt-8 lg:pt-0">
+               <div className="mb-8 hidden lg:block">
+                  {currentSong?.cover && (
+                    <NextImage 
+                      src={getHDThumbnail(currentSong.cover) || ""} 
+                      alt={currentSong.title} 
+                      width={300} 
+                      height={300} 
+                      className="rounded-2xl shadow-2xl border border-white/10"
+                    />
+                  )}
+               </div>
+               <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white tracking-tighter mb-1 sm:mb-2 truncate max-w-full lg:whitespace-normal">
                  {currentSong?.title}
                </h2>
-               <p className="text-base sm:text-xl text-white/50 font-bold truncate max-w-full px-4">
+               <p className="text-base sm:text-xl text-white/50 font-bold truncate max-w-full">
                  {currentSong?.artist}
                </p>
             </header>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 sm:space-y-8 py-[40vh] sm:py-[45vh] text-center">
+            {/* Right side: Lyrics */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-6 sm:space-y-10 py-[40vh] text-center lg:text-left">
                {isLoading ? (
                  <div className="h-full flex flex-col items-center justify-center gap-4 text-white/40">
                     <motion.div 
@@ -118,14 +131,14 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                         onClick={() => line.time !== undefined && seek(line.time)}
                         initial={{ opacity: 0 }}
                         animate={{ 
-                           opacity: isActive ? 1 : (isNearby ? 0.35 : 0.1),
-                           scale: isActive ? 1.05 : 1,
+                           opacity: isActive ? 1 : (isNearby ? 0.4 : 0.15),
+                           scale: isActive ? 1 : 0.95,
                            filter: isActive ? "blur(0px)" : "blur(1px)"
                         }}
                         transition={{ duration: 0.5 }}
-                        className="text-xl sm:text-3xl md:text-4xl lg:text-5xl font-black tracking-tight leading-relaxed transition-all px-2 cursor-pointer select-none"
+                        className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight transition-all px-2 cursor-pointer select-none"
                         style={isActive ? {
-                          backgroundImage: `linear-gradient(90deg, #fff ${lineProgress}%, ${colors.primary} ${lineProgress}%)`,
+                          backgroundImage: `linear-gradient(90deg, #fff ${lineProgress}%, rgba(255,255,255,0.2) ${lineProgress}%)`,
                           WebkitBackgroundClip: "text",
                           WebkitTextFillColor: "transparent",
                           backgroundClip: "text",
