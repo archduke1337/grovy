@@ -12,14 +12,92 @@ import {
   Github,
   Folder,
   ChevronLeft,
+  ChevronRight,
   TrendingUp,
   BarChart3,
   Heart,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Zap
 } from "lucide-react";
 import Link from "next/link";
 import NextImage from "next/image";
 import { getHDThumbnail } from "./lib/thumbnail";
+
+// ─── HELPER COMPONENTS ───────────────────────────────────
+
+const SectionHeader = ({ title, subtitle, onSeeAll }: { title: string; subtitle?: string; onSeeAll?: () => void }) => (
+  <div className="flex items-end justify-between mb-4 sm:mb-6 px-1">
+    <div className="space-y-1">
+      <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-tight leading-none">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="text-[11px] sm:text-xs md:text-sm font-medium text-gray-400 dark:text-white/30 uppercase tracking-widest">
+          {subtitle}
+        </p>
+      )}
+    </div>
+    {onSeeAll && (
+      <button 
+        onClick={onSeeAll}
+        className="group flex items-center gap-1 text-[11px] sm:text-xs font-bold text-blue-500 hover:text-blue-600 transition-colors"
+      >
+        See All
+        <ChevronRight size={14} className="transition-transform group-hover:translate-x-0.5" />
+      </button>
+    )}
+  </div>
+);
+
+const ScrollRow = ({ children }: { children: React.ReactNode }) => (
+  <div className="flex gap-4 sm:gap-5 md:gap-6 overflow-x-auto pb-6 pt-2 px-1 -mx-1 custom-scrollbar snap-x snap-mandatory">
+    {children}
+  </div>
+);
+
+const HeroCard = ({ item, onClick }: { item: any; onClick: () => void }) => (
+  <motion.div 
+    whileHover={{ scale: 1.01 }}
+    whileTap={{ scale: 0.98 }}
+    onClick={onClick}
+    className="relative aspect-[16/9] sm:aspect-[21/9] w-full rounded-2xl sm:rounded-[2rem] overflow-hidden cursor-pointer group shadow-2xl shadow-black/20"
+  >
+    <div className="absolute inset-0 bg-gray-200 dark:bg-white/[0.03]">
+      {item.cover && (
+        <NextImage 
+          src={getHDThumbnail(item.cover) || ""} 
+          alt={item.title} 
+          fill
+          className="object-cover transition-transform duration-1000 group-hover:scale-105"
+        />
+      )}
+    </div>
+    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+    <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+    
+    <div className="absolute bottom-0 left-0 p-5 sm:p-8 md:p-12 space-y-2 sm:space-y-4 max-w-2xl">
+      <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10 text-[10px] sm:text-[11px] font-bold text-white uppercase tracking-widest">
+        <Sparkles size={12} className="text-yellow-400" />
+        Featured Selection
+      </div>
+      <div className="space-y-1 sm:space-y-2">
+        <h3 className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-white leading-tight tracking-tighter drop-shadow-2xl">
+          {item.title}
+        </h3>
+        <p className="text-sm sm:text-lg md:text-xl text-white/70 font-medium tracking-tight">
+          {item.artist}
+        </p>
+      </div>
+      <div className="pt-2">
+        <button className="flex items-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-full bg-white text-black font-bold text-sm sm:text-base hover:bg-white/90 transition-all shadow-xl hover:shadow-2xl active:scale-95">
+          <Play size={18} fill="currentColor" />
+          Listen Now
+        </button>
+      </div>
+    </div>
+  </motion.div>
+);
 
 const GENRE_CONFIG: Record<string, { color: string; accent: string }> = {
   "Bollywood":  { color: "from-rose-500/40 to-pink-600/30",    accent: "#f43f5e" },
@@ -105,6 +183,10 @@ function HomeContent() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [topArtists, setTopArtists] = useState<{ name: string; browseId: string; thumbnail: string }[]>([]);
   const [dynamicMoods, setDynamicMoods] = useState<{ title: string; color: number }[]>([]);
+  const [featuredSongs, setFeaturedSongs] = useState<any[]>([]);
+  const [trendingSongs, setTrendingSongs] = useState<any[]>([]);
+  const [chartsSongs, setChartsSongs] = useState<any[]>([]);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Hydrate search history
   useEffect(() => {
@@ -246,27 +328,39 @@ function HomeContent() {
     else setGreeting("Good Evening");
   }, []);
 
-  // Fetch top artists + moods from YT API on mount
+  // Fetch initial data
   useEffect(() => {
     const controller = new AbortController();
     (async () => {
+      setIsInitialLoading(true);
       try {
-        const [artistsRes, moodsRes] = await Promise.all([
+        const [artistsRes, moodsRes, trendingRes, chartsRes] = await Promise.all([
           fetch("https://ytapi.gauravramyadav.workers.dev/api/top/artists?country=IN", { signal: controller.signal }).then(r => r.json()).catch(() => null),
           fetch("https://ytapi.gauravramyadav.workers.dev/api/moods", { signal: controller.signal }).then(r => r.json()).catch(() => null),
+          loadSongs("trending", "youtube&country=IN", controller.signal).catch(() => []),
+          loadSongs("charts", "youtube&country=IN", controller.signal).catch(() => []),
         ]);
-        if (!controller.signal.aborted && artistsRes?.artists) {
-          setTopArtists(artistsRes.artists.slice(0, 12));
+
+        if (controller.signal.aborted) return;
+
+        if (artistsRes?.artists) setTopArtists(artistsRes.artists.slice(0, 15));
+        if (Array.isArray(moodsRes)) setDynamicMoods(moodsRes[0]?.items || []);
+        if (trendingRes.length > 0) {
+          setTrendingSongs(trendingRes);
+          setFeaturedSongs(trendingRes.slice(0, 5));
+          // If no search, use trending as default search results to show something
+          if (!searchQuery && !selectedGenre) setSearchResults(trendingRes);
         }
-        if (!controller.signal.aborted && Array.isArray(moodsRes)) {
-          // First group = moods, second group = genres — take moods
-          const moods = moodsRes[0]?.items || [];
-          setDynamicMoods(moods.slice(0, 12));
-        }
-      } catch { /* ignore */ }
+        if (chartsRes.length > 0) setChartsSongs(chartsRes);
+
+      } catch (e) {
+        console.error("Failed to fetch initial home data", e);
+      } finally {
+        if (!controller.signal.aborted) setIsInitialLoading(false);
+      }
     })();
     return () => controller.abort();
-  }, []);
+  }, [loadSongs]); // Removed searchQuery and selectedGenre from deps to only run once
 
   // Debounced Auto-Search
   // Only re-fires when the actual searchQuery text changes (not when searchType changes,
