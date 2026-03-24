@@ -13,7 +13,7 @@ import { KeyboardShortcuts } from "@/app/components/KeyboardShortcuts";
 
 const APP_NAME = "Grovy";
 const APP_DESCRIPTION = "A premium open-source music player built for the web. Stream, discover, and enjoy music with a beautiful interface.";
-const APP_URL = "https://grovy.vercel.app";
+const APP_URL = "https://grovymusic.vercel.app";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
