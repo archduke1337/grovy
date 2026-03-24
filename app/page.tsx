@@ -99,6 +99,62 @@ const HeroCard = ({ item, onClick }: { item: any; onClick: () => void }) => (
   </motion.div>
 );
 
+const HeroCarousel = ({ items, onPlay }: { items: any[]; onPlay: (item: any) => void }) => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    const timer = setInterval(() => {
+      setIndex((prev) => (prev + 1) % items.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [items.length]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <div className="relative w-full group overflow-hidden rounded-2xl sm:rounded-[2.5rem] bg-gray-100 dark:bg-white/[0.03]">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={items[index].id}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.7, ease: [0.32, 0.72, 0, 1] }}
+          className="w-full"
+        >
+          <HeroCard item={items[index]} onClick={() => onPlay(items[index])} />
+        </motion.div>
+      </AnimatePresence>
+
+      <div className="absolute bottom-4 sm:bottom-8 right-6 sm:right-12 flex gap-2 sm:gap-3 z-20">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setIndex(i)}
+            className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 ${
+              i === index ? "w-6 sm:w-10 bg-white" : "w-1.5 sm:w-2 bg-white/30 hover:bg-white/50"
+            }`}
+          />
+        ))}
+      </div>
+
+      <button
+        onClick={() => setIndex((prev) => (prev - 1 + items.length) % items.length)}
+        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-black/40"
+      >
+        <ChevronLeft size={20} />
+      </button>
+      <button
+        onClick={() => setIndex((prev) => (prev + 1) % items.length)}
+        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/20 backdrop-blur-md border border-white/10 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-black/40"
+      >
+        <ChevronRight size={20} />
+      </button>
+    </div>
+  );
+};
+
 const GENRE_CONFIG: Record<string, { color: string; accent: string }> = {
   "Bollywood":  { color: "from-rose-500/40 to-pink-600/30",    accent: "#f43f5e" },
   "Punjabi":    { color: "from-amber-400/40 to-orange-500/30",  accent: "#f59e0b" },
@@ -145,6 +201,28 @@ const fadeUp = {
     transition: { type: "spring", stiffness: 200, damping: 28 }
   }
 };
+
+const HomeSkeleton = () => (
+  <div className="w-full max-w-[1400px] mx-auto px-5 sm:px-10 lg:px-16 py-8 space-y-12 sm:space-y-16 animate-pulse">
+    <div className="space-y-4">
+      <div className="h-16 sm:h-24 w-64 bg-gray-200 dark:bg-white/[0.05] rounded-2xl" />
+      <div className="h-6 w-48 bg-gray-100 dark:bg-white/[0.03] rounded-xl" />
+    </div>
+    <div className="h-[300px] sm:h-[450px] w-full bg-gray-200 dark:bg-white/[0.05] rounded-[2rem] sm:rounded-[3rem]" />
+    <div className="space-y-6">
+      <div className="h-8 w-48 bg-gray-200 dark:bg-white/[0.05] rounded-xl" />
+      <div className="flex gap-6 overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="min-w-[180px] space-y-3">
+            <div className="aspect-square bg-gray-200 dark:bg-white/[0.05] rounded-2xl" />
+            <div className="h-4 w-3/4 bg-gray-100 dark:bg-white/[0.03] rounded-lg" />
+            <div className="h-3 w-1/2 bg-gray-100 dark:bg-white/[0.02] rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+);
 
 export default function Home() {
   return (
@@ -424,6 +502,8 @@ function HomeContent() {
     setEntityError(null);
   };
 
+  if (isInitialLoading) return <HomeSkeleton />;
+
   return (
     <motion.div 
       initial="hidden"
@@ -619,204 +699,291 @@ function HomeContent() {
           animate="visible"
           exit={{ opacity: 0, y: -10 }}
           variants={containerVariants} 
-          className="space-y-12 sm:space-y-16 relative z-10"
+          className="space-y-12 sm:space-y-16 md:space-y-24 relative z-10"
         >
+          {/* Featured Hero Carousel */}
+          {!searchQuery && !selectedGenre && featuredSongs.length > 0 && (
+            <motion.section variants={fadeUp} className="w-full">
+              <HeroCarousel 
+                items={featuredSongs} 
+                onPlay={(item) => setQueue([item, ...trendingSongs.filter(s => s.id !== item.id)], 0)} 
+              />
+            </motion.section>
+          )}
+
           {/* Recently Played */}
           {recentlyPlayed.length > 0 && !searchQuery && !selectedGenre && (
-            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                  Recently Played
-                </h2>
-                <button 
-                  onClick={clearHistory} 
-                  className="text-[11px] sm:text-[12px] font-semibold text-gray-400 dark:text-white/20 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                >
-                  Clear All
-                </button>
-              </div>
-              
-              <div className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+            <motion.section variants={fadeUp} className="space-y-0">
+              <SectionHeader 
+                title="Recently Played" 
+                onSeeAll={recentlyPlayed.length > 6 ? () => {} : undefined} 
+              />
+              <ScrollRow>
                 {recentlyPlayed.map((song) => (
                   <motion.div
                     key={`recent-${song.id}`}
                     whileHover={{ y: -4 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setQueue([song, ...songs.filter(s => s.id !== song.id)], 0)}
-                    className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] group cursor-pointer snap-start"
+                    className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] group cursor-pointer snap-start"
                   >
-                    <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
+                    <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-2xl transition-all duration-500">
                       {song.cover ? (
-                        <NextImage src={song.cover} alt={song.title} width={160} height={160} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
+                        <NextImage src={song.cover} alt={song.title} width={200} height={200} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]" loading="lazy" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Music size={22} className="text-gray-300 dark:text-white/10" /></div>
+                        <div className="w-full h-full flex items-center justify-center"><Music size={24} className="text-gray-300 dark:text-white/10" /></div>
                       )}
-                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                        <div className="w-9 sm:w-10 h-9 sm:h-10 bg-white/90 dark:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl">
-                          <Play size={13} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 bg-white/90 dark:bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl scale-90 group-hover:scale-100">
+                          <Play size={14} fill="currentColor" className="text-black dark:text-white ml-0.5" />
                         </div>
                       </div>
                     </div>
-                    <div className="px-0.5">
-                      <h4 className="font-semibold text-gray-900 dark:text-white truncate text-[12px] sm:text-[13px]">{song.title}</h4>
-                      <p className="text-gray-500 dark:text-white/25 text-[10px] sm:text-[11px] font-medium truncate mt-0.5">{song.artist}</p>
+                    <div className="px-0.5 space-y-0.5">
+                      <h4 className="font-bold text-gray-900 dark:text-white truncate text-[13px] sm:text-[14px] tracking-tight">{song.title}</h4>
+                      <p className="text-gray-400 dark:text-white/30 text-[11px] sm:text-[12px] font-medium truncate">{song.artist}</p>
                     </div>
                   </motion.div>
                 ))}
-              </div>
+              </ScrollRow>
             </motion.section>
           )}
 
-          {/* Results Grid */}
-          <section className="space-y-5 sm:space-y-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 sm:gap-3">
-                {selectedGenre && (
-                  <button 
-                    onClick={clearGenre}
-                    className="p-1.5 sm:p-2 rounded-lg sm:rounded-xl bg-gray-100 dark:bg-white/[0.05] hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-colors text-gray-600 dark:text-white/60"
+          {/* Trending Songs */}
+          {!searchQuery && !selectedGenre && trendingSongs.length > 0 && (
+            <motion.section variants={fadeUp} className="space-y-0">
+              <SectionHeader 
+                title="Trending" 
+                subtitle="Top tracks right now"
+                onSeeAll={() => { setSearchQuery("trending"); fetchTrending(); }}
+              />
+              <ScrollRow>
+                {trendingSongs.slice(0, 15).map((song) => (
+                  <motion.div
+                    key={`trending-${song.id}`}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setQueue(trendingSongs, trendingSongs.indexOf(song))}
+                    className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] group cursor-pointer snap-start"
                   >
-                    <ChevronLeft size={16} />
-                  </button>
+                    <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-2xl transition-all duration-500">
+                      <NextImage 
+                        src={getHDThumbnail(song.cover) || ""} 
+                        alt={song.title} 
+                        width={200} 
+                        height={200} 
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]" 
+                        loading="lazy" 
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 bg-white/90 dark:bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl scale-90 group-hover:scale-100">
+                          <Play size={14} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-0.5 space-y-0.5">
+                      <h4 className="font-bold text-gray-900 dark:text-white truncate text-[13px] sm:text-[14px] tracking-tight">{song.title}</h4>
+                      <p className="text-gray-400 dark:text-white/30 text-[11px] sm:text-[12px] font-medium truncate">{song.artist}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </ScrollRow>
+            </motion.section>
+          )}
+
+          {/* Results Grid (Search or Genre) */}
+          {(searchQuery || selectedGenre) && (
+            <section className="space-y-6 sm:space-y-8">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 sm:gap-4">
+                  {(selectedGenre || searchQuery) && (
+                    <button 
+                      onClick={clearGenre}
+                      className="p-2 sm:p-2.5 rounded-xl bg-gray-100 dark:bg-white/[0.05] hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-colors text-gray-600 dark:text-white/60"
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                  )}
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
+                    {selectedGenre 
+                      ? selectedGenre 
+                      : searchQuery 
+                        ? `"${searchQuery}"` 
+                        : "Listen Now"}
+                  </h2>
+                </div>
+                {searchResults.length > 0 && (
+                  <span className="text-[11px] sm:text-xs font-bold text-gray-400 dark:text-white/20 uppercase tracking-widest tabular-nums bg-gray-100 dark:bg-white/[0.03] px-3 py-1.5 rounded-full">
+                    {searchResults.length} results
+                  </span>
                 )}
-                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                  {selectedGenre 
-                    ? selectedGenre 
-                    : searchQuery 
-                      ? `"${searchQuery}"` 
-                      : "Listen Now"}
-                </h2>
               </div>
-              {searchResults.length > 0 && (
-                <span className="text-[11px] sm:text-xs font-medium text-gray-400 dark:text-white/20 tabular-nums">
-                  {searchResults.length} results
-                </span>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4 md:gap-5">
-              {searchResults.length > 0 ? searchResults.slice(0, visibleCount).map((item, i) => {
-                if (searchType === "song") {
-                  const isCurrent = songs[currentSongIndex]?.id === item.id;
+              
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 sm:gap-6 md:gap-8">
+                {searchResults.length > 0 ? searchResults.slice(0, visibleCount).map((item, i) => {
+                  if (searchType === "song") {
+                    const isCurrent = songs[currentSongIndex]?.id === item.id;
+                    return (
+                      <motion.div
+                        key={item.id}
+                        variants={itemVariants}
+                        whileHover={{ y: -6 }}
+                        whileTap={{ scale: 0.96 }}
+                        className="group cursor-pointer"
+                        onClick={() => handlePlaySong(item.id)}
+                      >
+                        <div className="aspect-square relative rounded-2xl sm:rounded-[2rem] overflow-hidden mb-3 sm:mb-4 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-2xl transition-all duration-500">
+                          {item.cover ? (
+                            <NextImage 
+                              src={getHDThumbnail(item.cover) || ""} 
+                              alt={item.title} 
+                              width={300}
+                              height={300}
+                              className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]" 
+                              loading="lazy" 
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <Music size={32} className="text-gray-300 dark:text-white/10" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
+                            <div className="w-12 h-12 bg-white/95 dark:bg-white/15 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 shadow-2xl scale-90 group-hover:scale-100">
+                              <Play size={18} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                            </div>
+                          </div>
+                          {isCurrent && isPlaying && (
+                            <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-3 py-1.5 bg-black/60 backdrop-blur-xl rounded-xl border border-white/10">
+                              {[...Array(3)].map((_, j) => (
+                                <motion.div 
+                                  key={j}
+                                  className="w-1 rounded-full bg-white"
+                                  animate={{ height: [4, 14, 4] }}
+                                  transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.15 }}
+                                />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <div className="space-y-1 px-1">
+                          <h3 className={`font-bold text-[14px] sm:text-[15px] truncate tracking-tight leading-snug ${
+                            isCurrent ? "text-blue-500 dark:text-blue-400" : "text-gray-900 dark:text-white"
+                          }`}>{item.title}</h3>
+                          <p className="text-gray-400 dark:text-white/30 text-[12px] sm:text-[13px] truncate font-semibold">{item.artist || "Unknown"}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  }
                   return (
                     <motion.div
                       key={item.id}
                       variants={itemVariants}
-                      whileHover={{ y: -4 }}
-                      whileTap={{ scale: 0.97 }}
+                      whileHover={{ y: -6 }}
+                      whileTap={{ scale: 0.96 }}
                       className="group cursor-pointer"
-                      onClick={() => handlePlaySong(item.id)}
+                      onClick={() => handleEntityClick(item)}
                     >
-                      <div className="aspect-square relative rounded-xl sm:rounded-2xl overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500">
-                        {item.cover ? (
-                          <NextImage 
-                            src={getHDThumbnail(item.cover) || ""} 
-                            alt={item.title} 
-                            width={200}
-                            height={200}
-                            className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" 
-                            loading="lazy" 
-                          />
+                      <div className={`aspect-square relative overflow-hidden mb-3 sm:mb-4 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-2xl transition-all duration-500 ${
+                        item.type === 'artist' ? 'rounded-full' : 'rounded-2xl sm:rounded-[2rem]'
+                      }`}>
+                        {item.image ? (
+                          <NextImage src={item.image} alt={item.name} width={300} height={300} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]" loading="lazy" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <Music size={28} className="text-gray-300 dark:text-white/10" />
+                            <Music size={32} className="text-gray-300 dark:text-white/10" />
                           </div>
                         )}
-                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center">
-                          <div className="w-10 sm:w-12 h-10 sm:h-12 bg-white/90 dark:bg-white/20 backdrop-blur-xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl">
-                            <Play size={16} fill="currentColor" className="text-black dark:text-white ml-0.5" />
-                          </div>
-                        </div>
-                        {isCurrent && isPlaying && (
-                          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-2 py-1 bg-black/60 backdrop-blur-md rounded-lg">
-                            {[...Array(3)].map((_, j) => (
-                              <motion.div 
-                                key={j}
-                                className="w-0.5 rounded-full bg-white"
-                                animate={{ height: [3, 10, 3] }}
-                                transition={{ repeat: Infinity, duration: 0.8, delay: j * 0.15 }}
-                              />
-                            ))}
-                          </div>
-                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300" />
                       </div>
-                      <div className="space-y-0.5 px-0.5">
-                        <h3 className={`font-semibold text-[13px] sm:text-[14px] truncate tracking-[-0.01em] leading-tight ${
-                          isCurrent ? "text-blue-500 dark:text-blue-400" : "text-gray-900 dark:text-white"
-                        }`}>{item.title}</h3>
-                        <p className="text-gray-500 dark:text-white/30 text-[11px] sm:text-[12px] truncate font-medium">{item.artist || "Unknown"}</p>
+                      <div className={`space-y-1 ${item.type === 'artist' ? 'text-center' : ''} px-1`}>
+                        <h3 className="font-bold text-[14px] sm:text-[15px] text-gray-900 dark:text-white truncate tracking-tight">{item.name}</h3>
+                        <p className="text-gray-400 dark:text-white/20 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.1em]">{item.type}</p>
                       </div>
                     </motion.div>
                   );
-                }
-                return (
-                  <motion.div
-                    key={item.id}
-                    variants={itemVariants}
-                    whileHover={{ y: -4 }}
-                    whileTap={{ scale: 0.97 }}
-                    className="group cursor-pointer"
-                    onClick={() => handleEntityClick(item)}
+                }) : (
+                  <div className="col-span-full py-24 sm:py-32 flex flex-col items-center gap-6">
+                    <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-white/[0.03] flex items-center justify-center border border-gray-200/50 dark:border-white/[0.05]">
+                      <Music size={32} className="text-gray-300 dark:text-white/10" />
+                    </div>
+                    <div className="text-center space-y-2">
+                      <p className="text-gray-900 dark:text-white font-bold text-lg sm:text-xl">
+                        {entityError || "No results yet"}
+                      </p>
+                      <p className="text-gray-400 dark:text-white/30 text-sm font-medium">
+                        {entityError ? "Try a different search" : "Try searching or pick a genre below"}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Load More */}
+              {searchResults.length > visibleCount && (
+                <div className="flex justify-center pt-8">
+                  <button
+                    onClick={() => setVisibleCount(prev => prev + 20)}
+                    className="px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-bold text-[13px] hover:scale-105 active:scale-95 transition-all shadow-xl shadow-black/10"
                   >
-                    <div className={`aspect-square relative overflow-hidden mb-2.5 sm:mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500 ${
-                      item.type === 'artist' ? 'rounded-full' : 'rounded-xl sm:rounded-2xl'
-                    }`}>
-                      {item.image ? (
-                        <NextImage src={item.image} alt={item.name} width={200} height={200} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]" loading="lazy" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Music size={28} className="text-gray-300 dark:text-white/10" />
-                        </div>
-                      )}
-                    </div>
-                    <div className={`space-y-0.5 ${item.type === 'artist' ? 'text-center' : ''} px-0.5`}>
-                      <h3 className="font-semibold text-[13px] sm:text-[14px] text-gray-900 dark:text-white truncate">{item.name}</h3>
-                      <p className="text-gray-400 dark:text-white/25 text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider">{item.type}</p>
-                    </div>
-                  </motion.div>
-                );
-              }) : (
-                <div className="col-span-full py-16 sm:py-24 flex flex-col items-center gap-4">
-                  <div className="w-14 sm:w-16 h-14 sm:h-16 rounded-2xl bg-gray-100 dark:bg-white/[0.03] flex items-center justify-center">
-                    <Music size={22} className="text-gray-300 dark:text-white/10" />
-                  </div>
-                  <div className="text-center space-y-1">
-                    <p className="text-gray-500 dark:text-white/25 font-semibold text-[14px] sm:text-[15px]">
-                      {entityError || "No results yet"}
-                    </p>
-                    <p className="text-gray-400 dark:text-white/15 text-[12px] sm:text-[13px]">
-                      {entityError ? "Try a different search" : "Try searching or pick a genre below"}
-                    </p>
-                  </div>
+                    Show More Results ({searchResults.length - visibleCount})
+                  </button>
                 </div>
               )}
-            </div>
+            </section>
+          )}
 
-            {/* Load More */}
-            {searchResults.length > visibleCount && (
-              <div className="flex justify-center pt-4">
-                <button
-                  onClick={() => setVisibleCount(prev => prev + 20)}
-                  className="px-6 py-2.5 rounded-xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-white/[0.08] text-[13px] font-semibold transition-all"
-                >
-                  Load More ({searchResults.length - visibleCount} remaining)
-                </button>
-              </div>
-            )}
-          </section>
+          {/* Top Charts */}
+          {!searchQuery && !selectedGenre && chartsSongs.length > 0 && (
+            <motion.section variants={fadeUp} className="space-y-0">
+              <SectionHeader 
+                title="Top Charts" 
+                subtitle="Global hits"
+                onSeeAll={() => { setSearchQuery("charts"); fetchCharts(); }}
+              />
+              <ScrollRow>
+                {chartsSongs.slice(0, 15).map((song) => (
+                  <motion.div
+                    key={`chart-${song.id}`}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => setQueue(chartsSongs, chartsSongs.indexOf(song))}
+                    className="min-w-[140px] sm:min-w-[160px] md:min-w-[180px] lg:min-w-[200px] group cursor-pointer snap-start"
+                  >
+                    <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-2xl transition-all duration-500">
+                      <NextImage 
+                        src={getHDThumbnail(song.cover) || ""} 
+                        alt={song.title} 
+                        width={200} 
+                        height={200} 
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.05]" 
+                        loading="lazy" 
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-10 h-10 bg-white/90 dark:bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-2xl scale-90 group-hover:scale-100">
+                          <Play size={14} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-0.5 space-y-0.5">
+                      <h4 className="font-bold text-gray-900 dark:text-white truncate text-[13px] sm:text-[14px] tracking-tight">{song.title}</h4>
+                      <p className="text-gray-400 dark:text-white/30 text-[11px] sm:text-[12px] font-medium truncate">{song.artist}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </ScrollRow>
+            </motion.section>
+          )}
 
-          {/* Genre Grid */}
+          {/* Moods (Genre Grid) */}
           {!isLocal && searchType === "song" && !selectedGenre && !searchQuery && (
-            <motion.section variants={fadeUp} className="space-y-5 sm:space-y-6">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                Explore by Mood
-              </h2>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3 md:gap-4">
+            <motion.section variants={fadeUp} className="space-y-6">
+              <SectionHeader title="Moods & Genres" subtitle="Music for every moment" />
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 md:gap-6">
                 {Object.entries(GENRE_CONFIG).map(([name, conf], i) => (
                   <motion.button
                     key={name}
                     variants={itemVariants}
-                    whileHover={{ y: -3, scale: 1.01 }}
+                    whileHover={{ y: -4, scale: 1.02 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => {
                       setSearchType("song");
@@ -825,17 +992,16 @@ function HomeContent() {
                       loadSongs(`${name} hits`).then(setSearchResults);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`relative overflow-hidden rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 lg:p-6 flex flex-col justify-end text-left group transition-all duration-300 border border-transparent hover:border-white/[0.06] ${
-                      (i === 0 || i === 7) ? "sm:col-span-2 aspect-[2.2/1] sm:aspect-[2/1]" : "aspect-[4/3]"
+                    className={`relative overflow-hidden rounded-2xl sm:rounded-3xl p-5 sm:p-6 lg:p-8 flex flex-col justify-end text-left group transition-all duration-500 border border-transparent hover:border-white/[0.06] ${
+                      (i === 0 || i === 7) ? "sm:col-span-2 aspect-[2.2/1] sm:aspect-[2.1/1]" : "aspect-[4/3] sm:aspect-square"
                     }`}
                   >
                     <div className={`absolute inset-0 bg-gradient-to-br ${conf.color} transition-opacity duration-500`} />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
-                    <div className="absolute inset-0 bg-noise opacity-[0.03] mix-blend-overlay" />
-                    <div className="relative z-10 space-y-0.5">
-                      <span className="text-base sm:text-lg md:text-xl font-bold text-white tracking-[-0.02em] leading-tight block drop-shadow-sm">{name}</span>
-                      <span className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-widest text-white/40 block translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                        Explore →
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                    <div className="relative z-10 space-y-1">
+                      <span className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight leading-none block drop-shadow-md">{name}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-white/50 block translate-y-2 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                        Browse →
                       </span>
                     </div>
                   </motion.button>
@@ -846,17 +1012,15 @@ function HomeContent() {
 
           {/* Dynamic Moods from YouTube Music */}
           {!isLocal && searchType === "song" && !selectedGenre && !searchQuery && dynamicMoods.length > 0 && (
-            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                Moods & Vibes
-              </h2>
-              <div className="flex gap-2 sm:gap-2.5 overflow-x-auto pb-3 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+            <motion.section variants={fadeUp} className="space-y-0">
+              <SectionHeader title="Vibes" subtitle="Explore more moods" />
+              <ScrollRow>
                 {dynamicMoods.map((mood) => {
                   const hex = argbToHex(mood.color);
                   return (
                     <motion.button
                       key={mood.title}
-                      whileHover={{ y: -2, scale: 1.03 }}
+                      whileHover={{ y: -4, scale: 1.02 }}
                       whileTap={{ scale: 0.96 }}
                       onClick={() => {
                         setSearchType("song");
@@ -865,73 +1029,72 @@ function HomeContent() {
                         loadSongs(`${mood.title} music`).then(setSearchResults);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
-                      className="relative shrink-0 rounded-xl sm:rounded-2xl px-5 sm:px-6 py-3 sm:py-4 snap-start border border-white/[0.04] overflow-hidden group"
+                      className="relative shrink-0 rounded-2xl sm:rounded-3xl px-8 sm:px-10 py-5 sm:py-6 snap-start border border-white/[0.04] overflow-hidden group shadow-lg"
                     >
-                      <div className="absolute inset-0 opacity-30 group-hover:opacity-50 transition-opacity" style={{ backgroundColor: hex }} />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      <span className="relative z-10 text-[13px] sm:text-[14px] font-bold text-white whitespace-nowrap drop-shadow-sm">{mood.title}</span>
+                      <div className="absolute inset-0 opacity-40 group-hover:opacity-60 transition-opacity" style={{ backgroundColor: hex }} />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                      <span className="relative z-10 text-[15px] sm:text-[16px] font-black text-white whitespace-nowrap drop-shadow-lg tracking-tight">{mood.title}</span>
                     </motion.button>
                   );
                 })}
-              </div>
+              </ScrollRow>
             </motion.section>
           )}
 
           {/* Top Artists */}
           {!isLocal && searchType === "song" && !selectedGenre && !searchQuery && topArtists.length > 0 && (
-            <motion.section variants={fadeUp} className="space-y-4 sm:space-y-5">
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                Top Artists
-              </h2>
-              <div className="flex gap-3 sm:gap-4 md:gap-5 overflow-x-auto pb-4 custom-scrollbar snap-x snap-mandatory -mx-4 px-4 sm:mx-0 sm:px-0">
+            <motion.section variants={fadeUp} className="space-y-0">
+              <SectionHeader title="Top Artists" subtitle="Most popular performers" />
+              <ScrollRow>
                 {topArtists.map((artist) => (
                   <motion.button
                     key={artist.browseId}
-                    whileHover={{ y: -4 }}
+                    whileHover={{ y: -6 }}
                     whileTap={{ scale: 0.96 }}
                     onClick={() => {
                       handleEntityClick({ type: "artist", id: `yt-${artist.browseId}`, name: artist.name });
                     }}
-                    className="min-w-[100px] sm:min-w-[120px] group cursor-pointer snap-start flex flex-col items-center gap-2.5"
+                    className="min-w-[120px] sm:min-w-[140px] md:min-w-[160px] group cursor-pointer snap-start flex flex-col items-center gap-4"
                   >
-                    <div className="w-[80px] h-[80px] sm:w-[100px] sm:h-[100px] relative rounded-full overflow-hidden bg-gray-100 dark:bg-white/[0.03] shadow-sm group-hover:shadow-xl transition-shadow duration-500 ring-2 ring-transparent group-hover:ring-white/10">
+                    <div className="w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] md:w-[140px] md:h-[140px] relative rounded-full overflow-hidden bg-gray-100 dark:bg-white/[0.03] shadow-lg group-hover:shadow-2xl transition-all duration-700 ring-4 ring-transparent group-hover:ring-white/10">
                       {artist.thumbnail ? (
-                        <NextImage src={artist.thumbnail} alt={artist.name} width={100} height={100} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" loading="lazy" />
+                        <NextImage src={artist.thumbnail} alt={artist.name} width={140} height={140} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" loading="lazy" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center"><Music size={22} className="text-gray-300 dark:text-white/10" /></div>
+                        <div className="w-full h-full flex items-center justify-center"><Music size={32} className="text-gray-300 dark:text-white/10" /></div>
                       )}
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all" />
                     </div>
-                    <span className="text-[11px] sm:text-[12px] font-semibold text-gray-600 dark:text-white/40 group-hover:text-gray-900 dark:group-hover:text-white/70 transition-colors truncate max-w-[100px] text-center">
+                    <span className="text-[13px] sm:text-[14px] font-bold text-gray-700 dark:text-white/40 group-hover:text-gray-900 dark:group-hover:text-white/80 transition-colors truncate max-w-[120px] sm:max-w-[140px] text-center tracking-tight">
                       {artist.name}
                     </span>
                   </motion.button>
                 ))}
-              </div>
+              </ScrollRow>
             </motion.section>
           )}
 
           {/* Local Library Banner */}
-          {!isLocal && (
+          {!isLocal && !searchQuery && !selectedGenre && (
             <motion.section 
               variants={fadeUp}
-              whileHover={{ scale: 1.003 }}
-              className="relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer group" 
+              whileHover={{ scale: 1.005 }}
+              className="relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden cursor-pointer group shadow-2xl shadow-black/5" 
               onClick={toggleLocal}
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-white/[0.03] dark:to-white/[0.01]" />
-              <div className="absolute inset-0 border border-gray-200/50 dark:border-white/[0.04] rounded-2xl sm:rounded-3xl" />
+              <div className="absolute inset-0 bg-gradient-to-r from-gray-100 to-gray-50 dark:from-white/[0.04] dark:to-white/[0.02]" />
+              <div className="absolute inset-0 border border-gray-200/50 dark:border-white/[0.05] rounded-[2rem] sm:rounded-[3rem]" />
 
-              <div className="relative z-10 p-6 sm:p-8 md:p-12 flex items-center justify-between gap-4 sm:gap-6">
-                <div className="space-y-1.5 sm:space-y-2 max-w-lg">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white tracking-[-0.025em]">
-                    Your Local Library
+              <div className="relative z-10 p-8 sm:p-12 md:p-16 flex flex-col sm:flex-row items-center justify-between gap-8">
+                <div className="space-y-3 text-center sm:text-left">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white tracking-tight leading-none">
+                    Your Library.
                   </h2>
-                  <p className="text-gray-500 dark:text-white/30 font-medium text-[13px] sm:text-[14px] md:text-[15px] leading-relaxed">
-                    Play your local audio files with the Grovy engine.
+                  <p className="text-gray-500 dark:text-white/30 font-bold text-base sm:text-lg md:text-xl leading-relaxed max-w-md">
+                    Play your local audio files with the premium Grovy engine.
                   </p>
                 </div>
-                <div className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-gray-200/60 dark:bg-white/[0.04] rounded-xl sm:rounded-2xl flex items-center justify-center group-hover:bg-gray-300/60 dark:group-hover:bg-white/[0.08] transition-colors shrink-0">
-                  <Folder size={22} className="text-gray-500 dark:text-white/30 sm:w-6 sm:h-6" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200/50 dark:bg-white/[0.05] backdrop-blur-3xl rounded-3xl flex items-center justify-center group-hover:bg-gray-300/50 dark:group-hover:bg-white/[0.1] transition-all duration-500 shrink-0 group-hover:rotate-6 shadow-xl">
+                  <Folder size={32} className="text-gray-500 dark:text-white/40" />
                 </div>
               </div>
             </motion.section>

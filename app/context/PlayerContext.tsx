@@ -38,7 +38,7 @@ interface PlayerContextType {
   volume: number;
   isLoop: boolean;
   isShuffle: boolean;
-  favorites: string[];
+  favorites: Song[];
   colors: Colors;
   play: () => void;
   pause: () => void;
@@ -131,7 +131,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [isLoop, setIsLoop] = useState(false);
   const [isShuffle, setIsShuffle] = useState(false);
   const [recentlyPlayed, setRecentlyPlayed] = useState<Song[]>([]);
-  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<Song[]>([]);
   const [colors, setColors] = useState<Colors>(DEFAULT_COLORS);
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
@@ -176,7 +176,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         if (favs && favs.length > 0) setFavorites(favs);
         else {
           const savedFavs = localStorage.getItem("grovy-favorites");
-          if (savedFavs) setFavorites(JSON.parse(savedFavs));
+          // Legacy check: if saved favorites are strings (IDs), we'll clear them and start over or try to hydrate.
+          // For simplicity, we just clear legacy favorites.
+          if (savedFavs) {
+            const parsed = JSON.parse(savedFavs);
+            if (parsed.length > 0 && typeof parsed[0] === 'string') {
+               setFavorites([]);
+               localStorage.removeItem("grovy-favorites");
+            } else {
+               setFavorites(parsed);
+            }
+          }
         }
 
         const savedPlaylists = await getPlaylists();
@@ -1026,8 +1036,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isPlaying, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
-  const toggleFavorite = useCallback((id: string) => setFavorites(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]), []);
-  const isFavorite = useCallback((id: string) => favorites.includes(id), [favorites]);
+  const toggleFavorite = useCallback((id: string) => {
+    setFavorites(prev => {
+      if (prev.some(s => s.id === id)) return prev.filter(s => s.id !== id);
+      const song = songsRef.current.find(s => s.id === id) || recentlyPlayed.find(s => s.id === id);
+      if (song) return [...prev, song];
+      return prev;
+    });
+  }, [recentlyPlayed]);
+  const isFavorite = useCallback((id: string) => favorites.some(s => s.id === id), [favorites]);
   const clearHistory = useCallback(() => {
     setRecentlyPlayed([]);
     localStorage.removeItem("grovy-history");

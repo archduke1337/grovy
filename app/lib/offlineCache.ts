@@ -149,23 +149,26 @@ export async function getPlaylists(): Promise<any[]> {
 
 // ─── Favorites ───
 
-export async function saveFavorites(favoriteIds: string[]): Promise<void> {
+export async function saveFavorites(favoriteSongs: any[]): Promise<void> {
   try {
     const db = await openDB();
     const store = tx(db, STORES.favorites, "readwrite");
+    // Using put instead of clear + put to preserve data if needed, 
+    // but the app currently manages the whole list in state.
+    // For simplicity, we match the existing behavior of replacing the whole list.
     store.clear();
-    for (const id of favoriteIds) {
-      store.put({ id });
+    for (const song of favoriteSongs) {
+      store.put(song);
     }
   } catch (e) {}
 }
 
-export async function getFavorites(): Promise<string[]> {
+export async function getFavorites(): Promise<any[]> {
   try {
     const db = await openDB();
     return new Promise((resolve) => {
       const req = tx(db, STORES.favorites, "readonly").getAll();
-      req.onsuccess = () => resolve((req.result || []).map((f: any) => f.id));
+      req.onsuccess = () => resolve(req.result || []);
       req.onerror = () => resolve([]);
     });
   } catch (e) {
