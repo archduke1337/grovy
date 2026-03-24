@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef, Suspense, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
-import { getTrendingSongs, getCharts, search as apiSearch, getSearchSuggestions } from "@/app/lib/api";
+import { getTrendingSongs, getCharts, searchSongs, getSearchSuggestions } from "@/app/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Play,
@@ -250,6 +250,7 @@ function HomeContent() {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchError, setSearchError] = useState<string>("");
 
   const [trending, setTrending] = useState<any[]>([]);
   const [charts, setCharts] = useState<any[]>([]);
@@ -344,14 +345,30 @@ function HomeContent() {
 
   const handleSearch = useCallback(
     async (query: string = searchQuery) => {
-      if (!query || query.length < 2) return;
+      if (!query || query.length < 2) {
+        setSearchResults([]);
+        setSearchError("");
+        return;
+      }
 
       setIsSearching(true);
+      setSearchError("");
       try {
-        const results = await apiSearch(query, "song");
-        setSearchResults(results || []);
+        // Use searchSongs instead of apiSearch to get proper Song type with title, artist, cover
+        const controller = new AbortController();
+        const results = await searchSongs(query, undefined, controller.signal);
+        if (!controller.signal.aborted) {
+          setSearchResults(results || []);
+          if (!results || results.length === 0) {
+            setSearchError(`No results found for "${query}"`);
+          }
+        }
       } catch (error) {
-        console.error("Search failed:", error);
+        if (error instanceof Error && error.name !== "AbortError") {
+          console.error("Search failed:", error);
+          setSearchResults([]);
+          setSearchError(`Search failed: ${error.message}`);
+        }
       } finally {
         setIsSearching(false);
       }
@@ -361,10 +378,35 @@ function HomeContent() {
 
   const handleSongClick = useCallback(
     (song: any) => {
-      const queue = searchQuery ? searchResults : trending;
-      const index = queue.findIndex((s) => s.id === song.id);
-      if (index !== -1) {
-        setQueue(queue, index);
+      try {
+        // Determine which queue to use
+        let queue: any[] = [];
+        let index = -1;
+
+        if (searchQuery && searchResults.length > 0) {
+          // Use search results queue
+          queue = searchResults;
+          index = queue.findIndex((s) => {
+            // Match by ID or by title+artist combination as fallback
+            return s.id === song.id || (s.title === song.title && s.artist === song.artist);
+          });
+        } else if (trending.length > 0) {
+          // Use trending queue
+          queue = trending;
+          index = queue.findIndex((s) => {
+            return s.id === song.id || (s.title === song.title && s.artist === song.artist);
+          });
+        }
+
+        // If found, queue it
+        if (index !== -1 && queue.length > 0) {
+          setQueue(queue, index);
+        } else {
+          // Fallback: queue just this song
+          setQueue([song], 0);
+        }
+      } catch (error) {
+        console.error("Failed to play song:", error);
       }
     },
     [searchQuery, searchResults, trending, setQueue]
@@ -467,6 +509,7 @@ function HomeContent() {
               setSearchQuery("");
               setSearchResults([]);
               setShowSuggestions(false);
+              setSearchError("");
             }}
             className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:hover:bg-white/[0.12] transition-all shadow-sm"
           >
@@ -478,6 +521,7 @@ function HomeContent() {
               setSearchQuery("");
               setSearchResults([]);
               setShowSuggestions(false);
+              setSearchError("");
             }}
             className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:hover:bg-white/[0.12] transition-all shadow-sm"
           >
@@ -536,8 +580,17 @@ function HomeContent() {
           className="flex flex-col items-center justify-center py-12 sm:py-16"
         >
           <Music size={48} className="text-gray-300 dark:text-white/10 mb-4" />
-          <p className="text-gray-500 dark:text-white/50 font-medium">No results found for "{searchQuery}"</p>
-          <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Try different keywords</p>
+          {searchError ? (
+            <>
+              <p className="text-gray-700 dark:text-white/70 font-medium text-center max-w-md">{searchError}</p>
+              <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Try a different search term</p>
+            </>
+          ) : (
+            <>
+              <p className="text-gray-500 dark:text-white/50 font-medium">No results found for "{searchQuery}"</p>
+              <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Try different keywords</p>
+            </>
+          )}
         </motion.div>
       )}
 
