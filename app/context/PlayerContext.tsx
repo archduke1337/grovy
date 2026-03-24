@@ -266,18 +266,40 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             lastStateRef.current = event.data;
           },
           onError: (e: any) => {
-            console.error("[YTPlayer] Error:", e.data);
+            // YouTube player error codes:
+            // 2 = Invalid parameter
+            // 5 = HTML5 player error
+            // 100 = Video not found (user deleted, made private, or not available)
+            // 101 = Video owner doesn't allow playback
+            // 150 = Same as 101
+            const errorCode = e.data;
+            const errorMessages: Record<number, string> = {
+              2: "Invalid parameter",
+              5: "HTML5 player error",
+              100: "Video not found or unavailable",
+              101: "Video owner doesn't allow playback",
+              150: "Video owner doesn't allow playback"
+            };
+            const errorMsg = errorMessages[errorCode] || `Error code ${errorCode}`;
+            console.error(`[YTPlayer] Error (${errorCode}): ${errorMsg}`);
+            
             // Recover: try streaming via audio element fallback, or skip
             const song = songsRef.current[currentSongIndexRef.current];
             if (song?.source === "YouTube" && audioRef.current) {
               const videoId = song.id.replace("yt-", "");
               const streamUrl = new URL(`/api/stream?id=${videoId}`, window.location.origin).href;
-              console.warn(`[YTPlayer] Falling back to audio stream proxy: ${streamUrl}`);
+              console.warn(`[YTPlayer] Attempting fallback to audio stream: ${streamUrl}`);
               const audio = audioRef.current;
               audio.src = streamUrl;
               audio.load();
-              if (isPlayingRef.current) audio.play().catch(() => nextTrackRef.current());
+              if (isPlayingRef.current) {
+                audio.play().catch((playError) => {
+                  console.error("[YTPlayer] Fallback failed:", playError);
+                  nextTrackRef.current();
+                });
+              }
             } else {
+              console.log("[YTPlayer] Skipping to next track");
               nextTrackRef.current();
             }
           }
@@ -381,13 +403,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const song = songsRef.current[currentSongIndexRef.current];
       if (song?.source === "YouTube") return;
 
-      console.warn("[Audio] Playback stalled, attempting recovery...");
+      console.warn(`[Audio] Playback stalled for: ${song?.title}, attempt ${stallRetryCountRef.current + 1}/3`);
       if (stallRetryCountRef.current < 3 && audio.src) {
         stallRetryCountRef.current++;
         const pos = audio.currentTime;
         audio.load();
-        audio.currentTime = pos;
-        if (isPlayingRef.current) audio.play().catch(() => {});
+        audio.currentTime = Math.max(0, pos - 1); // Rewind 1 second to help recovery
+        if (isPlayingRef.current) {
+          audio.play().catch((err) => {
+            console.error("[Audio] Playback retry failed:", err);
+          });
+        }
+      } else if (stallRetryCountRef.current >= 3) {
+        console.error("[Audio] Max retries exceeded, skipping to next track");
+        stallRetryCountRef.current = 0;
+        nextTrackRef.current();
       }
     };
     const handleError = () => {
@@ -395,9 +425,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const song = songsRef.current[currentSongIndexRef.current];
       if (song?.source === "YouTube") return;
 
-      console.error("[Audio] Playback error, retry:", stallRetryCountRef.current);
+      const errorCode = audio.error?.code;
+      const errorName = audio.error?.code === 1 ? "MEDIA_ERR_ABORTED" 
+                      : audio.error?.code === 2 ? "MEDIA_ERR_NETWORK"
+                      : audio.error?.code === 3 ? "MEDIA_ERR_DECODE"
+                      : audio.error?.code === 4 ? "MEDIA_ERR_SRC_NOT_SUPPORTED"
+                      : "UNKNOWN_ERROR";
+      
+      console.error(`[Audio] Error (${errorCode}): ${errorName} - ${song?.title}`);
+      
       if (stallRetryCountRef.current >= 3) {
         stallRetryCountRef.current = 0;
+        console.log("[Audio] Skipping song due to repeated errors");
         nextTrackRef.current();
       } else {
         // Delay retry to avoid rapid-fire error cascade
@@ -405,7 +444,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
     const handlePlaying = () => {
-      stallRetryCountRef.current = 0;
+      stallRetryCountRef.current = 0; // Reset on successful playback
     };
 
     audio.addEventListener("timeupdate", updateTime);

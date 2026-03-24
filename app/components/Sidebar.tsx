@@ -5,22 +5,16 @@ import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Home, 
-  Music2, 
-  Search, 
-  Library, 
   Clock, 
   Heart, 
   Plus, 
-  Music,
-  Radio
+  Music
 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import Image from "next/image";
 
 const mainNav = [
   { name: "Home", path: "/", icon: Home },
-  { name: "Browse", path: "/browse", icon: Music2 },
-  { name: "Radio", path: "/radio", icon: Radio },
 ];
 
 const libraryNav = [

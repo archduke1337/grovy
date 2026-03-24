@@ -1,19 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import dynamic from "next/dynamic";
 import { Analytics } from "@vercel/analytics/next"
 import { PlayerProvider } from "@/app/context/PlayerContext";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
 import { Sidebar } from "@/app/components/Sidebar";
 import { BottomPlayer } from "@/app/components/BottomPlayer";
-import { CommandPalette } from "@/app/components/CommandPalette";
-import { AmbientBackground } from "@/app/components/AmbientBackground";
-import SmoothScroll from "@/app/components/SmoothScroll";
 import { ToastProvider } from "@/app/components/Toast";
-import { KeyboardShortcuts } from "@/app/components/KeyboardShortcuts";
+
+// Dynamic imports for non-critical components (no ssr: false in Server Components)
+const CommandPalette = dynamic(() => import("@/app/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
+const AmbientBackground = dynamic(() => import("@/app/components/AmbientBackground").then(m => ({ default: m.AmbientBackground })));
+const SmoothScroll = dynamic(() => import("@/app/components/SmoothScroll"));
+const KeyboardShortcuts = dynamic(() => import("@/app/components/KeyboardShortcuts").then(m => ({ default: m.KeyboardShortcuts })));
 
 const APP_NAME = "Grovy";
 const APP_DESCRIPTION = "A premium open-source music player built for the web. Stream, discover, and enjoy music with a beautiful interface.";
-const APP_URL = "https://grovymusic.vercel.app";
+const APP_URL = "https://grovy.vercel.app";
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,

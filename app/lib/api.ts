@@ -177,3 +177,15 @@ export async function getArtistInfo(
     { signal }
   );
 }
+
+// ─── Trending & Charts ────────────────────────────────────────────
+export async function getTrendingSongs(signal?: AbortSignal): Promise<any[]> {
+  return request<any[]>(`/api/trending`, { signal });
+}
+
+export async function getCharts(
+  chartId: string = "songs",
+  signal?: AbortSignal
+): Promise<any[]> {
+  return request<any[]>(`/api/charts?id=${chartId}`, { signal });
+}
