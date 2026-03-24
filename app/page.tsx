@@ -93,12 +93,11 @@ const ScrollRow = ({ children, className = "" }: { children: React.ReactNode; cl
   </div>
 );
 
-const SongCard = ({ song, onClick, loading = false }: { song: any; onClick: () => void; loading?: boolean }) => (
+const SongCard = ({ song, onClick, loading = false, onFavorite, isFav = false }: { song: any; onClick: () => void; loading?: boolean; onFavorite?: (song: any) => void; isFav?: boolean }) => (
   <motion.div
     whileHover={{ y: -6 }}
     whileTap={{ scale: 0.96 }}
-    onClick={onClick}
-    className="min-w-[150px] sm:min-w-[170px] md:min-w-[190px] lg:min-w-[210px] group cursor-pointer snap-start flex-shrink-0"
+    className="min-w-[150px] sm:min-w-[170px] md:min-w-[190px] lg:min-w-[210px] group cursor-pointer snap-start flex-shrink-0 relative"
   >
     <div className="aspect-square relative rounded-[16px] overflow-hidden mb-3 bg-gradient-to-br from-gray-300 to-gray-400 dark:from-white/[0.08] dark:to-white/[0.02] shadow-md group-hover:shadow-2xl transition-all duration-500">
       {song.cover ? (
@@ -130,6 +129,22 @@ const SongCard = ({ song, onClick, loading = false }: { song: any; onClick: () =
           <Play size={24} fill="white" className="text-white ml-1" />
         </motion.button>
       </div>
+      
+      {/* Heart/Favorite Button */}
+      {onFavorite && (
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFavorite(song);
+          }}
+          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-pink-500 transition-all backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100"
+          title={isFav ? "Remove from favorites" : "Add to favorites"}
+        >
+          <Heart size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-pink-500" : "text-white"} />
+        </motion.button>
+      )}
     </div>
     <div className="px-0 space-y-1.5">
       <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm sm:text-base leading-snug">
@@ -244,7 +259,7 @@ export default function Home() {
 }
 
 function HomeContent() {
-  const { setQueue, songs } = usePlayer();
+  const { setQueue, songs, toggleFavorite, isFavorite } = usePlayer();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -566,6 +581,8 @@ function HomeContent() {
                   key={item.id}
                   song={item}
                   onClick={() => handleSongClick(item)}
+                  onFavorite={toggleFavorite}
+                  isFav={isFavorite(item.id)}
                 />
               ))}
             </div>
@@ -621,6 +638,8 @@ function HomeContent() {
                     key={song.id}
                     song={song}
                     onClick={() => handleSongClick(song)}
+                    onFavorite={toggleFavorite}
+                    isFav={isFavorite(song.id)}
                   />
                 ))}
               </ScrollRow>
@@ -646,6 +665,8 @@ function HomeContent() {
                         setQueue(charts, index);
                       }
                     }}
+                    onFavorite={toggleFavorite}
+                    isFav={isFavorite(song.id)}
                   />
                 ))}
               </ScrollRow>
@@ -666,6 +687,8 @@ function HomeContent() {
                     key={song.id}
                     song={song}
                     onClick={() => handleSongClick(song)}
+                    onFavorite={toggleFavorite}
+                    isFav={isFavorite(song.id)}
                   />
                 ))}
               </ScrollRow>

@@ -15,53 +15,66 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
-  const saavnUrl = request.nextUrl.searchParams.get("saavnUrl"); // For Saavn songs
-  const quality = request.nextUrl.searchParams.get("quality") || "high"; // 'high', 'medium', 'low'
+  const saavnUrl = request.nextUrl.searchParams.get("saavnUrl");
+  const quality = request.nextUrl.searchParams.get("quality") || "high";
   
   if (!id && !saavnUrl) {
     return Response.json({ error: "Missing id or saavnUrl" }, { status: 400 });
   }
 
-  // Handle Saavn songs directly
+  // ═══ HANDLE SAAVN DIRECT DOWNLOAD ═══
   if (saavnUrl) {
     try {
+      const decodedUrl = decodeURIComponent(saavnUrl);
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 10000);
+      const timeout = setTimeout(() => controller.abort(), 15000);
       
-      const res = await fetch(decodeURIComponent(saavnUrl), {
+      const res = await fetch(decodedUrl, {
         signal: controller.signal,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Referer": "https://www.jiosaavn.com/",
+          "Range": request.headers.get("Range") || "bytes=0-",
         },
       });
       clearTimeout(timeout);
 
-      if (res.ok || res.status === 206) {
-        const contentType = res.headers.get("Content-Type") || "audio/mpeg";
-        const responseHeaders: Record<string, string> = {
-          "Content-Type": contentType,
-          "Access-Control-Allow-Origin": "*",
-          "Accept-Ranges": "bytes",
-          "Cache-Control": "public, max-age=3600",
-        };
-        const contentLength = res.headers.get("Content-Length");
-        const contentRange = res.headers.get("Content-Range");
-        if (contentLength) responseHeaders["Content-Length"] = contentLength;
-        if (contentRange) responseHeaders["Content-Range"] = contentRange;
-
-        return new Response(res.body, {
-          status: res.status,
-          headers: responseHeaders,
-        });
+      if (!res.ok && res.status !== 206) {
+        console.error(`[StreamAPI] Saavn fetch failed: ${res.status}`);
+        return Response.json({ error: `Saavn return ${res.status}` }, { status: 502 });
       }
+
+      const contentType = res.headers.get("Content-Type") || "audio/mpeg";
+      const responseHeaders: Record<string, string> = {
+        "Content-Type": contentType,
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Range, Content-Type",
+        "Accept-Ranges": "bytes",
+        "Cache-Control": "public, max-age=3600",
+      };
+
+      const contentLength = res.headers.get("Content-Length");
+      const contentRange = res.headers.get("Content-Range");
+      if (contentLength) responseHeaders["Content-Length"] = contentLength;
+      if (contentRange) responseHeaders["Content-Range"] = contentRange;
+
+      console.log(`[StreamAPI] Saavn: ${contentType}, length: ${contentLength}`);
+      return new Response(res.body, {
+        status: res.status,
+        headers: responseHeaders,
+      });
     } catch (error) {
-      console.error("[StreamAPI] Saavn proxy failed:", error);
-      return Response.json({ error: "Saavn playback unavailable" }, { status: 502 });
+      console.error("[StreamAPI] Saavn proxy error:", error);
+      return Response.json({ error: "Saavn streaming failed" }, { status: 502 });
     }
   }
 
-  // Handle YouTube videos
+  // ═══ HANDLE YOUTUBE VIDEO ═══
+  if (!id) {
+    return Response.json({ error: "Missing id" }, { status: 400 });
+  }
+
   try {
     const controller = new AbortController();
     const metaTimeout = setTimeout(() => controller.abort(), 8000);

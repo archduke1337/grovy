@@ -50,7 +50,7 @@ interface PlayerContextType {
   setVolume: (volume: number) => void;
   toggleLoop: () => void;
   toggleShuffle: () => void;
-  toggleFavorite: (id: string) => void;
+  toggleFavorite: (idOrSong: string | Song) => void;
   isFavorite: (id: string) => boolean;
   loadSongs: (query?: string, source?: string, signal?: AbortSignal) => Promise<Song[]>;
   setQueue: (newSongs: Song[], index: number) => void;
@@ -1075,11 +1075,26 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [isPlaying, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
-  const toggleFavorite = useCallback((id: string) => {
+  const toggleFavorite = useCallback((idOrSong: string | Song) => {
+    const id = typeof idOrSong === 'string' ? idOrSong : idOrSong.id;
     setFavorites(prev => {
+      // If already favorited, remove it
       if (prev.some(s => s.id === id)) return prev.filter(s => s.id !== id);
-      const song = songsRef.current.find(s => s.id === id) || recentlyPlayed.find(s => s.id === id);
+      
+      // Try to find the full song object
+      let song = songsRef.current.find(s => s.id === id);
+      if (!song) song = recentlyPlayed.find(s => s.id === id);
+      
+      // If we have a Song object passed in, use it
+      if (typeof idOrSong === 'object' && idOrSong.id === id) {
+        song = idOrSong;
+      }
+      
+      // Add to favorites if we have the song
       if (song) return [...prev, song];
+      
+      // Fallback: create minimal song object from what we have
+      // This shouldn't happen but prevents data loss
       return prev;
     });
   }, [recentlyPlayed]);

@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
           const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
                         item.artist || "Unknown Artist";
           
-          // Proxy Saavn downloads through our stream endpoint
+          // Proxy Saavn URLs through stream endpoint for CORS support
           const streamUrl = downloadUrl 
             ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`
             : "";
@@ -231,10 +231,12 @@ export async function GET(request: NextRequest) {
       const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
                      item.artist || "Unknown Artist";
       
-      // Proxy Saavn downloads through our stream endpoint to handle CORS/auth
-      const streamUrl = downloadUrl 
-        ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`
-        : "";
+      // Create streaming URL that proxies through our endpoint for CORS support
+      let streamUrl = "";
+      if (downloadUrl) {
+        // URL encode the download URL properly for query parameter
+        streamUrl = `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`;
+      }
       
       return {
         id: `saavn-${item.id}`,
@@ -246,7 +248,7 @@ export async function GET(request: NextRequest) {
         duration: item.duration,
         source: "Saavn"
       };
-    });
+    }).filter((s: any) => s.url && s.id); // Filter out songs without URLs
 
     // Robust YouTube Parsing — with HD thumbnail upgrade
     const ytRaw = Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || ytRes?.songs || []);
