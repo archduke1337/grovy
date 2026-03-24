@@ -250,6 +250,65 @@ const HomeSkeleton = () => (
   </div>
 );
 
+// ═══ FEATURED HIGHLIGHT CARD (NEW - Premium Hero Section) ═══
+const FeaturedHero = ({ song, onClick }: { song: any; onClick: () => void }) => {
+  const [imageLoaded, setImageLoaded] = useState(false);
+  
+  return (
+    <motion.div
+      variants={fadeUp}
+      whileHover={{ scale: 1.02 }}
+      className="relative w-full rounded-[24px] md:rounded-[32px] overflow-hidden cursor-pointer group"
+      onClick={onClick}
+    >
+      <div className="relative aspect-[4/3] sm:aspect-[16/10] md:aspect-[21/9] w-full bg-gradient-to-br from-gray-300 via-gray-200 to-gray-300 dark:from-white/[0.08] dark:via-white/[0.04] dark:to-white/[0.08]">
+        {song.cover && (
+          <NextImage
+            src={getHDThumbnail(song.cover) || song.cover}
+            alt={song.title}
+            fill
+            className="object-cover transition-transform duration-700 group-hover:scale-110"
+            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 85vw, 1200px"
+            onLoad={() => setImageLoaded(true)}
+            priority
+          />
+        )}
+        
+        {/* Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        
+        {/* Content */}
+        <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 md:p-8">
+          <div className="flex items-center gap-2">
+            <Sparkles size={20} className="text-pink-400" />
+            <span className="text-xs sm:text-sm font-bold text-pink-400 uppercase tracking-widest">
+              NOW PLAYING
+            </span>
+          </div>
+          
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-white leading-tight">
+              {song.title}
+            </h3>
+            <p className="text-sm sm:text-base md:text-lg text-white/80 line-clamp-2">
+              {song.artist}
+            </p>
+            
+            <motion.button
+              whileHover={{ scale: 1.08 }}
+              whileTap={{ scale: 0.95 }}
+              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-pink-500 hover:bg-pink-600 rounded-full flex items-center justify-center shadow-2xl transition-all mt-2 sm:mt-4"
+            >
+              <Play size={24} fill="white" className="text-white ml-0.5" />
+            </motion.button>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
 export default function Home() {
   return (
     <Suspense fallback={<HomeSkeleton />}>
