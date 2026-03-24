@@ -9,17 +9,17 @@ function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
 
 export async function GET(request: NextRequest) {
   try {
+    const country = request.nextUrl.searchParams.get("country") || "IN";
+    
     // Fetch from both JioSaavn and YouTube Music for comprehensive trending data
     const saavnEndpoint = "https://jiosaavn-api.gauravramyadav.workers.dev/api/trending/songs?limit=30";
     
-    // YouTube Music Charts - fetch top songs from various sources
-    const ytChartEndpoint = "https://ytapi.gauravramyadav.workers.dev/api/charts?region=US";
-    const ytSearchEndpoint = "https://ytapi.gauravramyadav.workers.dev/api/search?q=top%20charts%20now&filter=songs&limit=30";
+    // YouTube Music Charts - using charts endpoint, not search
+    const ytChartEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/charts?country=${country}`;
 
-    const [saavnRes, ytChartRes, ytSearchRes] = await Promise.all([
+    const [saavnRes, ytRes] = await Promise.all([
       fetchWithTimeout(saavnEndpoint).then(res => res.json()).catch(() => ({ success: false })),
-      fetchWithTimeout(ytChartEndpoint).then(res => res.json()).catch(() => []),
-      fetchWithTimeout(ytSearchEndpoint).then(res => res.json()).catch(() => [])
+      fetchWithTimeout(ytChartEndpoint).then(res => res.json()).catch(() => [])
     ]);
 
     const saavnTrending = (saavnRes.success && saavnRes.data?.results) 
@@ -46,9 +46,8 @@ export async function GET(request: NextRequest) {
         })
       : [];
 
-    // Use YouTube chart data if available, otherwise use search results
-    const ytData = Array.isArray(ytChartRes) && ytChartRes.length > 0 ? ytChartRes : 
-                   (Array.isArray(ytSearchRes) ? ytSearchRes : (ytSearchRes?.results || ytSearchRes?.data || []));
+    // Use YouTube chart data
+    const ytData = Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || []);
 
     const ytTrending = ytData
       .slice(0, 30)

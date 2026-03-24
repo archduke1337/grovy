@@ -10,7 +10,7 @@ function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const chartId = searchParams.get("id") || "songs"; // songs, albums, artists, playlists
-  const region = searchParams.get("region") || "US";
+  const country = searchParams.get("country") || "IN";
 
   try {
     let saavnEndpoint = "";
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     switch (chartId) {
       case "songs":
         saavnEndpoint = "https://jiosaavn-api.gauravramyadav.workers.dev/api/charts/songs?limit=30";
-        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/charts?region=${region}`;
+        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/charts?country=${country}`;
         break;
       case "albums":
         saavnEndpoint = "https://jiosaavn-api.gauravramyadav.workers.dev/api/charts/albums?limit=20";
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         break;
       default:
         saavnEndpoint = "https://jiosaavn-api.gauravramyadav.workers.dev/api/charts/songs?limit=30";
-        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/charts?region=${region}`;
+        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/charts?country=${country}`;
     }
 
     // Fetch from both sources in parallel
