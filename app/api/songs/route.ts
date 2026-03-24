@@ -100,10 +100,15 @@ export async function GET(request: NextRequest) {
           const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
                         item.artist || "Unknown Artist";
           
+          // Proxy Saavn downloads through our stream endpoint
+          const streamUrl = downloadUrl 
+            ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`
+            : "";
+          
           return {
             id: `saavn-${item.id}`,
             title: item.name || item.title,
-            url: downloadUrl || "",
+            url: streamUrl,
             artist: artist,
             cover: cover,
             genre: "Unknown", 
@@ -226,10 +231,15 @@ export async function GET(request: NextRequest) {
       const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
                      item.artist || "Unknown Artist";
       
+      // Proxy Saavn downloads through our stream endpoint to handle CORS/auth
+      const streamUrl = downloadUrl 
+        ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`
+        : "";
+      
       return {
         id: `saavn-${item.id}`,
         title: item.name || item.title,
-        url: downloadUrl,
+        url: streamUrl,
         artist: artist,
         cover: cover,
         genre: GENRES[index % GENRES.length],
