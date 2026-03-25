@@ -27,7 +27,7 @@ export const Sidebar = () => {
   const { playlists, createPlaylist } = usePlayer();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-black/[0.05] dark:border-white/[0.05] bg-gray-50/50 dark:bg-black/20 backdrop-blur-xl z-40 overflow-y-auto custom-scrollbar">
+    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 backdrop-blur-xl z-40 overflow-y-auto custom-scrollbar\">
       <div className="p-6">
         <Link href="/" className="flex items-center gap-2.5 mb-10">
           <Image src="/icons/logo.png" alt="Grovy" width={28} height={28} className="w-7 h-7" />
@@ -47,8 +47,8 @@ export const Sidebar = () => {
                   href={item.path}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive 
-                      ? "bg-black/[0.05] dark:bg-white/[0.1] text-pink-500 dark:text-pink-400" 
-                      : "text-gray-600 dark:text-white/50 hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
+                      ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                      : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <item.icon size={18} className={isActive ? "text-pink-500 dark:text-pink-400" : ""} />
@@ -72,8 +72,8 @@ export const Sidebar = () => {
                     href={item.path}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive 
-                        ? "bg-black/[0.05] dark:bg-white/[0.1] text-pink-500 dark:text-pink-400" 
-                        : "text-gray-600 dark:text-white/50 hover:bg-black/[0.03] dark:hover:bg-white/[0.05] hover:text-gray-900 dark:hover:text-white"
+                        ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                        : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
                     <item.icon size={18} className={isActive ? "text-pink-500 dark:text-pink-400" : ""} />
@@ -92,7 +92,7 @@ export const Sidebar = () => {
               </h3>
               <button 
                 onClick={() => createPlaylist("New Playlist")}
-                className="p-1 rounded-md hover:bg-black/[0.05] dark:hover:bg-white/10 text-gray-400 transition-colors"
+                className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 transition-colors"
               >
                 <Plus size={14} />
               </button>
@@ -102,8 +102,8 @@ export const Sidebar = () => {
                 href="/playlists"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === "/playlists" 
-                    ? "bg-black/[0.05] dark:bg-white/[0.1] text-pink-500 dark:text-pink-400" 
-                    : "text-gray-600 dark:text-white/50 hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+                    ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                    : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5"
                 }`}
               >
                 <div className="w-4 h-4 flex items-center justify-center">
@@ -117,8 +117,8 @@ export const Sidebar = () => {
                   href={`/playlists/${pl.id}`}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all truncate ${
                     pathname === `/playlists/${pl.id}` 
-                      ? "bg-black/[0.05] dark:bg-white/[0.1] text-pink-500 dark:text-pink-400" 
-                      : "text-gray-600 dark:text-white/50 hover:bg-black/[0.03] dark:hover:bg-white/[0.05]"
+                      ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                      : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5"
                   }`}
                 >
                   <Music size={16} className="shrink-0" />

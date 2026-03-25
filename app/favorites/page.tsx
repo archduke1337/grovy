@@ -27,7 +27,7 @@ export default function FavoritesPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+      className="w-full max-w-350 mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
     >
       <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
         <div className="space-y-4">
@@ -51,7 +51,7 @@ export default function FavoritesPage() {
             </button>
             <button
               onClick={handleShufflePlay}
-              className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-900 dark:text-white font-black hover:bg-gray-200 dark:hover:bg-white/[0.08] active:scale-95 transition-all"
+              className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white font-black hover:bg-gray-200 dark:hover:bg-white/8 active:scale-95 transition-all"
             >
               <Shuffle size={20} />
               Shuffle
@@ -76,7 +76,7 @@ export default function FavoritesPage() {
               >
                 <div 
                   onClick={() => setQueue(favorites, i)}
-                  className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/[0.03] shadow-lg group-hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                  className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/3 shadow-lg group-hover:shadow-2xl transition-all duration-500 cursor-pointer"
                 >
                   {song.cover ? (
                     <Image src={getHDThumbnail(song.cover) || ""} alt={song.title} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
@@ -110,7 +110,7 @@ export default function FavoritesPage() {
         </div>
       ) : (
         <div className="py-32 text-center space-y-8">
-           <div className="w-24 h-24 mx-auto rounded-[2rem] bg-gray-100 dark:bg-white/[0.03] flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
+           <div className="w-24 h-24 mx-auto rounded-4xl bg-gray-100 dark:bg-white/3 flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
               <Heart size={48} />
            </div>
            <div className="space-y-3">

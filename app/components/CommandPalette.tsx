@@ -165,16 +165,16 @@ export const CommandPalette: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setCommandPaletteOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[150]"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xl z-150"
           />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="fixed left-1/2 top-[10%] sm:top-[20%] -translate-x-1/2 w-full max-w-2xl z-[151] px-4"
+            className="fixed left-1/2 top-[10%] sm:top-[20%] -translate-x-1/2 w-full max-w-2xl z-151 px-4"
           >
-            <div className="glass-effect dark:glass-effect-dark rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 dark:border-white/10">
+            <div className="glass-effect dark:glass-effect-dark rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 dark:border-white/10">
               <div className="relative flex items-center p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">
                 {isSearching ? (
                   <Loader2 className="text-blue-500 mr-4 animate-spin shrink-0" size={20} />
@@ -194,7 +194,7 @@ export const CommandPalette: React.FC = () => {
                 </button>
               </div>
 
-              <div className="max-h-[350px] sm:max-h-[450px] overflow-y-auto custom-scrollbar p-2 sm:p-3 space-y-1">
+              <div className="max-h-87.5 sm:max-h-112.5 overflow-y-auto custom-scrollbar p-2 sm:p-3 space-y-1">
                 {filteredItems.length > 0 ? (
                   filteredItems.map((item, i) => (
                     <button

@@ -14,7 +14,7 @@ export default function HistoryPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+      className="w-full max-w-350 mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
     >
       <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
         <div className="space-y-4">
@@ -30,7 +30,7 @@ export default function HistoryPage() {
         {recentlyPlayed.length > 0 && (
           <button
             onClick={clearHistory}
-            className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-500 dark:text-white/30 font-black hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-95"
+            className="group flex items-center gap-2.5 px-6 py-3.5 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-500 dark:text-white/30 font-black hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-95"
           >
             <Trash2 size={18} className="transition-transform group-hover:rotate-12" />
             Clear All
@@ -53,7 +53,7 @@ export default function HistoryPage() {
                 onClick={() => setQueue(recentlyPlayed, i)}
                 className="group cursor-pointer space-y-3"
               >
-                <div className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-100 dark:bg-white/[0.03] shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                <div className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-100 dark:bg-white/3 shadow-lg group-hover:shadow-2xl transition-all duration-500">
                   {song.cover ? (
                     <Image src={getHDThumbnail(song.cover) || ""} alt={song.title} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
                   ) : (
@@ -77,7 +77,7 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="py-32 text-center space-y-8">
-           <div className="w-24 h-24 mx-auto rounded-[2rem] bg-gray-100 dark:bg-white/[0.03] flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
+           <div className="w-24 h-24 mx-auto rounded-4xl bg-gray-100 dark:bg-white/3 flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
               <Clock size={48} />
            </div>
            <div className="space-y-3">

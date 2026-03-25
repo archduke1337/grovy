@@ -72,7 +72,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[120] bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-0"
+          className="fixed inset-0 z-120 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-0"
         >
           <button 
             onClick={onClose}
@@ -111,7 +111,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                       animate={{ rotate: 360 }}
                       transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
                     >
-                      <Music size={40} className="sm:w-[48px] sm:h-[48px]" />
+                      <Music size={40} className="sm:w-12 sm:h-12" />
                     </motion.div>
                     <p className="font-black uppercase tracking-widest text-[10px] sm:text-xs">Finding Lyrics</p>
                  </div>

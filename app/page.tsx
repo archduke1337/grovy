@@ -97,9 +97,9 @@ const SongCard = ({ song, onClick, loading = false, onFavorite, isFav = false }:
   <motion.div
     whileHover={{ y: -6 }}
     whileTap={{ scale: 0.96 }}
-    className="min-w-[150px] sm:min-w-[170px] md:min-w-[190px] lg:min-w-[210px] group cursor-pointer snap-start flex-shrink-0 relative"
+    className="min-w-37.5 sm:min-w-42.5 md:min-w-47.5 lg:min-w-52.5 group cursor-pointer snap-start shrink-0 relative"
   >
-    <div className="aspect-square relative rounded-[16px] overflow-hidden mb-3 bg-gradient-to-br from-gray-300 to-gray-400 dark:from-white/[0.08] dark:to-white/[0.02] shadow-md group-hover:shadow-2xl transition-all duration-500">
+    <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-linear-to-br from-gray-300 to-gray-400 dark:from-white/8 dark:to-white/2 shadow-md group-hover:shadow-2xl transition-all duration-500">
       {song.cover ? (
         <NextImage
           src={getHDThumbnail(song.cover) || song.cover}
@@ -111,7 +111,7 @@ const SongCard = ({ song, onClick, loading = false, onFavorite, isFav = false }:
           loading="lazy"
         />
       ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-400/20 to-purple-500/20 dark:from-blue-500/10 dark:to-purple-600/10">
+        <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-blue-400/20 to-purple-500/20 dark:from-blue-500/10 dark:to-purple-600/10">
           <Music size={40} className="text-white/30" />
         </div>
       )}
@@ -165,9 +165,9 @@ const HeroCard = ({ song, onClick }: { song: any; onClick: () => void }) => {
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      className="relative w-full rounded-[24px] md:rounded-[32px] overflow-hidden cursor-pointer group"
+      className="relative w-full rounded-3xl md:rounded-4xl overflow-hidden cursor-pointer group"
     >
-      <div className="relative aspect-[4/3] sm:aspect-[16/10] md:aspect-[21/9] w-full bg-gradient-to-br from-gray-300 via-gray-200 to-gray-300 dark:from-white/[0.08] dark:via-white/[0.04] dark:to-white/[0.08]">
+      <div className="relative aspect-4/3 sm:aspect-16/10 md:aspect-21/9 w-full bg-linear-to-br from-gray-300 via-gray-200 to-gray-300 dark:from-white/8 dark:via-white/4 dark:to-white/8">
         {song.cover && (
           <NextImage
             src={getHDThumbnail(song.cover) || song.cover}
@@ -183,8 +183,8 @@ const HeroCard = ({ song, onClick }: { song: any; onClick: () => void }) => {
 
       {/* Enhanced Gradient Overlay */}
       <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-transparent" />
         <div className="absolute inset-0 group-hover:bg-black/10 transition-all duration-300" />
       </div>
 
@@ -229,20 +229,20 @@ const HeroCard = ({ song, onClick }: { song: any; onClick: () => void }) => {
 };
 
 const HomeSkeleton = () => (
-  <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-5 md:px-8 lg:px-12 py-6 sm:py-8 space-y-10 sm:space-y-14 animate-pulse">
+  <div className="w-full max-w-350 mx-auto px-3 sm:px-5 md:px-8 lg:px-12 py-6 sm:py-8 space-y-10 sm:space-y-14 animate-pulse">
     <div className="space-y-3">
-      <div className="h-14 sm:h-20 w-72 bg-gray-200 dark:bg-white/[0.06] rounded-2xl" />
-      <div className="h-5 w-56 bg-gray-100 dark:bg-white/[0.04] rounded-lg" />
+      <div className="h-14 sm:h-20 w-72 bg-gray-200 dark:bg-white/6 rounded-2xl" />
+      <div className="h-5 w-56 bg-gray-100 dark:bg-white/4 rounded-lg" />
     </div>
-    <div className="h-64 sm:h-96 md:h-[450px] w-full bg-gray-200 dark:bg-white/[0.06] rounded-3xl" />
+    <div className="h-64 sm:h-96 md:h-112.5 w-full bg-gray-200 dark:bg-white/6 rounded-3xl" />
     <div className="space-y-6">
-      <div className="h-8 w-52 bg-gray-200 dark:bg-white/[0.06] rounded-xl" />
+      <div className="h-8 w-52 bg-gray-200 dark:bg-white/6 rounded-xl" />
       <div className="flex gap-4 overflow-hidden">
         {[...Array(8)].map((_, i) => (
-          <div key={i} className="min-w-[150px] space-y-3 flex-shrink-0">
-            <div className="aspect-square bg-gray-200 dark:bg-white/[0.06] rounded-2xl" />
-            <div className="h-4 w-32 bg-gray-100 dark:bg-white/[0.04] rounded-lg" />
-            <div className="h-3 w-24 bg-gray-100 dark:bg-white/[0.04] rounded-lg" />
+          <div key={i} className="min-w-37.5 space-y-3 shrink-0">
+            <div className="aspect-square bg-gray-200 dark:bg-white/6 rounded-2xl" />
+            <div className="h-4 w-32 bg-gray-100 dark:bg-white/4 rounded-lg" />
+            <div className="h-3 w-24 bg-gray-100 dark:bg-white/4 rounded-lg" />
           </div>
         ))}
       </div>
@@ -258,10 +258,10 @@ const FeaturedHero = ({ song, onClick }: { song: any; onClick: () => void }) => 
     <motion.div
       variants={fadeUp}
       whileHover={{ scale: 1.02 }}
-      className="relative w-full rounded-[24px] md:rounded-[32px] overflow-hidden cursor-pointer group"
+      className="relative w-full rounded-3xl md:rounded-4xl overflow-hidden cursor-pointer group"
       onClick={onClick}
     >
-      <div className="relative aspect-[4/3] sm:aspect-[16/10] md:aspect-[21/9] w-full bg-gradient-to-br from-gray-300 via-gray-200 to-gray-300 dark:from-white/[0.08] dark:via-white/[0.04] dark:to-white/[0.08]">
+      <div className="relative aspect-4/3 sm:aspect-16/10 md:aspect-21/9 w-full bg-linear-to-br from-gray-300 via-gray-200 to-gray-300 dark:from-white/8 dark:via-white/4 dark:to-white/8">
         {song.cover && (
           <NextImage
             src={getHDThumbnail(song.cover) || song.cover}
@@ -275,8 +275,8 @@ const FeaturedHero = ({ song, onClick }: { song: any; onClick: () => void }) => 
         )}
         
         {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
+        <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-transparent" />
         
         {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 md:p-8">
@@ -493,7 +493,7 @@ function HomeContent() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="w-full max-w-[1400px] mx-auto px-3 sm:px-5 md:px-8 lg:px-12 py-4 sm:py-6 md:py-8 space-y-10 sm:space-y-14 md:space-y-16 pb-40 sm:pb-44 md:pb-48"
+      className="w-full max-w-350 mx-auto px-3 sm:px-5 md:px-8 lg:px-12 py-4 sm:py-6 md:py-8 space-y-10 sm:space-y-14 md:space-y-16 pb-40 sm:pb-44 md:pb-48"
     >
       {/* ═══ HERO HEADER WITH SEARCH ═══ */}
       <motion.header variants={fadeUp} className="pt-2 sm:pt-4 md:pt-6 space-y-6 sm:space-y-8">
@@ -517,7 +517,7 @@ function HomeContent() {
 
         {/* Search Bar - Apple Music Style */}
         <motion.div variants={fadeUp} className="relative max-w-2xl">
-          <div className="relative flex items-center bg-white/60 dark:bg-white/[0.08] backdrop-blur-3xl border border-gray-200/40 dark:border-white/[0.12] rounded-2xl px-4 sm:px-5 py-3 sm:py-4 transition-all duration-300 hover:bg-white/80 dark:hover:bg-white/[0.12] focus-within:border-pink-400/50 dark:focus-within:border-pink-400/30 focus-within:bg-white dark:focus-within:bg-white/[0.15] shadow-sm hover:shadow-lg">
+          <div className="relative flex items-center bg-white/60 dark:bg-white/8 backdrop-blur-3xl border border-gray-200/40 dark:border-white/12 rounded-2xl px-4 sm:px-5 py-3 sm:py-4 transition-all duration-300 hover:bg-white/80 dark:hover:bg-white/12 focus-within:border-pink-400/50 dark:focus-within:border-pink-400/30 focus-within:bg-white dark:focus-within:bg-white/15 shadow-sm hover:shadow-lg">
             <Search size={20} className="text-gray-500 dark:text-white/40 shrink-0" />
             <input
               type="text"
@@ -554,7 +554,7 @@ function HomeContent() {
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -8, scale: 0.95 }}
                 transition={{ duration: 0.15 }}
-                className="absolute top-full left-0 right-0 mt-3 z-50 bg-white dark:bg-gray-950 border border-gray-200/40 dark:border-white/[0.08] rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
+                className="absolute top-full left-0 right-0 mt-3 z-50 bg-white dark:bg-gray-950 border border-gray-200/40 dark:border-white/8 rounded-2xl shadow-2xl overflow-hidden backdrop-blur-xl"
               >
                 {suggestions.map((suggestion, i) => (
                   <button
@@ -565,7 +565,7 @@ function HomeContent() {
                       setShowSuggestions(false);
                       handleSearch(suggestion);
                     }}
-                    className="w-full flex items-center gap-3 px-5 py-3 text-left text-sm font-medium text-gray-800 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors border-b border-gray-100/50 dark:border-white/[0.05] last:border-b-0"
+                    className="w-full flex items-center gap-3 px-5 py-3 text-left text-sm font-medium text-gray-800 dark:text-white/70 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors border-b border-gray-100/50 dark:border-white/5 last:border-b-0"
                   >
                     <Search size={16} className="text-gray-400 dark:text-white/20 shrink-0" />
                     <span className="truncate">{suggestion}</span>
@@ -585,7 +585,7 @@ function HomeContent() {
               setShowSuggestions(false);
               setSearchError("");
             }}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:hover:bg-white/[0.12] transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/12 transition-all shadow-sm"
           >
             <TrendingUp size={16} />
             Trending
@@ -597,7 +597,7 @@ function HomeContent() {
               setShowSuggestions(false);
               setSearchError("");
             }}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-white/[0.08] hover:bg-gray-200 dark:hover:bg-white/[0.12] transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold text-gray-900 dark:text-white bg-gray-100 dark:bg-white/8 hover:bg-gray-200 dark:hover:bg-white/12 transition-all shadow-sm"
           >
             <BarChart3 size={16} />
             Charts

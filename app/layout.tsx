@@ -236,14 +236,14 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="bg-[#f5f5f7] dark:bg-black min-h-screen min-h-dvh overflow-x-hidden antialiased" suppressHydrationWarning>
+      <body className="bg-[#f5f5f7] dark:bg-black min-h-dvh overflow-x-hidden antialiased" suppressHydrationWarning>
         <PlayerProvider>
           <ToastProvider>
           <AmbientBackground />
           <KeyboardShortcuts />
           <div className="flex">
             <Sidebar />
-            <div className="flex-1 lg:ml-64 relative min-h-screen min-h-dvh flex flex-col">
+            <div className="flex-1 lg:ml-64 relative min-h-dvh flex flex-col">
               <SmoothScroll>
                 <CommandPalette />
                 <Navbar />

@@ -98,7 +98,7 @@ export const MusicPlayer: React.FC = () => {
                {/* Large Album Art */}
                <motion.div
                 layoutId={`art-${currentSongIndex}`}
-                className="relative aspect-square w-full max-w-[320px] sm:max-w-[400px] lg:max-w-[480px] group apple-shadow"
+                className="relative aspect-square w-full max-w-80 sm:max-w-100 lg:max-w-120 group apple-shadow"
                >
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
