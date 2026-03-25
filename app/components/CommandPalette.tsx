@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Music, X, Home, Info, Play, Github, Loader2 } from "lucide-react";
+import { Search, Music, X, Home, Info, Play, Github, Loader2, FileText } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { useRouter } from "next/navigation";
 import { Song } from "../types/song";
@@ -39,6 +39,7 @@ export const CommandPalette: React.FC = () => {
       { id: "nav-home", title: "Go to Home", icon: <Home size={18} />, action: () => { router.push("/"); setCommandPaletteOpen(false); } },
       { id: "nav-github", title: "View Source code", icon: <Github size={18} />, action: () => { window.open("https://github.com/archduke1337/grovy", "_blank"); setCommandPaletteOpen(false); } },
       { id: "nav-opensource", title: "Open Source Credits", icon: <Info size={18} />, action: () => { router.push("/opensource"); setCommandPaletteOpen(false); } },
+      { id: "nav-tos", title: "Terms of Service", icon: <FileText size={18} />, action: () => { router.push("/tos"); setCommandPaletteOpen(false); } },
     ];
 
     navigation.forEach(item => {
