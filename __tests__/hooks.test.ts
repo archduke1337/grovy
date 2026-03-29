@@ -38,7 +38,7 @@ describe("useLocalStorageState", () => {
     patchGrovyPrefsMock.mockClear();
   });
 
-  it("should return initial value when localStorage is empty", () => {
+  it("should return initial value when preferences are empty", () => {
     const { result } = renderHook(() => useLocalStorageState("test-key", 42));
     expect(result.current[0]).toBe(42);
   });

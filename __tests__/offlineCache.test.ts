@@ -1,15 +1,9 @@
 /**
- * Unit tests for the offline cache (IndexedDB wrapper).
+ * Unit tests for the offline cache helper.
  * Run with: npx vitest run __tests__/offlineCache.test.ts
- *
- * Note: requires `fake-indexeddb` package for Node environment.
- * Install: npm i -D vitest fake-indexeddb
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-
-// Polyfill IndexedDB for Node
-import "fake-indexeddb/auto";
 
 import {
   cacheSong,
