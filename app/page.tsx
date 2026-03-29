@@ -493,6 +493,18 @@ function HomeContent() {
     () => (lastSubmittedQuery || searchQuery).trim(),
     [lastSubmittedQuery, searchQuery]
   );
+  const hasResultsForActiveQuery = useMemo(() => {
+    const activeQuery = searchQuery.trim().toLowerCase();
+    const submittedQuery = lastSubmittedQuery.trim().toLowerCase();
+    return activeQuery.length > 0 && activeQuery === submittedQuery && visibleSearchResults.length > 0;
+  }, [searchQuery, lastSubmittedQuery, visibleSearchResults.length]);
+
+  useEffect(() => {
+    if (showSuggestions && hasResultsForActiveQuery) {
+      setShowSuggestions(false);
+    }
+  }, [showSuggestions, hasResultsForActiveQuery]);
+
   const resultSuggestions = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) return [];
@@ -594,7 +606,7 @@ function HomeContent() {
             </div>
 
             <AnimatePresence>
-              {showSuggestions && searchQuery.trim().length >= 2 ? (
+              {showSuggestions && searchQuery.trim().length >= 2 && !hasResultsForActiveQuery ? (
                 <motion.div
                   initial={{ opacity: 0, y: -6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
