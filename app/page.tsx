@@ -120,7 +120,7 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
             event.stopPropagation();
             onFavorite(song);
           }}
-          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-all backdrop-blur-sm z-10 opacity-0 group-hover:opacity-100"
+          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-all backdrop-blur-sm z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           title={isFav ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-sky-400" : "text-white"} />

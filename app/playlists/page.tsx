@@ -63,31 +63,31 @@ export default function PlaylistsPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-screen-2xl mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+      className="w-full max-w-screen-2xl mx-auto px-3 sm:px-5 md:px-8 lg:px-10 pt-8 sm:pt-10 md:pt-12 pb-36 sm:pb-40 space-y-10 sm:space-y-14"
     >
-      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
+      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 sm:gap-8 pt-4 sm:pt-8">
         <div className="space-y-4">
            <div className="flex items-center gap-3 font-black uppercase text-[11px] sm:text-[12px] tracking-[0.25em] text-blue-500">
              <Folder size={16} />
              <span>Your Library</span>
            </div>
-           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
+           <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
              Playlists<span className="text-blue-500/20">.</span>
            </h1>
         </div>
         
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto">
           <button
             onClick={handleExportAll}
             disabled={playlists.length === 0}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all disabled:opacity-20 active:scale-95"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all disabled:opacity-20 active:scale-95"
           >
             <Download size={16} />
             <span>Export</span>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all active:scale-95"
           >
             <Upload size={16} />
             <span>Import</span>

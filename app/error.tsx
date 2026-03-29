@@ -44,7 +44,7 @@ export default function Error({
         )}
       </div>
 
-      <div style={{ display: "flex", gap: "1rem" }}>
+      <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center" }}>
         <button
           onClick={() => reset()}
           style={{ padding: "0.75rem 1.5rem", borderRadius: 9999, background: "#2563eb", color: "#fff", fontWeight: 700, border: "none", cursor: "pointer" }}

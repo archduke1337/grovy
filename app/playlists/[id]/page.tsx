@@ -70,14 +70,14 @@ export default function PlaylistDetailPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-screen-2xl mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-20"
+      className="w-full max-w-screen-2xl mx-auto px-3 sm:px-5 md:px-8 lg:px-10 pt-8 sm:pt-10 md:pt-12 pb-36 sm:pb-40 space-y-10 sm:space-y-16"
     >
       {/* Header Section */}
-      <header className="flex flex-col md:flex-row items-center md:items-end gap-10 md:gap-12">
+      <header className="flex flex-col md:flex-row items-center md:items-end gap-8 md:gap-12">
          <motion.div 
            initial={{ opacity: 0, scale: 0.9, y: 20 }}
            animate={{ opacity: 1, scale: 1, y: 0 }}
-           className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] relative group shrink-0 bg-gray-100 dark:bg-zinc-900"
+           className="w-full max-w-72 sm:w-72 sm:h-72 md:w-80 md:h-80 aspect-square rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] relative group shrink-0 bg-gray-100 dark:bg-zinc-900"
          >
             {playlist.songs.length > 0 && playlist.songs[0].cover ? (
                <Image 
@@ -104,7 +104,7 @@ export default function PlaylistDetailPage() {
                 <span className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]" />
                 <span>Playlist Collection</span>
               </div>
-              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9] drop-shadow-sm">
+              <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-tighter leading-[0.9] drop-shadow-sm">
                 {playlist.name}
               </h1>
             </div>
@@ -120,10 +120,10 @@ export default function PlaylistDetailPage() {
               </div>
             </div>
             
-            <div className="flex items-center justify-center md:justify-start gap-4 pt-4">
+            <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 pt-4">
                <button
                  onClick={handlePlay}
-                 className="flex items-center gap-2.5 px-10 py-4 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase text-xs tracking-[0.15em] shadow-2xl hover:scale-105 active:scale-95 transition-all"
+                 className="flex items-center gap-2.5 px-6 sm:px-10 py-3.5 sm:py-4 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase text-[11px] sm:text-xs tracking-[0.15em] shadow-2xl hover:scale-105 active:scale-95 transition-all"
                >
                  <Play size={18} fill="currentColor" />
                  Play All
@@ -183,7 +183,7 @@ export default function PlaylistDetailPage() {
                        animate={{ opacity: 1, y: 0 }}
                        transition={{ delay: i * 0.02 }}
                        onClick={() => setQueue(playlist.songs, i)}
-                       className={`group flex items-center gap-4 sm:gap-6 px-4 py-3 sm:px-8 sm:py-5 cursor-pointer transition-all hover:bg-black/3 dark:hover:bg-zinc-800 relative ${
+                       className={`group flex items-center gap-3 sm:gap-6 px-3 py-3 sm:px-8 sm:py-5 cursor-pointer transition-all hover:bg-black/3 dark:hover:bg-zinc-800 relative ${
                          isCurrent ? "bg-black/2 dark:bg-zinc-900" : "" 
                        }`}
                      >
@@ -234,15 +234,15 @@ export default function PlaylistDetailPage() {
                          </div>
 
                          <div className="flex items-center gap-2 sm:gap-4 px-2">
-                            <button 
+                             <button 
                                onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                               className={`p-3 rounded-2xl transition-all hover:bg-gray-100 dark:hover:bg-white/10 ${favorite ? "text-red-500" : "text-gray-300 dark:text-white/10 hover:text-red-400"}`}
+                               className={`p-2.5 sm:p-3 rounded-2xl transition-all hover:bg-gray-100 dark:hover:bg-white/10 ${favorite ? "text-red-500" : "text-gray-300 dark:text-white/10 hover:text-red-400"}`}
                             >
                                <Heart size={18} fill={favorite ? "currentColor" : "none"} />
                             </button>
                             <button 
                               onClick={(e) => { e.stopPropagation(); removeFromPlaylist(playlist.id, song.id); }}
-                              className="p-3 rounded-2xl text-gray-300 dark:text-white/10 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-0 group-hover:opacity-100"
+                              className="p-2.5 sm:p-3 rounded-2xl text-gray-300 dark:text-white/10 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
                               title="Remove"
                             >
                               <X size={18} />

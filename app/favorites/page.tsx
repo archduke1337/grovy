@@ -27,31 +27,31 @@ export default function FavoritesPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-350 mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+      className="w-full max-w-350 mx-auto px-3 sm:px-5 md:px-8 lg:px-10 pt-8 sm:pt-10 md:pt-12 pb-36 sm:pb-40 space-y-10 sm:space-y-14"
     >
-      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
+      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 sm:gap-8 pt-4 sm:pt-8">
         <div className="space-y-4">
            <div className="flex items-center gap-3 font-black uppercase text-[11px] sm:text-[12px] tracking-[0.25em] text-pink-500">
              <Heart size={16} fill="currentColor" />
              <span>Your Collection</span>
            </div>
-           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
+           <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
              Favorites<span className="text-pink-500/20">.</span>
            </h1>
         </div>
         
         {favorites.length > 0 && (
-          <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex flex-wrap items-center gap-2.5 sm:gap-4 w-full md:w-auto">
             <button
               onClick={handlePlayAll}
-              className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-pink-500 text-white font-black shadow-xl shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
+              className="flex items-center gap-2.5 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl bg-pink-500 text-white text-sm sm:text-base font-black shadow-xl shadow-pink-500/25 hover:scale-105 active:scale-95 transition-all"
             >
               <Play size={20} fill="currentColor" />
               Play
             </button>
             <button
               onClick={handleShufflePlay}
-              className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white font-black hover:bg-gray-200 dark:hover:bg-white/8 active:scale-95 transition-all"
+              className="flex items-center gap-2.5 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white text-sm sm:text-base font-black hover:bg-gray-200 dark:hover:bg-white/8 active:scale-95 transition-all"
             >
               <Shuffle size={20} />
               Shuffle
@@ -100,7 +100,7 @@ export default function FavoritesPage() {
                 {/* Remove from favorites button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                  className="absolute top-2 right-2 p-2 rounded-xl bg-black/40 backdrop-blur-md text-white opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500"
+                  className="absolute top-2 right-2 p-2 rounded-xl bg-black/40 backdrop-blur-md text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:bg-red-500"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -109,7 +109,7 @@ export default function FavoritesPage() {
           </AnimatePresence>
         </div>
       ) : (
-        <div className="py-32 text-center space-y-8">
+        <div className="py-20 sm:py-32 text-center space-y-8">
            <div className="w-24 h-24 mx-auto rounded-4xl bg-gray-100 dark:bg-white/3 flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
               <Heart size={48} />
            </div>

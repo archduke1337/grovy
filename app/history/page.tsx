@@ -14,15 +14,15 @@ export default function HistoryPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-350 mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+      className="w-full max-w-350 mx-auto px-3 sm:px-5 md:px-8 lg:px-10 pt-8 sm:pt-10 md:pt-12 pb-36 sm:pb-40 space-y-10 sm:space-y-14"
     >
-      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
+      <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 sm:gap-8 pt-4 sm:pt-8">
         <div className="space-y-4">
            <div className="flex items-center gap-3 font-black uppercase text-[11px] sm:text-[12px] tracking-[0.25em] text-blue-500">
              <Clock size={16} />
              <span>Playback History</span>
            </div>
-           <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
+           <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black text-gray-900 dark:text-white tracking-[-0.04em] leading-none">
              Recent<span className="text-blue-500/20">.</span>
            </h1>
         </div>
@@ -76,7 +76,7 @@ export default function HistoryPage() {
           </AnimatePresence>
         </div>
       ) : (
-        <div className="py-32 text-center space-y-8">
+        <div className="py-20 sm:py-32 text-center space-y-8">
            <div className="w-24 h-24 mx-auto rounded-4xl bg-gray-100 dark:bg-white/3 flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
               <Clock size={48} />
            </div>
