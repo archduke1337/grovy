@@ -26,6 +26,60 @@ const GENRES = [
   "Tollywood / Regional Film"
 ];
 
+function pickArtist(item: any): string {
+  const primaryArtists = item?.artists?.primary;
+  if (Array.isArray(primaryArtists) && primaryArtists.length > 0) {
+    const names = primaryArtists.map((a: any) => a?.name).filter(Boolean);
+    if (names.length > 0) return names.join(", ");
+  }
+
+  if (Array.isArray(item?.artists) && item.artists.length > 0) {
+    const names = item.artists
+      .map((a: any) => (typeof a === "string" ? a : a?.name || ""))
+      .filter(Boolean);
+    if (names.length > 0) return names.join(", ");
+  }
+
+  if (typeof item?.artist === "string" && item.artist.trim()) return item.artist;
+  if (typeof item?.author === "string" && item.author.trim()) return item.author;
+  if (typeof item?.primaryArtists === "string" && item.primaryArtists.trim()) return item.primaryArtists;
+  if (item?.channel?.name) return String(item.channel.name);
+  return "Unknown Artist";
+}
+
+function pickCover(item: any): string | undefined {
+  if (Array.isArray(item?.image) && item.image.length > 0) {
+    return item.image[item.image.length - 1]?.url || item.image[0]?.url;
+  }
+
+  const bestThumb = getBestThumbnail(item?.thumbnails);
+  if (bestThumb) return bestThumb;
+
+  if (typeof item?.thumbnail === "string" && item.thumbnail) {
+    return getHDThumbnail(item.thumbnail);
+  }
+
+  return getHDThumbnail(item?.thumbnails?.[0]?.url);
+}
+
+function pickSaavnDownloadUrl(item: any): string {
+  const direct =
+    item?.downloadUrl?.[item.downloadUrl.length - 1]?.url ||
+    (Array.isArray(item?.downloadUrl) ? item.downloadUrl[0]?.url : item?.downloadUrl);
+  return typeof direct === "string" ? direct : "";
+}
+
+function parseDuration(value: any): number {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value !== "string") return 0;
+
+  const chunks = value.split(":").map((part) => Number(part));
+  if (chunks.some((part) => Number.isNaN(part))) return 0;
+  if (chunks.length === 2) return chunks[0] * 60 + chunks[1];
+  if (chunks.length === 3) return chunks[0] * 3600 + chunks[1] * 60 + chunks[2];
+  return 0;
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const source = searchParams.get("source");
@@ -37,17 +91,17 @@ export async function GET(request: NextRequest) {
     // 1. Fetch by ID (Album/Playlist/Artist details)
     if (id && type && ["album", "playlist", "artist"].includes(type)) {
       const isYT = id.startsWith("yt-");
-      const realId = isYT ? id.replace("yt-", "") : id;
+      const realId = isYT ? id.replace(/^yt-/, "") : id.replace(/^saavn-/, "");
 
       let endpoint = "";
       if (isYT) {
-        if (type === "album") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/albums/${realId}`;
-        if (type === "playlist") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/playlists/${realId}`;
-        if (type === "artist") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/artists/${realId}`;
+        if (type === "album") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/albums/${encodeURIComponent(realId)}`;
+        if (type === "playlist") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/playlists/${encodeURIComponent(realId)}`;
+        if (type === "artist") endpoint = `https://ytapi.gauravramyadav.workers.dev/api/artists/${encodeURIComponent(realId)}`;
       } else {
-        if (type === "album") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/albums?id=${id}`;
-        if (type === "playlist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/playlists?id=${id}`;
-        if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${id}&song_count=20`; 
+        if (type === "album") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/albums?id=${encodeURIComponent(realId)}`;
+        if (type === "playlist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/playlists?id=${encodeURIComponent(realId)}`;
+        if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${encodeURIComponent(realId)}&song_count=20`;
       }
 
       const response = await fetchWithTimeout(endpoint);
@@ -65,6 +119,9 @@ export async function GET(request: NextRequest) {
          if (songsList.length === 0 && data.songs?.results) {
            songsList = data.songs.results;
          }
+         if (songsList.length === 0 && Array.isArray(data.topSongs)) {
+           songsList = data.topSongs;
+         }
       } else if (data.success && data.data) {
         if (type === "artist") {
            songsList = data.data.topSongs || data.data.songs || [];
@@ -80,25 +137,25 @@ export async function GET(request: NextRequest) {
         songsList = data;
       }
 
-      const rawSongs = songsList.filter((item: any) => item && (item.videoId || item.id)).map((item: any) => {
+      const rawSongs = songsList.filter((item: any) => item && (item.videoId || item.id || item.fallbackVideoId)).map((item: any) => {
           if (isYT) {
-             const vid = item.videoId || item.id;
+           const vid = item.videoId || item.id || item.fallbackVideoId;
+           if (!vid) return null;
              return {
                 id: `yt-${vid}`,
-                title: item.title,
+             title: item.title || item.name || item.fallbackTitle || "Untitled",
                 url: `/api/stream?id=${vid}`,
-                artist: item.artists?.[0]?.name || "YT Artist",
-                cover: getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url),
+             artist: pickArtist(item),
+             cover: pickCover(item),
                 genre: "YouTube",
-                duration: item.duration || 0,
+             duration: Number(item.duration) || parseDuration(item.durationText || item.duration) || 0,
                 source: "YouTube",
              };
           }
 
-          const cover = item.image?.[item.image.length - 1]?.url;
-          const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url;
-          const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
-                        item.artist || "Unknown Artist";
+         const cover = pickCover(item);
+         const downloadUrl = pickSaavnDownloadUrl(item);
+         const artist = pickArtist(item);
           
           // Proxy Saavn URLs through stream endpoint for CORS support
           const streamUrl = downloadUrl 
@@ -107,15 +164,15 @@ export async function GET(request: NextRequest) {
           
           return {
             id: `saavn-${item.id}`,
-            title: item.name || item.title,
+            title: item.name || item.title || "Untitled",
             url: streamUrl,
             artist: artist,
             cover: cover,
             genre: "Unknown", 
-            duration: item.duration,
+            duration: Number(item.duration) || 0,
             source: "Saavn",
           };
-      }).filter((s: any) => s.url);
+      }).filter((s: any) => s && s.url);
 
       return Response.json(rawSongs);
     }
@@ -211,9 +268,9 @@ export async function GET(request: NextRequest) {
     
     let ytUrl = "";
     if (query === "trending") {
-      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/trending?region=${country}`;
+      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/trending?country=${country}`;
     } else if (query === "charts") {
-      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/charts?region=${country}`;
+      ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/trending?country=${country}`;
     } else {
       ytUrl = `https://ytapi.gauravramyadav.workers.dev/api/search?q=${encodeURIComponent(query)}&filter=songs`;
     }
@@ -226,10 +283,9 @@ export async function GET(request: NextRequest) {
     // Robust Saavn Parsing
     const saavnRaw = saavnRes.data?.results || saavnRes.data || (Array.isArray(saavnRes) ? saavnRes : []);
     const saavnSongs = saavnRaw.map((item: any, index: number) => {
-      const cover = item.image?.[item.image.length - 1]?.url || (Array.isArray(item.image) ? item.image[0]?.url : item.image);
-      const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url || (Array.isArray(item.downloadUrl) ? item.downloadUrl[0]?.url : item.downloadUrl);
-      const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || 
-                     item.artist || "Unknown Artist";
+      const cover = pickCover(item);
+      const downloadUrl = pickSaavnDownloadUrl(item);
+      const artist = pickArtist(item);
       
       // Create streaming URL that proxies through our endpoint for CORS support
       let streamUrl = "";
@@ -240,33 +296,40 @@ export async function GET(request: NextRequest) {
       
       return {
         id: `saavn-${item.id}`,
-        title: item.name || item.title,
+        title: item.name || item.title || "Untitled",
         url: streamUrl,
         artist: artist,
         cover: cover,
         genre: GENRES[index % GENRES.length],
-        duration: item.duration,
+        duration: Number(item.duration) || 0,
         source: "Saavn"
       };
     }).filter((s: any) => s.url && s.id); // Filter out songs without URLs
 
     // Robust YouTube Parsing — with HD thumbnail upgrade
-    const ytRaw = Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || ytRes?.songs || []);
+    const ytRaw = Array.isArray(ytRes)
+      ? ytRes
+      : (ytRes?.tracks || ytRes?.results || ytRes?.data || ytRes?.songs || []);
     const ytSongs = ytRaw.map((item: any) => {
-      const id = item.videoId || item.id;
+      const id = item.videoId || item.id || item.fallbackVideoId;
       if (!id) return null;
 
       // Get HD thumbnail — upgrade from 60x60 to 544x544
-      const cover = getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url) || item.image;
+      const cover = pickCover(item);
 
       return {
         id: `yt-${id}`,
-        title: item.title || item.name,
+        title: item.title || item.name || item.fallbackTitle || "Untitled",
         url: `/api/stream?id=${id}`, 
-        artist: item.artists?.[0]?.name || item.artist || "YouTube Artist",
+        artist: pickArtist(item),
         cover,
         genre: "YouTube",
-        duration: item.duration ?? (item.duration_ms != null ? item.duration_ms / 1000 : 180),
+        duration:
+          Number(item.duration_seconds) ||
+          Number(item.duration) ||
+          (item.duration_ms != null ? Number(item.duration_ms) / 1000 : 0) ||
+          parseDuration(item.durationText || item.duration) ||
+          180,
         source: "YouTube"
       };
     }).filter(Boolean);

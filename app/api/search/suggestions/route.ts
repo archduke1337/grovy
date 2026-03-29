@@ -22,7 +22,27 @@ export async function GET(request: NextRequest) {
       return Response.json([]);
     }
     const data = await res.json();
-    return Response.json(data, {
+
+    const rawSuggestions = Array.isArray(data)
+      ? data
+      : Array.isArray(data?.suggestions)
+      ? data.suggestions
+      : Array.isArray(data?.data?.suggestions)
+      ? data.data.suggestions
+      : [];
+
+    const suggestions = rawSuggestions
+      .map((item: any) => {
+        if (typeof item === "string") return item.trim();
+        if (item && typeof item === "object") {
+          return String(item.text || item.query || item.title || "").trim();
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .slice(0, 12);
+
+    return Response.json(suggestions, {
       headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" }
     });
   } catch (error) {
