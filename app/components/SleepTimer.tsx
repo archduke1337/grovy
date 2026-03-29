@@ -23,9 +23,10 @@ const PRESETS = [
 
 export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sleepMinutes, sleepEndTime, onSetTimer }) => {
   const [remainingDisplay, setRemainingDisplay] = useState("");
+  const activeRemainingDisplay = sleepEndTime && isOpen ? remainingDisplay : "";
 
   useEffect(() => {
-    if (!sleepEndTime || !isOpen) { setRemainingDisplay(""); return; }
+    if (!sleepEndTime || !isOpen) return;
     const tick = () => {
       const diff = Math.max(0, sleepEndTime - Date.now());
       if (diff <= 0) { setRemainingDisplay(""); clearInterval(interval); return; }
@@ -33,9 +34,12 @@ export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sl
       const s = Math.floor((diff % 60000) / 1000);
       setRemainingDisplay(m > 0 ? `${m}m ${s}s` : `${s}s`);
     };
-    tick();
+    const timeout = setTimeout(tick, 0);
     const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, [sleepEndTime, isOpen]);
 
   return (
@@ -69,7 +73,7 @@ export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sl
               <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 text-center">
                 <p className="text-sm font-bold text-blue-400">Timer Active</p>
                 <p className="text-xs text-blue-400/60 mt-1">
-                  {remainingDisplay ? `Playback will pause in ${remainingDisplay}` : `Playback will pause in ${sleepMinutes} min`}
+                  {activeRemainingDisplay ? `Playback will pause in ${activeRemainingDisplay}` : `Playback will pause in ${sleepMinutes} min`}
                 </p>
               </div>
             )}
@@ -111,9 +115,10 @@ export const SleepTimerButton: React.FC<{
   onClick: () => void;
 }> = ({ sleepMinutes, sleepEndTime, onClick }) => {
   const [remaining, setRemaining] = useState("");
+  const activeRemaining = sleepEndTime ? remaining : "";
 
   useEffect(() => {
-    if (!sleepEndTime) { setRemaining(""); return; }
+    if (!sleepEndTime) return;
     const tick = () => {
       const diff = Math.max(0, sleepEndTime - Date.now());
       if (diff <= 0) { setRemaining(""); clearInterval(interval); return; }
@@ -121,9 +126,12 @@ export const SleepTimerButton: React.FC<{
       const s = Math.floor((diff % 60000) / 1000);
       setRemaining(m > 0 ? `${m}m ${s}s` : `${s}s`);
     };
-    tick();
+    const timeout = setTimeout(tick, 0);
     const interval = setInterval(tick, 1000);
-    return () => clearInterval(interval);
+    return () => {
+      clearTimeout(timeout);
+      clearInterval(interval);
+    };
   }, [sleepEndTime]);
 
   return (
@@ -136,15 +144,15 @@ export const SleepTimerButton: React.FC<{
           ? "text-blue-400 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.2)]"
           : "text-white/40 hover:text-white"
       }`}
-      title={remaining ? `Sleep in ${remaining}` : "Sleep Timer"}
+      title={sleepMinutes ? (activeRemaining ? `Sleep in ${activeRemaining}` : "Sleep Timer Active") : "Sleep Timer"}
     >
       <Timer size={20} />
       {sleepMinutes && (
         <>
           <span className="absolute -top-1 -right-1 w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-          {remaining && (
+          {activeRemaining && (
             <span className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[9px] font-bold text-blue-400/80 whitespace-nowrap">
-              {remaining}
+              {activeRemaining}
             </span>
           )}
         </>

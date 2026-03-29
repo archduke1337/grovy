@@ -82,7 +82,7 @@ export default function HistoryPage() {
            </div>
            <div className="space-y-3">
               <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">Your history is empty</p>
-              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you listen to will appear here for quick access. Let's start the music!</p>
+              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you listen to will appear here for quick access. Let&apos;s start the music!</p>
            </div>
            <button 
              onClick={() => window.location.href = "/"}

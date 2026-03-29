@@ -623,7 +623,7 @@ function HomeContent() {
           <div className="space-y-2">
             <p className="text-[11px] sm:text-[12px] font-extrabold uppercase tracking-[0.18em] text-sky-500">{greeting}</p>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.04] tracking-tight">
-              What's on your mind?
+              What&apos;s on your mind?
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-white/60 font-medium max-w-2xl">
               A song, an artist, a lyric you half-remember, just type it in.
@@ -763,7 +763,7 @@ function HomeContent() {
             <p className="text-gray-700 dark:text-white/70 font-medium max-w-md">{searchError}</p>
           ) : (
             <>
-              <p className="text-gray-500 dark:text-white/50 font-medium">Nothing came up for "{normalizedQuery}"</p>
+              <p className="text-gray-500 dark:text-white/50 font-medium">Nothing came up for &quot;{normalizedQuery}&quot;</p>
               <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Maybe try a different spelling?</p>
             </>
           )}

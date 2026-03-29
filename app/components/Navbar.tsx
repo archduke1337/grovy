@@ -28,7 +28,6 @@ export const Navbar = () => {
     currentSongIndex 
   } = usePlayer();
   const [isDark, setIsDark] = useState(true);
-  const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -44,7 +43,6 @@ export const Navbar = () => {
 
   useEffect(() => {
     let isActive = true;
-    setMounted(true);
 
     void (async () => {
       const prefs = await getGrovyPrefs();

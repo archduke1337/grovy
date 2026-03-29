@@ -53,7 +53,7 @@ export default function TermsOfService() {
         <section className="space-y-3 sm:space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">1. Acceptance of Terms</h2>
           <p className="text-[14px] sm:text-[15px] text-gray-600 dark:text-white/40 leading-relaxed">
-            By accessing and using Grovy ("the Service"), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service. Grovy is an open-source music player that allows you to play, discover, and manage music.
+            By accessing and using Grovy (&quot;the Service&quot;), you accept and agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Service. Grovy is an open-source music player that allows you to play, discover, and manage music.
           </p>
         </section>
 
@@ -102,7 +102,7 @@ export default function TermsOfService() {
         <section className="space-y-3 sm:space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">7. Disclaimer of Warranties</h2>
           <p className="text-[14px] sm:text-[15px] text-gray-600 dark:text-white/40 leading-relaxed">
-            The Service is provided "as is" and "as available" without warranties of any kind, either express or implied. We do not guarantee that the Service will be uninterrupted, error-free, or free of harmful components.
+            The Service is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind, either express or implied. We do not guarantee that the Service will be uninterrupted, error-free, or free of harmful components.
           </p>
         </section>
 

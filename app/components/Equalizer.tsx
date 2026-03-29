@@ -48,8 +48,9 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
       updated[index] = { ...updated[index], gain };
       return updated;
     });
-    if (filters[index]) {
-      filters[index].gain.value = gain;
+    const filter = filters[index];
+    if (filter) {
+      filter.gain.setValueAtTime(gain, filter.context.currentTime);
     }
   }, [filters]);
 
@@ -74,7 +75,10 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
         if (!isActive || !data || !Array.isArray(data.bands)) return;
 
         data.bands.forEach((g, i) => {
-          if (filters[i]) filters[i].gain.value = Number(g) || 0;
+          const filter = filters[i];
+          if (filter) {
+            filter.gain.setValueAtTime(Number(g) || 0, filter.context.currentTime);
+          }
         });
 
         setBands((prev) => prev.map((b, i) => ({ ...b, gain: Number(data.bands?.[i]) || 0 })));

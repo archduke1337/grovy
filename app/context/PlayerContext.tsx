@@ -109,6 +109,8 @@ const YouTubeHiddenPlayer = React.memo(() => {
   return <div id="yt-player-hidden" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }} />;
 }, () => true);
 
+YouTubeHiddenPlayer.displayName = "YouTubeHiddenPlayer";
+
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
