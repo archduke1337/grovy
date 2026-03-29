@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, Suspense, useMemo, useState } from "react";
 
 import { AuthShell } from "@/app/components/AuthShell";
 import { sanitizeNextPath } from "@/app/lib/auth/redirect";
 
-export default function SignUpPage() {
+function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [name, setName] = useState("");
@@ -151,5 +151,13 @@ export default function SignUpPage() {
         </button>
       </form>
     </AuthShell>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
   );
 }

@@ -592,7 +592,8 @@ function HomeContent() {
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
-                    setShowSuggestions(true);
+                    setShowSuggestions(false);
+                    void runSearch();
                   }
                 }}
                 className="w-full bg-transparent border-none outline-none text-sm sm:text-base text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/35 px-3 font-medium"

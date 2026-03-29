@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Play, Music, Trash2, Shuffle } from "lucide-react";
@@ -8,6 +9,7 @@ import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export default function FavoritesPage() {
+  const router = useRouter();
   const { favorites, setQueue, toggleFavorite } = usePlayer();
 
   const handlePlayAll = () => {
@@ -118,7 +120,7 @@ export default function FavoritesPage() {
               <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you love will appear here. Start exploring and mark some tracks!</p>
            </div>
            <button 
-             onClick={() => window.location.href = "/"}
+             onClick={() => router.push("/")}
              className="px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
            >
              Start Browsing

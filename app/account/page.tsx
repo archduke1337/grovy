@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 
 import { useAuth } from "@/app/hooks/useAuth";
 
-export default function AccountPage() {
+function AccountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { loading, user, authenticated, refresh } = useAuth();
@@ -171,5 +171,13 @@ export default function AccountPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function AccountPage() {
+  return (
+    <Suspense>
+      <AccountContent />
+    </Suspense>
   );
 }

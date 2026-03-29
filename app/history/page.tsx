@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Play, Music, Trash2, RotateCcw } from "lucide-react";
@@ -8,6 +9,7 @@ import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export default function HistoryPage() {
+  const router = useRouter();
   const { recentlyPlayed, setQueue, clearHistory } = usePlayer();
 
   return (
@@ -85,7 +87,7 @@ export default function HistoryPage() {
               <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you listen to will appear here for quick access. Let&apos;s start the music!</p>
            </div>
            <button 
-             onClick={() => window.location.href = "/"}
+             onClick={() => router.push("/")}
              className="flex items-center gap-2.5 mx-auto px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
            >
              <RotateCcw size={18} />

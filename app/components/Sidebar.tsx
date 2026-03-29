@@ -47,11 +47,11 @@ export const Sidebar = () => {
                   href={item.path}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive 
-                      ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                      ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                       : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
-                  <item.icon size={18} className={isActive ? "text-pink-500 dark:text-pink-400" : ""} />
+                  <item.icon size={18} className={isActive ? "text-sky-500 dark:text-sky-400" : ""} />
                   {item.name}
                 </Link>
               );
@@ -72,11 +72,11 @@ export const Sidebar = () => {
                     href={item.path}
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive 
-                        ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                        ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                         : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
-                    <item.icon size={18} className={isActive ? "text-pink-500 dark:text-pink-400" : ""} />
+                    <item.icon size={18} className={isActive ? "text-sky-500 dark:text-sky-400" : ""} />
                     {item.name}
                   </Link>
                 );
@@ -102,12 +102,12 @@ export const Sidebar = () => {
                 href="/playlists"
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === "/playlists" 
-                    ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                    ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                     : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5"
                 }`}
               >
                 <div className="w-4 h-4 flex items-center justify-center">
-                  <div className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-sky-500" />
                 </div>
                 All Playlists
               </Link>
@@ -117,7 +117,7 @@ export const Sidebar = () => {
                   href={`/playlists/${pl.id}`}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all truncate ${
                     pathname === `/playlists/${pl.id}` 
-                      ? "bg-black/5 dark:bg-white/10 text-pink-500 dark:text-pink-400"
+                      ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                       : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5"
                   }`}
                 >
