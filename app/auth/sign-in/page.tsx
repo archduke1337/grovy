@@ -19,8 +19,6 @@ export default function SignInPage() {
     return sanitizeNextPath(searchParams.get("next"));
   }, [searchParams]);
 
-  const oauthFailed = searchParams.get("oauth") === "failed";
-
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
@@ -103,12 +101,6 @@ export default function SignInPage() {
           </Link>
         </div>
 
-        {oauthFailed ? (
-          <p className="text-sm text-amber-600 dark:text-amber-400">
-            OAuth sign-in failed. Please try again.
-          </p>
-        ) : null}
-
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : null}
@@ -121,21 +113,6 @@ export default function SignInPage() {
           {loading ? "Signing In..." : "Sign In"}
         </button>
       </form>
-
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <a
-          href={`/api/auth/oauth/start?provider=google&next=${encodeURIComponent(nextPath)}`}
-          className="rounded-xl border border-black/10 dark:border-white/10 px-4 py-3 text-sm font-semibold text-center text-gray-800 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          Continue With Google
-        </a>
-        <a
-          href={`/api/auth/oauth/start?provider=github&next=${encodeURIComponent(nextPath)}`}
-          className="rounded-xl border border-black/10 dark:border-white/10 px-4 py-3 text-sm font-semibold text-center text-gray-800 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          Continue With GitHub
-        </a>
-      </div>
     </AuthShell>
   );
 }

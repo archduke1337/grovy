@@ -150,21 +150,6 @@ export default function SignUpPage() {
           {loading ? "Creating Account..." : "Create Account"}
         </button>
       </form>
-
-      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <a
-          href={`/api/auth/oauth/start?provider=google&next=${encodeURIComponent(nextPath)}`}
-          className="rounded-xl border border-black/10 dark:border-white/10 px-4 py-3 text-sm font-semibold text-center text-gray-800 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          Continue With Google
-        </a>
-        <a
-          href={`/api/auth/oauth/start?provider=github&next=${encodeURIComponent(nextPath)}`}
-          className="rounded-xl border border-black/10 dark:border-white/10 px-4 py-3 text-sm font-semibold text-center text-gray-800 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5"
-        >
-          Continue With GitHub
-        </a>
-      </div>
     </AuthShell>
   );
 }

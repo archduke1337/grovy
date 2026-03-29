@@ -10,7 +10,7 @@ Migrate Grovy from legacy browser persistence to Appwrite for:
 
 ## Appwrite Services
 
-- Auth: Email/Password and OAuth2
+- Auth: Email/Password
 - Databases: 1 database, 6 tables
 - Preferences: Appwrite Account preferences for compact user settings
 
@@ -159,7 +159,6 @@ Permissions:
 
 Enabled methods:
 - Email/password sign-up and sign-in
-- OAuth2 sign-in (Google, GitHub)
 
 Session strategy:
 - Cookie name format: `a_session_<PROJECT_ID>`
@@ -173,7 +172,6 @@ Session strategy:
 - `/auth/forgot-password`
 - `/auth/reset-password`
 - `/auth/verify-email`
-- `/auth/oauth/callback`
 - `/account`
 
 ## Environment Variables
