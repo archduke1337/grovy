@@ -14,16 +14,18 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   const [isLoading, setIsLoading] = useState(false);
 
   const currentSong = songs[currentSongIndex];
+  const currentTitle = currentSong?.title ?? "";
+  const currentArtist = currentSong?.artist ?? "";
 
   useEffect(() => {
-    if (!isOpen || !currentSong) return;
+    if (!isOpen || !currentTitle) return;
 
     const controller = new AbortController();
 
     const fetchLyrics = async () => {
       setIsLoading(true);
       try {
-        const data = await getLyrics(currentSong.title, currentSong.artist || "", controller.signal);
+        const data = await getLyrics(currentTitle, currentArtist, controller.signal);
         if (!controller.signal.aborted) setLyrics(data);
       } catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError') return;
@@ -36,7 +38,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
     fetchLyrics();
 
     return () => { controller.abort(); };
-  }, [isOpen, currentSong?.title, currentSong?.artist]);
+  }, [isOpen, currentTitle, currentArtist]);
 
   // Separate effect for keyboard listener to ensure cleanup always runs
   useEffect(() => {

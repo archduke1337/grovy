@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-page-custom-font, @next/next/google-font-preconnect */
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
 import { Analytics } from "@vercel/analytics/next"

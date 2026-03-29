@@ -15,16 +15,17 @@ export const ArtistInfo: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const currentSong = songs[currentSongIndex];
+  const currentArtist = currentSong?.artist ?? "";
 
   useEffect(() => {
-    if (!isOpen || !currentSong) return;
+    if (!isOpen || !currentArtist) return;
 
     const controller = new AbortController();
 
     const fetchInfo = async () => {
       setIsLoading(true);
       try {
-        const data = await getArtistInfo(currentSong.artist || "", controller.signal);
+        const data = await getArtistInfo(currentArtist, controller.signal);
         if (!controller.signal.aborted) setInfo(data);
       } catch (e) {
         if (e instanceof DOMException && e.name === 'AbortError') return;
@@ -37,7 +38,7 @@ export const ArtistInfo: React.FC = () => {
     fetchInfo();
 
     return () => { controller.abort(); };
-  }, [isOpen, currentSong?.artist]);
+  }, [isOpen, currentArtist]);
 
   // Separate effect for keyboard listener to ensure cleanup always runs
   useEffect(() => {

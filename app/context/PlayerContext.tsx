@@ -361,7 +361,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     }, 500);
     return () => clearInterval(interval);
-  }, [songs, currentSongIndex]);
+  }, [isPlaying, songs, currentSongIndex]);
 
   // 1. Initialize Audio Element ONCE (Saavn/Gaana)
   useEffect(() => {
@@ -869,7 +869,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (isPlaying) audioRef.current?.play().catch(() => {});
       else audioRef.current?.pause();
     }
-  }, [isPlaying, currentSongIndex, songs[currentSongIndex]?.id]);
+  }, [isPlaying, songs, currentSongIndex]);
 
   const loadSongs = useCallback(async (query?: string, source?: string, signal?: AbortSignal): Promise<Song[]> => {
     try {
