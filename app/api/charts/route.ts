@@ -7,6 +7,23 @@ function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
   return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
 }
 
+const VALID_COUNTRIES = new Set(["IN", "US", "GB", "KR", "JP", "BR", "DE", "FR", "CA", "AU"]);
+
+function resolveCountry(request: NextRequest): string {
+  const queryCountry = (request.nextUrl.searchParams.get("country") || "").toUpperCase();
+  if (VALID_COUNTRIES.has(queryCountry)) return queryCountry;
+
+  const edgeCountry = (request.headers.get("x-vercel-ip-country") || "").toUpperCase();
+  if (VALID_COUNTRIES.has(edgeCountry)) return edgeCountry;
+
+  const acceptLanguage = request.headers.get("accept-language") || "";
+  const langMatch = acceptLanguage.match(/-([A-Za-z]{2})(?:,|;|$)/);
+  const langCountry = (langMatch?.[1] || "").toUpperCase();
+  if (VALID_COUNTRIES.has(langCountry)) return langCountry;
+
+  return "IN";
+}
+
 function pickArtist(item: any): string {
   if (Array.isArray(item?.artists) && item.artists.length > 0) {
     return item.artists
@@ -58,7 +75,7 @@ function parseDuration(value: any): number {
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const chartId = searchParams.get("id") || "songs"; // songs, albums, artists, playlists
-  const country = searchParams.get("country") || "IN";
+  const country = resolveCountry(request);
 
   try {
     let saavnEndpoint = "";
@@ -75,7 +92,7 @@ export async function GET(request: NextRequest) {
     switch (chartId) {
       case "songs":
         saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(saavnQueryByType.songs)}&limit=30`;
-        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/trending?country=${country}`;
+        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/top/tracks?country=${country}`;
         break;
       case "albums":
         saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/albums?query=${encodeURIComponent(saavnQueryByType.albums)}&limit=20`;
@@ -83,7 +100,7 @@ export async function GET(request: NextRequest) {
         break;
       case "artists":
         saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/artists?query=${encodeURIComponent(saavnQueryByType.artists)}&limit=20`;
-        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/search?q=popular+artists&filter=artists&limit=20`;
+        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/top/artists?country=${country}`;
         break;
       case "playlists":
         saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/playlists?query=${encodeURIComponent(saavnQueryByType.playlists)}&limit=20`;
@@ -91,7 +108,7 @@ export async function GET(request: NextRequest) {
         break;
       default:
         saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(saavnQueryByType.songs)}&limit=30`;
-        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/trending?country=${country}`;
+        ytEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/top/tracks?country=${country}`;
     }
 
     // Fetch from both sources in parallel
@@ -140,6 +157,8 @@ export async function GET(request: NextRequest) {
 
     const ytData = chartId === "songs"
       ? (Array.isArray(ytRes) ? ytRes : (ytRes?.tracks || ytRes?.results || ytRes?.data || []))
+      : chartId === "artists"
+      ? (Array.isArray(ytRes) ? ytRes : (ytRes?.artists || ytRes?.results || ytRes?.data || []))
       : (Array.isArray(ytRes) ? (ytRes?.[0]?.items ? ytRes.flatMap((section: any) => section?.items || []) : ytRes) : (ytRes?.results || ytRes?.data || []));
 
     const ytCharts = (Array.isArray(ytData) ? ytData : [])
@@ -171,27 +190,46 @@ export async function GET(request: NextRequest) {
       })
       .filter(Boolean);
 
-    // Interleave results: alternate between Saavn and YouTube for variety
     const combined: any[] = [];
     const seen = new Set<string>();
-    const maxLen = Math.max(saavnCharts.length, ytCharts.length);
-    
-    for (let i = 0; i < maxLen; i++) {
-      const ytItem = ytCharts[i];
-      const saavnItem = saavnCharts[i];
 
-      if (ytItem && !seen.has(ytItem.id)) {
-        combined.push(ytItem);
-        seen.add(ytItem.id);
+    // For songs, prioritize true chart feed first; use Saavn only as gap-filler fallback.
+    if (chartId === "songs") {
+      for (const song of ytCharts) {
+        if (song && !seen.has(song.id)) {
+          combined.push(song);
+          seen.add(song.id);
+        }
       }
-      if (saavnItem && !seen.has(saavnItem.id)) {
-        combined.push(saavnItem);
-        seen.add(saavnItem.id);
+
+      if (combined.length < 20) {
+        for (const song of saavnCharts) {
+          if (song && !seen.has(song.id)) {
+            combined.push(song);
+            seen.add(song.id);
+          }
+          if (combined.length >= 50) break;
+        }
+      }
+    } else {
+      const maxLen = Math.max(saavnCharts.length, ytCharts.length);
+      for (let i = 0; i < maxLen; i++) {
+        const ytItem = ytCharts[i];
+        const saavnItem = saavnCharts[i];
+
+        if (ytItem && !seen.has(ytItem.id)) {
+          combined.push(ytItem);
+          seen.add(ytItem.id);
+        }
+        if (saavnItem && !seen.has(saavnItem.id)) {
+          combined.push(saavnItem);
+          seen.add(saavnItem.id);
+        }
       }
     }
 
     return Response.json(combined.slice(0, chartId === "songs" ? 50 : 30), {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" }
+      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" }
     });
 
   } catch (error) {
