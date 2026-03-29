@@ -65,16 +65,15 @@ export function OpenSourceContent() {
         </div>
 
         <h1 className="text-[2rem] sm:text-[2.8rem] md:text-[3.5rem] lg:text-[4.2rem] font-bold text-gray-900 dark:text-white tracking-[-0.04em] leading-[1.05]">
-          Built in the open,<br />
-          <span className="text-gray-300 dark:text-white/15">because music should be free.</span>
+          Built in public,<br />
+          <span className="text-gray-300 dark:text-white/15">for people who just want to listen.</span>
         </h1>
 
         <p className="text-[14px] sm:text-[15px] md:text-[17px] text-gray-500 dark:text-white/35 leading-[1.7] max-w-2xl">
-          Grovy started as a weekend project — a frustration with bloated music players 
-          that track everything you listen to. No ads, no accounts, no invasive tracking. 
-          Just a clean player that respects your time and your data, with privacy-first local storage 
-          and optional aggregated analytics when deployed on Vercel.
-          The entire source code is on GitHub under the MIT license.
+          Grovy started as a small side project when I wanted a player that opened fast,
+          stayed simple, and did not force signups. It is still built with that same idea:
+          no ads, no account wall, and no clutter. Your library data stays in your browser,
+          and the code is fully open under MIT.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 pt-1">
@@ -111,22 +110,22 @@ export function OpenSourceContent() {
             { 
               icon: Radio, 
               title: "Streams from multiple sources", 
-              body: "Grovy pulls from JioSaavn and YouTube Music simultaneously, interleaves results, and lets you play anything instantly. No account needed." 
+              body: "Grovy fetches results from JioSaavn and YouTube Music, combines them, and lets you play right away." 
             },
             { 
               icon: Eye, 
               title: "Ambient UI that adapts to your music", 
-              body: "Album art colors are extracted in real-time using ColorThief. The entire interface — backgrounds, gradients, accents — shifts to match whatever you're listening to." 
+              body: "The player picks colors from album art in real time, so the screen changes with whatever is playing." 
             },
             { 
               icon: Headphones, 
               title: "Proper audio handling",
-              body: "HLS adaptive streaming for JioSaavn tracks, YouTube IFrame API for YT content, with automatic codec selection preferring opus/webm at the highest available bitrate." 
+              body: "Streaming is tuned for stable playback with HLS for Saavn tracks and YouTube playback support when needed." 
             },
             { 
               icon: Disc3, 
               title: "Runs entirely in the browser", 
-              body: "Playlists, favorites, play history, and cached metadata are stored locally in localStorage + IndexedDB. There is no app-managed user database." 
+              body: "Playlists, favorites, and history live locally in your browser. There is no app-managed user database." 
             },
           ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex gap-3 sm:gap-4 md:gap-5">
@@ -243,9 +242,8 @@ export function OpenSourceContent() {
           Contributing
         </h2>
         <p className="text-[13px] sm:text-[14px] md:text-[15px] text-gray-500 dark:text-white/30 leading-[1.65] max-w-2xl">
-          If you find a bug or have an idea, open an issue. If you want to fix something 
-          yourself, PRs are welcome — just keep the code clean and the UI minimal. 
-          No contribution guidelines doc needed, just common sense.
+          Found a bug or have a better idea? Open an issue. Want to contribute a fix?
+          Send a PR. Keep things clean, readable, and practical.
         </p>
         <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3">
           <a 

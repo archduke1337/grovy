@@ -1,34 +1,27 @@
 import type { MetadataRoute } from 'next';
+import { absoluteUrl } from "@/app/lib/seo";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://grovy.vercel.app';
-  
-  const routes = [
+  const lastModified = new Date("2026-03-29T00:00:00.000Z");
+
+  return [
     {
-      url: baseUrl,
-      lastModified: new Date(),
-      changeFrequency: 'daily' as const,
+      url: absoluteUrl("/"),
+      lastModified,
+      changeFrequency: 'daily',
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/favorites`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      url: absoluteUrl("/opensource"),
+      lastModified,
+      changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: `${baseUrl}/history`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.8,
-    },
-    {
-      url: `${baseUrl}/playlists`,
-      lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
-      priority: 0.7,
+      url: absoluteUrl("/tos"),
+      lastModified,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
   ];
-
-  return routes;
 }

@@ -158,8 +158,6 @@ const SongCard = ({ song, onClick, loading = false, onFavorite, isFav = false }:
 );
 
 const HeroCard = ({ song, onClick }: { song: any; onClick: () => void }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-
   return (
     <motion.div
       whileHover={{ scale: 1.02 }}
@@ -176,7 +174,6 @@ const HeroCard = ({ song, onClick }: { song: any; onClick: () => void }) => {
             className="object-cover transition-transform duration-1000 group-hover:scale-105"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 95vw, (max-width: 1280px) 90vw, 1240px"
             priority
-            onLoad={() => setImageLoaded(true)}
           />
         )}
       </div>
@@ -250,65 +247,6 @@ const HomeSkeleton = () => (
   </div>
 );
 
-// ═══ FEATURED HIGHLIGHT CARD (NEW - Premium Hero Section) ═══
-const FeaturedHero = ({ song, onClick }: { song: any; onClick: () => void }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  
-  return (
-    <motion.div
-      variants={fadeUp}
-      whileHover={{ scale: 1.02 }}
-      className="relative w-full rounded-3xl md:rounded-4xl overflow-hidden cursor-pointer group"
-      onClick={onClick}
-    >
-      <div className="relative aspect-4/3 sm:aspect-16/10 md:aspect-21/9 w-full bg-linear-to-br from-gray-300 via-gray-200 to-gray-300 dark:from-white/8 dark:via-white/4 dark:to-white/8">
-        {song.cover && (
-          <NextImage
-            src={getHDThumbnail(song.cover) || song.cover}
-            alt={song.title}
-            fill
-            className="object-cover transition-transform duration-700 group-hover:scale-110"
-            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 85vw, 1200px"
-            onLoad={() => setImageLoaded(true)}
-            priority
-          />
-        )}
-        
-        {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent" />
-        <div className="absolute inset-0 bg-linear-to-r from-black/40 via-transparent to-transparent" />
-        
-        {/* Content */}
-        <div className="absolute inset-0 flex flex-col justify-between p-4 sm:p-6 md:p-8">
-          <div className="flex items-center gap-2">
-            <Sparkles size={20} className="text-pink-400" />
-            <span className="text-xs sm:text-sm font-bold text-pink-400 uppercase tracking-widest">
-              NOW PLAYING
-            </span>
-          </div>
-          
-          <div className="space-y-3 sm:space-y-4">
-            <h3 className="text-2xl sm:text-3xl md:text-5xl font-black text-white leading-tight">
-              {song.title}
-            </h3>
-            <p className="text-sm sm:text-base md:text-lg text-white/80 line-clamp-2">
-              {song.artist}
-            </p>
-            
-            <motion.button
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 bg-pink-500 hover:bg-pink-600 rounded-full flex items-center justify-center shadow-2xl transition-all mt-2 sm:mt-4"
-            >
-              <Play size={24} fill="white" className="text-white ml-0.5" />
-            </motion.button>
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
-
 export default function Home() {
   return (
     <Suspense fallback={<HomeSkeleton />}>
@@ -336,6 +274,7 @@ function HomeContent() {
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasHandledSharedSongRef = useRef(false);
+  const handledUrlSearchRef = useRef("");
 
   // Set greeting based on time
   useEffect(() => {
@@ -531,6 +470,17 @@ function HomeContent() {
     [searchQuery]
   );
 
+  // Accept URL-based queries such as /?q=lofi for better discoverability and sharing.
+  useEffect(() => {
+    const paramQuery = (searchParams.get("q") || searchParams.get("query") || "").trim();
+    if (!paramQuery || handledUrlSearchRef.current === paramQuery) return;
+
+    handledUrlSearchRef.current = paramQuery;
+    setSearchQuery(paramQuery);
+    setShowSuggestions(false);
+    void handleSearch(paramQuery);
+  }, [searchParams, handleSearch]);
+
   const handleSongClick = useCallback(
     (song: any) => {
       try {
@@ -592,7 +542,7 @@ function HomeContent() {
             variants={slideInLeft}
             className="text-base sm:text-lg text-gray-600 dark:text-white/50 font-medium"
           >
-            Discover your next favorite track
+            Pick something good and press play.
           </motion.p>
         </div>
 
@@ -770,7 +720,7 @@ function HomeContent() {
               <SectionHeader
                 icon={Flame}
                 title="Trending Now"
-                subtitle="Top picks this week"
+                subtitle="What people are replaying this week"
               />
               <ScrollRow>
                 {trending.slice(1, 13).map((song) => (
@@ -792,7 +742,7 @@ function HomeContent() {
               <SectionHeader
                 icon={BarChart3}
                 title="Top Charts"
-                subtitle="Most popular songs"
+                subtitle="Chart leaders across sources"
               />
               <ScrollRow>
                 {charts.slice(0, 12).map((song) => (
@@ -819,7 +769,7 @@ function HomeContent() {
               <SectionHeader
                 icon={Radio}
                 title="Listen Again"
-                subtitle="Continue from trending"
+                subtitle="More tracks from your recent vibe"
               />
               <ScrollRow>
                 {trending.slice(12, 24).map((song) => (

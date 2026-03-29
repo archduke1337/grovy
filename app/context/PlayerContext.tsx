@@ -114,6 +114,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const ytPlayerRef = useRef<any>(null);
+  const ytScriptRequestedRef = useRef(false);
+  const ensureYouTubeApiRef = useRef<() => void>(() => {});
   const currentTimeRef = useRef(0);
   const lastStateRef = useRef<number>(-1);
   const isLoopRef = useRef(false);
@@ -213,8 +215,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (e) {}
     })();
 
-    // Define the YT initialization function FIRST (before checking if API is loaded)
-    window.onYouTubeIframeAPIReady = () => {
+    // Define the YT initialization function, but delay loading until needed.
+    const initializeYouTubePlayer = () => {
       if (ytPlayerRef.current) return; // Already initialized
       
       ytPlayerRef.current = new window.YT.Player('yt-player-hidden', {
@@ -307,24 +309,34 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       });
     };
+    window.onYouTubeIframeAPIReady = initializeYouTubePlayer;
 
-    // Check if YT API is already loaded or script already injected
-    if (window.YT?.Player) {
-      // API already loaded, initialize player directly
-      if (!ytPlayerRef.current) {
-        window.onYouTubeIframeAPIReady();
+    const ensureYouTubeApi = () => {
+      if (window.YT?.Player) {
+        initializeYouTubePlayer();
+        return;
       }
-    } else if (!document.querySelector('script[src="https://www.youtube.com/iframe_api"]')) {
-      const tag = document.createElement('script');
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-    }
+
+      if (ytScriptRequestedRef.current) return;
+
+      const existingScript = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+      if (!existingScript) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        tag.async = true;
+        document.head.appendChild(tag);
+      }
+
+      ytScriptRequestedRef.current = true;
+    };
+
+    ensureYouTubeApiRef.current = ensureYouTubeApi;
     
     return () => {
       // Destroy YT player on unmount to prevent leaks
       try { ytPlayerRef.current?.destroy?.(); } catch (e) {}
       ytPlayerRef.current = null;
+      ensureYouTubeApiRef.current = () => {};
     };
   }, []);
 
@@ -715,6 +727,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       stallRetryCountRef.current = 0;
 
       if (currentSong.source === "YouTube") {
+        // Load iframe API only when a YouTube track is actually selected.
+        ensureYouTubeApiRef.current();
         if (audio) {
           audio.pause();
           // Don't set audio.src = "" — browsers resolve it to the page URL,

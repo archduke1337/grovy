@@ -1,8 +1,37 @@
 import type { Metadata } from "next";
+import { APP_NAME, absoluteUrl } from "@/app/lib/seo";
+
+const canonicalPath = "/tos";
+const pageTitle = `Terms of Service | ${APP_NAME}`;
+const pageDescription =
+  "Read the Grovy terms, privacy details, and usage conditions for the web music player.";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Grovy Terms of Service — Read our terms and conditions for using the Grovy music player.",
+  description: pageDescription,
+  alternates: {
+    canonical: canonicalPath,
+  },
+  openGraph: {
+    type: "website",
+    url: absoluteUrl(canonicalPath),
+    title: pageTitle,
+    description: pageDescription,
+    images: [
+      {
+        url: absoluteUrl("/opengraph-image"),
+        width: 1200,
+        height: 630,
+        alt: "Grovy terms of service",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: pageTitle,
+    description: pageDescription,
+    images: [absoluteUrl("/twitter-image")],
+  },
 };
 
 export default function TermsOfService() {

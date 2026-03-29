@@ -7,6 +7,7 @@ import { Navbar } from "@/app/components/Navbar";
 import { Sidebar } from "@/app/components/Sidebar";
 import { BottomPlayer } from "@/app/components/BottomPlayer";
 import { ToastProvider } from "@/app/components/Toast";
+import { APP_DESCRIPTION, APP_NAME, absoluteUrl, getSiteUrl } from "@/app/lib/seo";
 
 // Dynamic imports for non-critical components (no ssr: false in Server Components)
 const CommandPalette = dynamic(() => import("@/app/components/CommandPalette").then(m => ({ default: m.CommandPalette })));
@@ -14,30 +15,33 @@ const AmbientBackground = dynamic(() => import("@/app/components/AmbientBackgrou
 const SmoothScroll = dynamic(() => import("@/app/components/SmoothScroll"));
 const KeyboardShortcuts = dynamic(() => import("@/app/components/KeyboardShortcuts").then(m => ({ default: m.KeyboardShortcuts })));
 
-const APP_NAME = "Grovy";
-const APP_DESCRIPTION = "A premium open-source music player built for the web. Stream, discover, and enjoy music with a beautiful interface.";
-const APP_URL = "https://grovy.vercel.app";
+const APP_URL = getSiteUrl();
+const OG_IMAGE_URL = absoluteUrl("/opengraph-image");
+const TWITTER_IMAGE_URL = absoluteUrl("/twitter-image");
+const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
 export const metadata: Metadata = {
   applicationName: APP_NAME,
   title: {
-    default: `${APP_NAME} — Premium Music Streaming`,
+    default: `${APP_NAME} - Open-source Music Player`,
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
   keywords: [
-    "music player",
-    "web music player",
-    "open source",
-    "streaming",
     "grovy",
+    "music player",
+    "open-source music player",
+    "web music player",
+    "privacy-first music app",
+    "open source",
+    "music streaming",
     "PWA",
-    "next.js",
     "music discovery",
     "trending music",
     "charts",
     "lyrics",
-    "audio player",
+    "playlist manager",
+    "next.js",
   ],
   authors: [{ name: "Archduke", url: "https://archduke.is-a.dev" }],
   creator: "Archduke",
@@ -54,29 +58,22 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: APP_URL,
     siteName: APP_NAME,
-    title: `${APP_NAME} — Premium Music Streaming`,
+    title: `${APP_NAME} - Open-source Music Player`,
     description: APP_DESCRIPTION,
     images: [
       {
-        url: "/icons/logo.png",
-        width: 512,
-        height: 512,
-        alt: "Grovy Logo",
-        type: "image/png",
-      },
-      {
-        url: "/icons/logo.png",
+        url: OG_IMAGE_URL,
         width: 1200,
         height: 630,
-        alt: "Grovy - Open Source Music Player",
+        alt: "Grovy open-source web music player",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${APP_NAME} — Premium Music Streaming`,
+    title: `${APP_NAME} - Open-source Music Player`,
     description: APP_DESCRIPTION,
-    images: ["/icons/logo.png"],
+    images: [TWITTER_IMAGE_URL],
     creator: "@archduke1337",
   },
   icons: {
@@ -107,11 +104,19 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
       "max-image-preview": "large",
       "max-snippet": -1,
+      noimageindex: false,
     },
   },
   category: "Entertainment",
   referrer: "origin-when-cross-origin",
   manifest: "/manifest.webmanifest",
+  ...(GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
 };
 
 export const viewport: Viewport = {
@@ -130,6 +135,55 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: APP_NAME,
+    url: APP_URL,
+    description: APP_DESCRIPTION,
+    inLanguage: "en-US",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${APP_URL}/?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const webApplicationSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: APP_NAME,
+    description: APP_DESCRIPTION,
+    url: APP_URL,
+    applicationCategory: "MultimediaApplication",
+    operatingSystem: "Web",
+    inLanguage: "en-US",
+    isAccessibleForFree: true,
+    offers: {
+      "@type": "Offer",
+      price: "0",
+      priceCurrency: "USD",
+    },
+    author: {
+      "@type": "Person",
+      name: "Archduke",
+      url: "https://archduke.is-a.dev",
+    },
+    softwareVersion: "latest",
+  };
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: APP_NAME,
+    url: APP_URL,
+    logo: absoluteUrl("/icons/logo.png"),
+    sameAs: [
+      "https://github.com/archduke1337/grovy",
+      "https://archduke.is-a.dev",
+    ],
+  };
+
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <head>
@@ -156,69 +210,24 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/icons/logo.png" />
         <link rel="apple-touch-icon" href="/icons/logo.png" />
         
-        {/* Structured Data (JSON-LD) for SEO */}
+        {/* Structured data for search and answer engines */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "WebApplication",
-              name: APP_NAME,
-              description: APP_DESCRIPTION,
-              url: APP_URL,
-              applicationCategory: "MultimediaApplication",
-              offers: {
-                "@type": "Offer",
-                price: "0",
-                priceCurrency: "USD",
-              },
-              aggregateRating: {
-                "@type": "AggregateRating",
-                ratingValue: "4.8",
-                ratingCount: "1000",
-              },
-              screenshot: [
-                {
-                  "@type": "ImageObject",
-                  url: `${APP_URL}/icons/logo.png`,
-                  width: 512,
-                  height: 512,
-                },
-              ],
-              author: {
-                "@type": "Person",
-                name: "Archduke",
-                url: "https://archduke.is-a.dev",
-              },
-              inLanguage: "en-US",
-              isAccessibleForFree: true,
-              operatingSystem: ["Web"],
-              permissions: ["music streaming", "offline playback"],
-            }),
+            __html: JSON.stringify(websiteSchema),
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(webApplicationSchema),
           }}
         />
 
-        {/* Organization Schema */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              "@context": "https://schema.org",
-              "@type": "Organization",
-              name: APP_NAME,
-              url: APP_URL,
-              logo: `${APP_URL}/icons/logo.png`,
-              description: APP_DESCRIPTION,
-              contactPoint: {
-                "@type": "ContactPoint",
-                contactType: "Customer Support",
-                url: "https://github.com/archduke1337/grovy/issues",
-              },
-              sameAs: [
-                "https://github.com/archduke1337/grovy",
-                "https://twitter.com",
-              ],
-            }),
+            __html: JSON.stringify(organizationSchema),
           }}
         />
         

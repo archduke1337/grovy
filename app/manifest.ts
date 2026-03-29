@@ -1,10 +1,12 @@
 import { MetadataRoute } from "next";
+import { APP_DESCRIPTION, APP_NAME } from "@/app/lib/seo";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Grovy",
-    short_name: "Grovy",
-    description: "A premium open-source music player built for the web",
+    id: "/",
+    name: APP_NAME,
+    short_name: APP_NAME,
+    description: APP_DESCRIPTION,
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -30,9 +32,35 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["music", "multimedia", "entertainment"],
     shortcuts: [
       {
-        name: "Play Music",
-        short_name: "Play",
-        description: "Launch the music player",
+        name: "Search Music",
+        short_name: "Search",
+        description: "Open Grovy and search music",
+        url: "/?q=lofi",
+        icons: [
+          {
+            src: "/icons/logo.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
+      },
+      {
+        name: "Open Source",
+        short_name: "Code",
+        description: "View project details and repository links",
+        url: "/opensource",
+        icons: [
+          {
+            src: "/icons/logo.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
+      },
+      {
+        name: "Home",
+        short_name: "Home",
+        description: "Open the player home",
         url: "/",
         icons: [
           {

@@ -1,14 +1,21 @@
 User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /*.json$
-Disallow: /*.js$
-Disallow: /*.css$
+
+User-agent: GPTBot
+Allow: /
+Disallow: /api/
+
+User-agent: OAI-SearchBot
+Allow: /
+Disallow: /api/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /api/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /api/
 
 Sitemap: https://grovy.vercel.app/sitemap.xml
-
-# Crawl delay
-Crawl-delay: 0
-
-# Fast crawling
-Request-rate: 60/1m

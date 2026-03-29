@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -10,6 +10,27 @@ interface AmbientBackgroundProps {
 
 export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className }) => {
   const { colors, isPlaying } = usePlayer();
+  const [liteMode, setLiteMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMode = () => {
+      const lowPowerDevice = (navigator.hardwareConcurrency || 8) <= 4;
+      const smallScreen = window.innerWidth < 768;
+      setLiteMode(media.matches || lowPowerDevice || smallScreen);
+    };
+
+    updateMode();
+    media.addEventListener("change", updateMode);
+    window.addEventListener("resize", updateMode, { passive: true });
+
+    return () => {
+      media.removeEventListener("change", updateMode);
+      window.removeEventListener("resize", updateMode);
+    };
+  }, []);
 
   // Create a mesh of 3 moving blobs for a liquid effect
   const blobs = [
@@ -17,6 +38,7 @@ export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className 
     { color: colors.secondary, initialX: 120, initialY: -20, scale: 1.2, delay: 2 },
     { color: colors.accent || colors.primary, initialX: 50, initialY: 120, scale: 1.8, delay: 4 },
   ];
+  const activeBlobs = liteMode ? blobs.slice(0, 1) : blobs;
 
   return (
     <div className={`fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-white dark:bg-black transition-colors duration-1000 ${className}`}>
@@ -30,26 +52,30 @@ export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className 
       
       {/* Animated Mesh Gradients */}
       <AnimatePresence>
-        {isPlaying && blobs.map((blob, i) => (
+        {isPlaying && activeBlobs.map((blob, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0 }}
             animate={{
-              x: ["0%", "20%", "-20%", "0%"],
-              y: ["0%", "15%", "-15%", "0%"],
-              scale: [1, 1.2, 0.9, 1],
-              rotate: [0, 90, 180, 0],
+              x: liteMode ? ["0%", "8%", "-8%", "0%"] : ["0%", "20%", "-20%", "0%"],
+              y: liteMode ? ["0%", "6%", "-6%", "0%"] : ["0%", "15%", "-15%", "0%"],
+              scale: liteMode ? [1, 1.05, 0.98, 1] : [1, 1.2, 0.9, 1],
+              rotate: liteMode ? [0, 20, -20, 0] : [0, 90, 180, 0],
               opacity: 1
             }}
             exit={{ opacity: 0 }}
             transition={{
-              duration: 20 + i * 5,
+              duration: liteMode ? 14 + i * 2 : 20 + i * 5,
               repeat: Infinity,
               ease: "easeInOut",
               times: [0, 0.33, 0.66, 1],
               delay: blob.delay
             }}
-            className="absolute rounded-full mix-blend-multiply dark:mix-blend-screen filter blur-[120px] md:blur-[160px] opacity-[0.12] dark:opacity-[0.15]"
+            className={`absolute rounded-full mix-blend-multiply dark:mix-blend-screen ${
+              liteMode
+                ? "filter blur-3xl opacity-10 dark:opacity-15"
+                : "filter blur-[120px] md:blur-[160px] opacity-[0.12] dark:opacity-[0.15]"
+            }`}
             style={{
               backgroundColor: blob.color,
               top: `${blob.initialY}%`,
@@ -65,11 +91,11 @@ export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className 
       {/* Rhythmic Pulse synced to isPlaying state */}
       <motion.div
         animate={{
-          opacity: isPlaying ? [0, 0.03, 0] : 0,
+          opacity: liteMode ? (isPlaying ? 0.02 : 0) : (isPlaying ? [0, 0.03, 0] : 0),
         }}
         transition={{
-          duration: 2.5, 
-          repeat: Infinity,
+          duration: liteMode ? 0.4 : 2.5,
+          repeat: liteMode ? 0 : Infinity,
           ease: "easeInOut"
         }}
         className="absolute inset-0 bg-white dark:bg-white mix-blend-overlay pointer-events-none"
