@@ -6,6 +6,12 @@
  */
 
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
+import { Client } from "appwrite";
+
+import {
+  APPWRITE_TABLE_IDS,
+  getPublicAppwriteConfig,
+} from "@/app/lib/appwrite/config";
 
 type SongRecord = { id: string; [key: string]: any };
 type SearchEntry = { results: any[]; timestamp: number };
@@ -28,6 +34,7 @@ const PREF_KEYS = {
 
 const LIBRARY_ENDPOINT = "/api/user/library";
 const LIBRARY_SYNC_WINDOW_MS = 2000;
+const LIBRARY_REALTIME_DEBOUNCE_MS = 350;
 
 let memoryState: OfflineState = {
   songs: {},
@@ -39,6 +46,11 @@ let memoryState: OfflineState = {
 
 let librarySyncPromise: Promise<void> | null = null;
 let lastLibrarySyncAt = 0;
+let realtimeClient: Client | null = null;
+let realtimeSubscription: (() => void) | null = null;
+let realtimeSubscriptionInitPromise: Promise<void> | null = null;
+let realtimeRefreshTimer: ReturnType<typeof setTimeout> | null = null;
+const realtimeListeners = new Set<() => void>();
 
 function normalizeQuery(query: string): string {
   return query.toLowerCase().trim();
@@ -56,6 +68,22 @@ function readArray(value: unknown): any[] {
 
 function hasPref(prefs: Record<string, unknown>, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(prefs, key);
+}
+
+function areCollectionsEqual(a: any[], b: any[]): boolean {
+  try {
+    return JSON.stringify(a) === JSON.stringify(b);
+  } catch {
+    return false;
+  }
+}
+
+function buildLibraryRealtimeChannels(databaseId: string): string[] {
+  return [
+    `databases.${databaseId}.tables.${APPWRITE_TABLE_IDS.playlists}.rows`,
+    `databases.${databaseId}.tables.${APPWRITE_TABLE_IDS.playlistTracks}.rows`,
+    `databases.${databaseId}.tables.${APPWRITE_TABLE_IDS.favorites}.rows`,
+  ];
 }
 
 async function loadState(): Promise<OfflineState> {
@@ -226,6 +254,111 @@ async function refreshLibraryFromAppwrite(force = false): Promise<void> {
   await librarySyncPromise;
 }
 
+function scheduleRealtimeRefresh() {
+  if (realtimeRefreshTimer) {
+    clearTimeout(realtimeRefreshTimer);
+  }
+
+  realtimeRefreshTimer = setTimeout(() => {
+    void refreshLibraryFromAppwrite(true).then(() => {
+      realtimeListeners.forEach((listener) => {
+        listener();
+      });
+    });
+  }, LIBRARY_REALTIME_DEBOUNCE_MS);
+}
+
+async function fetchRealtimeJwt(): Promise<string | null> {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const res = await fetch("/api/auth/jwt", {
+      method: "GET",
+      cache: "no-store",
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    const data = (await res.json()) as { jwt?: unknown };
+    return typeof data.jwt === "string" && data.jwt ? data.jwt : null;
+  } catch {
+    return null;
+  }
+}
+
+async function ensureRealtimeSubscription(): Promise<void> {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  if (realtimeSubscription || realtimeSubscriptionInitPromise) {
+    await realtimeSubscriptionInitPromise;
+    return;
+  }
+
+  realtimeSubscriptionInitPromise = (async () => {
+    const jwt = await fetchRealtimeJwt();
+    if (!jwt) {
+      return;
+    }
+
+    try {
+      const { endpoint, projectId, databaseId } = getPublicAppwriteConfig();
+      realtimeClient = new Client()
+        .setEndpoint(endpoint)
+        .setProject(projectId)
+        .setJWT(jwt);
+
+      realtimeSubscription = realtimeClient.subscribe(
+        buildLibraryRealtimeChannels(databaseId),
+        () => {
+          scheduleRealtimeRefresh();
+        }
+      );
+    } catch {
+      realtimeClient = null;
+      realtimeSubscription = null;
+    }
+  })().finally(() => {
+    realtimeSubscriptionInitPromise = null;
+  });
+
+  await realtimeSubscriptionInitPromise;
+}
+
+async function teardownRealtimeSubscription(): Promise<void> {
+  if (realtimeRefreshTimer) {
+    clearTimeout(realtimeRefreshTimer);
+    realtimeRefreshTimer = null;
+  }
+
+  if (realtimeSubscription) {
+    realtimeSubscription();
+  }
+
+  realtimeSubscription = null;
+  realtimeClient = null;
+}
+
+export async function subscribeLibraryRealtime(
+  listener: () => void
+): Promise<() => void> {
+  realtimeListeners.add(listener);
+  await ensureRealtimeSubscription();
+
+  return () => {
+    realtimeListeners.delete(listener);
+
+    if (realtimeListeners.size === 0) {
+      void teardownRealtimeSubscription();
+    }
+  };
+}
+
 // Song metadata cache
 export async function cacheSong(song: SongRecord): Promise<void> {
   if (!song?.id) return;
@@ -290,7 +423,12 @@ export async function getCachedSearch(query: string, maxAge = 5 * 60 * 1000): Pr
 
 // User playlists
 export async function savePlaylists(playlists: any[]): Promise<void> {
-  memoryState.playlists = Array.isArray(playlists) ? [...playlists] : [];
+  const nextPlaylists = Array.isArray(playlists) ? [...playlists] : [];
+  if (areCollectionsEqual(nextPlaylists, memoryState.playlists)) {
+    return;
+  }
+
+  memoryState.playlists = nextPlaylists;
   await syncLibraryToAppwrite({ playlists: memoryState.playlists });
 }
 
@@ -302,7 +440,12 @@ export async function getPlaylists(): Promise<any[]> {
 
 // Favorites
 export async function saveFavorites(favoriteSongs: any[]): Promise<void> {
-  memoryState.favorites = Array.isArray(favoriteSongs) ? [...favoriteSongs] : [];
+  const nextFavorites = Array.isArray(favoriteSongs) ? [...favoriteSongs] : [];
+  if (areCollectionsEqual(nextFavorites, memoryState.favorites)) {
+    return;
+  }
+
+  memoryState.favorites = nextFavorites;
   await syncLibraryToAppwrite({ favorites: memoryState.favorites });
 }
 

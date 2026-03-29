@@ -20,6 +20,7 @@ import {
   getHistory, 
   addToHistory,
   clearHistory as clearHistoryFromCache,
+  subscribeLibraryRealtime,
 } from "@/app/lib/offlineCache";
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
@@ -841,6 +842,47 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       return updated;
     });
   }, [currentSongIndex, songs]);
+
+  // Realtime sync for playlists and favorites across tabs/devices.
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    let isMounted = true;
+    let unsubscribe: (() => void) | null = null;
+
+    const refreshLibraryState = async () => {
+      try {
+        const [favs, savedPlaylists] = await Promise.all([
+          getFavorites(),
+          getPlaylists(),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        setFavorites(Array.isArray(favs) ? favs : []);
+        setPlaylists(Array.isArray(savedPlaylists) ? savedPlaylists : []);
+      } catch {
+        // Keep current state if realtime refresh fails.
+      }
+    };
+
+    (async () => {
+      unsubscribe = await subscribeLibraryRealtime(() => {
+        void refreshLibraryState();
+      });
+    })();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
 
   // Sync Favorites to Appwrite-backed cache
   useEffect(() => {
