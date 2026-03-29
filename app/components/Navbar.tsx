@@ -9,6 +9,7 @@ import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
 import { useAuth } from "@/app/hooks/useAuth";
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 import { AddToPlaylistModal } from "./AddToPlaylistModal";
 
 const navItems = [
@@ -26,7 +27,7 @@ export const Navbar = () => {
     songs, 
     currentSongIndex 
   } = usePlayer();
-  const [isDark, setIsDark] = useState(true); // default dark, hydrate from localStorage in useEffect
+  const [isDark, setIsDark] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -41,17 +42,28 @@ export const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Hydrate theme from localStorage after mount (avoids SSR mismatch)
   useEffect(() => {
+    let isActive = true;
     setMounted(true);
-    const saved = localStorage.getItem("theme");
-    const prefersDark = saved ? saved === "dark" : true;
-    setIsDark(prefersDark);
-    if (prefersDark) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+
+    void (async () => {
+      const prefs = await getGrovyPrefs();
+      if (!isActive) return;
+
+      const theme = prefs.theme === "light" ? "light" : "dark";
+      const prefersDark = theme === "dark";
+
+      setIsDark(prefersDark);
+      if (prefersDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    })();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   const toggleTheme = () => {
@@ -60,11 +72,10 @@ export const Navbar = () => {
     const html = document.documentElement;
     if (next) {
       html.classList.add("dark");
-      localStorage.setItem("theme", "dark");
     } else {
       html.classList.remove("dark");
-      localStorage.setItem("theme", "light");
     }
+    void patchGrovyPrefs({ theme: next ? "dark" : "light" });
   };
 
   return (

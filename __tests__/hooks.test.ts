@@ -7,12 +7,35 @@
 
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
+
+const { prefStore, getGrovyPrefsMock, patchGrovyPrefsMock } = vi.hoisted(() => {
+  const store: Record<string, unknown> = {};
+
+  return {
+    prefStore: store,
+    getGrovyPrefsMock: vi.fn(async () => ({ ...store })),
+    patchGrovyPrefsMock: vi.fn(async (patch: Record<string, unknown>) => {
+      Object.assign(store, patch);
+      return { ...store };
+    }),
+  };
+});
+
+vi.mock("../app/lib/appwrite/prefsClient", () => ({
+  getGrovyPrefs: getGrovyPrefsMock,
+  patchGrovyPrefs: patchGrovyPrefsMock,
+}));
+
 import { useLocalStorageState } from "../app/hooks/useLocalStorageState";
 import { useDebounceSearch } from "../app/hooks/useDebounceSearch";
 
 describe("useLocalStorageState", () => {
   beforeEach(() => {
-    localStorage.clear();
+    Object.keys(prefStore).forEach((key) => {
+      delete prefStore[key];
+    });
+    getGrovyPrefsMock.mockClear();
+    patchGrovyPrefsMock.mockClear();
   });
 
   it("should return initial value when localStorage is empty", () => {
@@ -20,21 +43,39 @@ describe("useLocalStorageState", () => {
     expect(result.current[0]).toBe(42);
   });
 
-  it("should persist value to localStorage on set", () => {
-    const { result } = renderHook(() => useLocalStorageState("test-key", 0));
-    act(() => {
-      result.current[1](99);
+  it("should hydrate from preferences when key exists", async () => {
+    prefStore["test-key"] = 7;
+    const { result } = renderHook(() => useLocalStorageState("test-key", 42));
+
+    await act(async () => {
+      await Promise.resolve();
     });
-    expect(result.current[0]).toBe(99);
-    expect(localStorage.getItem("test-key")).toBe("99");
+
+    expect(result.current[0]).toBe(7);
   });
 
-  it("should accept updater function", () => {
-    const { result } = renderHook(() => useLocalStorageState("counter", 5));
-    act(() => {
-      result.current[1]((prev) => prev + 10);
+  it("should persist value to preferences on set", async () => {
+    const { result } = renderHook(() => useLocalStorageState("test-key", 0));
+
+    await act(async () => {
+      result.current[1](99);
+      await Promise.resolve();
     });
+
+    expect(result.current[0]).toBe(99);
+    expect(patchGrovyPrefsMock).toHaveBeenCalledWith({ "test-key": 99 });
+  });
+
+  it("should accept updater function", async () => {
+    const { result } = renderHook(() => useLocalStorageState("counter", 5));
+
+    await act(async () => {
+      result.current[1]((prev) => prev + 10);
+      await Promise.resolve();
+    });
+
     expect(result.current[0]).toBe(15);
+    expect(patchGrovyPrefsMock).toHaveBeenCalledWith({ counter: 15 });
   });
 });
 

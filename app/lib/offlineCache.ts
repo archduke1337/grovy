@@ -1,250 +1,227 @@
 /**
- * IndexedDB-backed offline cache for song metadata and search results.
- * Audio streams are too large for IndexedDB but metadata can be cached
- * to enable offline queue browsing and faster search.
+ * Appwrite-backed metadata cache and user collections.
+ * Falls back to in-memory state when preference sync is unavailable.
  */
 
-const DB_NAME = "grovy-offline";
-const DB_VERSION = 1;
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 
-const STORES = {
-  songs: "songs",        // Cached song metadata by ID
-  searches: "searches",  // Cached search results by query
-  playlists: "playlists", // User playlists
-  favorites: "favorites", // Favorite song IDs
-  history: "history",     // Recently played songs
+type SongRecord = { id: string; [key: string]: any };
+type SearchEntry = { results: any[]; timestamp: number };
+
+type OfflineState = {
+  songs: Record<string, SongRecord>;
+  searches: Record<string, SearchEntry>;
+  playlists: any[];
+  favorites: any[];
+  history: any[];
+};
+
+const PREF_KEYS = {
+  songs: "cachedSongs",
+  searches: "cachedSearches",
+  playlists: "playlists",
+  favorites: "favorites",
+  history: "history",
 } as const;
 
-// Singleton DB connection to prevent connection leaks
-let _dbInstance: IDBDatabase | null = null;
+let memoryState: OfflineState = {
+  songs: {},
+  searches: {},
+  playlists: [],
+  favorites: [],
+  history: [],
+};
 
-function openDB(): Promise<IDBDatabase> {
-  if (_dbInstance) return Promise.resolve(_dbInstance);
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onupgradeneeded = () => {
-      const db = req.result;
-      if (!db.objectStoreNames.contains(STORES.songs)) {
-        db.createObjectStore(STORES.songs, { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains(STORES.searches)) {
-        const store = db.createObjectStore(STORES.searches, { keyPath: "query" });
-        store.createIndex("timestamp", "timestamp");
-      }
-      if (!db.objectStoreNames.contains(STORES.playlists)) {
-        db.createObjectStore(STORES.playlists, { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains(STORES.favorites)) {
-        db.createObjectStore(STORES.favorites, { keyPath: "id" });
-      }
-      if (!db.objectStoreNames.contains(STORES.history)) {
-        const store = db.createObjectStore(STORES.history, { keyPath: "id" });
-        store.createIndex("timestamp", "timestamp");
-      }
-    };
-    req.onsuccess = () => {
-      _dbInstance = req.result;
-      // Reset singleton if the DB is closed externally
-      _dbInstance.onclose = () => { _dbInstance = null; };
-      resolve(_dbInstance);
-    };
-    req.onerror = () => reject(req.error);
+function normalizeQuery(query: string): string {
+  return query.toLowerCase().trim();
+}
+
+function readObject(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
+}
+
+function readArray(value: unknown): any[] {
+  return Array.isArray(value) ? value : [];
+}
+
+function hasPref(prefs: Record<string, unknown>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(prefs, key);
+}
+
+async function loadState(): Promise<OfflineState> {
+  const prefs = await getGrovyPrefs();
+
+  memoryState = {
+    songs: hasPref(prefs, PREF_KEYS.songs)
+      ? readObject(prefs[PREF_KEYS.songs])
+      : memoryState.songs,
+    searches: hasPref(prefs, PREF_KEYS.searches)
+      ? readObject(prefs[PREF_KEYS.searches])
+      : memoryState.searches,
+    playlists: hasPref(prefs, PREF_KEYS.playlists)
+      ? readArray(prefs[PREF_KEYS.playlists])
+      : memoryState.playlists,
+    favorites: hasPref(prefs, PREF_KEYS.favorites)
+      ? readArray(prefs[PREF_KEYS.favorites])
+      : memoryState.favorites,
+    history: hasPref(prefs, PREF_KEYS.history)
+      ? readArray(prefs[PREF_KEYS.history])
+      : memoryState.history,
+  };
+
+  return {
+    songs: { ...memoryState.songs },
+    searches: { ...memoryState.searches },
+    playlists: [...memoryState.playlists],
+    favorites: [...memoryState.favorites],
+    history: [...memoryState.history],
+  };
+}
+
+async function savePartialState(partial: Partial<OfflineState>): Promise<void> {
+  memoryState = {
+    songs: partial.songs ?? memoryState.songs,
+    searches: partial.searches ?? memoryState.searches,
+    playlists: partial.playlists ?? memoryState.playlists,
+    favorites: partial.favorites ?? memoryState.favorites,
+    history: partial.history ?? memoryState.history,
+  };
+
+  const patch: Record<string, unknown> = {};
+  if (partial.songs !== undefined) patch[PREF_KEYS.songs] = memoryState.songs;
+  if (partial.searches !== undefined) patch[PREF_KEYS.searches] = memoryState.searches;
+  if (partial.playlists !== undefined) patch[PREF_KEYS.playlists] = memoryState.playlists;
+  if (partial.favorites !== undefined) patch[PREF_KEYS.favorites] = memoryState.favorites;
+  if (partial.history !== undefined) patch[PREF_KEYS.history] = memoryState.history;
+
+  if (Object.keys(patch).length === 0) {
+    return;
+  }
+
+  await patchGrovyPrefs(patch).catch(() => {
+    // Ignore sync failures and keep memory fallback.
   });
 }
 
-function tx(db: IDBDatabase, store: string, mode: IDBTransactionMode) {
-  return db.transaction(store, mode).objectStore(store);
+// Song metadata cache
+export async function cacheSong(song: SongRecord): Promise<void> {
+  if (!song?.id) return;
+
+  const state = await loadState();
+  await savePartialState({
+    songs: {
+      ...state.songs,
+      [song.id]: { ...song, _cachedAt: Date.now() },
+    },
+  });
 }
 
-// ─── Song Metadata Cache ───
+export async function cacheSongs(songs: SongRecord[]): Promise<void> {
+  if (!Array.isArray(songs) || songs.length === 0) return;
 
-export async function cacheSong(song: { id: string; [key: string]: any }): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.songs, "readwrite");
-    store.put({ ...song, _cachedAt: Date.now() });
-  } catch (e) {
-    // Fail silently — cache is best-effort
-  }
-}
+  const state = await loadState();
+  const nextSongs = { ...state.songs };
 
-export async function cacheSongs(songs: { id: string; [key: string]: any }[]): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.songs, "readwrite");
-    for (const song of songs) {
-      store.put({ ...song, _cachedAt: Date.now() });
-    }
-  } catch (e) {}
+  songs.forEach((song) => {
+    if (!song?.id) return;
+    nextSongs[song.id] = { ...song, _cachedAt: Date.now() };
+  });
+
+  await savePartialState({ songs: nextSongs });
 }
 
 export async function getCachedSong(id: string): Promise<any | null> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve) => {
-      const req = tx(db, STORES.songs, "readonly").get(id);
-      req.onsuccess = () => resolve(req.result ?? null);
-      req.onerror = () => resolve(null);
-    });
-  } catch (e) {
-    return null;
-  }
+  const state = await loadState();
+  return state.songs[id] ?? null;
 }
 
-// ─── Search Results Cache ───
-
+// Search results cache
 export async function cacheSearchResults(query: string, results: any[]): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.searches, "readwrite");
-    store.put({ query: query.toLowerCase().trim(), results, timestamp: Date.now() });
-  } catch (e) {}
+  const normalized = normalizeQuery(query);
+  if (!normalized) return;
+
+  const state = await loadState();
+  await savePartialState({
+    searches: {
+      ...state.searches,
+      [normalized]: {
+        results: Array.isArray(results) ? results : [],
+        timestamp: Date.now(),
+      },
+    },
+  });
 }
 
 export async function getCachedSearch(query: string, maxAge = 5 * 60 * 1000): Promise<any[] | null> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve) => {
-      const req = tx(db, STORES.searches, "readonly").get(query.toLowerCase().trim());
-      req.onsuccess = () => {
-        const entry = req.result;
-        if (!entry) return resolve(null);
-        // Stale check
-        if (Date.now() - entry.timestamp > maxAge) return resolve(null);
-        resolve(entry.results);
-      };
-      req.onerror = () => resolve(null);
-    });
-  } catch (e) {
-    return null;
-  }
+  const normalized = normalizeQuery(query);
+  if (!normalized) return null;
+
+  const state = await loadState();
+  const entry = state.searches[normalized];
+
+  if (!entry) return null;
+  if (Date.now() - (entry.timestamp || 0) > maxAge) return null;
+
+  return Array.isArray(entry.results) ? entry.results : null;
 }
 
-// ─── User Playlists ───
-
+// User playlists
 export async function savePlaylists(playlists: any[]): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.playlists, "readwrite");
-    // Clear and re-save is simplest for small sets
-    store.clear();
-    for (const pl of playlists) {
-      store.put(pl);
-    }
-  } catch (e) {}
+  await savePartialState({ playlists: Array.isArray(playlists) ? playlists : [] });
 }
 
 export async function getPlaylists(): Promise<any[]> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve) => {
-      const req = tx(db, STORES.playlists, "readonly").getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve([]);
-    });
-  } catch (e) {
-    return [];
-  }
+  const state = await loadState();
+  return Array.isArray(state.playlists) ? state.playlists : [];
 }
 
-// ─── Favorites ───
-
+// Favorites
 export async function saveFavorites(favoriteSongs: any[]): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.favorites, "readwrite");
-    // Using put instead of clear + put to preserve data if needed, 
-    // but the app currently manages the whole list in state.
-    // For simplicity, we match the existing behavior of replacing the whole list.
-    store.clear();
-    for (const song of favoriteSongs) {
-      store.put(song);
-    }
-  } catch (e) {}
+  await savePartialState({ favorites: Array.isArray(favoriteSongs) ? favoriteSongs : [] });
 }
 
 export async function getFavorites(): Promise<any[]> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve) => {
-      const req = tx(db, STORES.favorites, "readonly").getAll();
-      req.onsuccess = () => resolve(req.result || []);
-      req.onerror = () => resolve([]);
-    });
-  } catch (e) {
-    return [];
-  }
+  const state = await loadState();
+  return Array.isArray(state.favorites) ? state.favorites : [];
 }
 
-// ─── History ───
-
+// History
 export async function addToHistory(song: any): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.history, "readwrite");
-    store.put({ ...song, timestamp: Date.now() });
-    
-    // Limit history to 50 items
-    const countReq = store.count();
-    countReq.onsuccess = () => {
-      if (countReq.result > 50) {
-        const idx = store.index("timestamp");
-        idx.openCursor().onsuccess = (e: any) => {
-          const cursor = e.target.result;
-          if (cursor) cursor.delete();
-        };
-      }
-    };
-  } catch (e) {}
+  if (!song?.id) return;
+
+  const state = await loadState();
+  const filtered = state.history.filter((entry) => entry?.id !== song.id);
+  const updated = [{ ...song, timestamp: Date.now() }, ...filtered].slice(0, 50);
+
+  await savePartialState({ history: updated });
 }
 
 export async function getHistory(): Promise<any[]> {
-  try {
-    const db = await openDB();
-    return new Promise((resolve) => {
-      const store = tx(db, STORES.history, "readonly");
-      const idx = store.index("timestamp");
-      const req = idx.getAll(); // get all sorted by timestamp
-      req.onsuccess = () => resolve((req.result || []).reverse()); // Newest first
-      req.onerror = () => resolve([]);
-    });
-  } catch (e) {
-    return [];
-  }
+  const state = await loadState();
+  return [...state.history].sort((a, b) => (b?.timestamp || 0) - (a?.timestamp || 0));
 }
 
 export async function clearHistory(): Promise<void> {
-  try {
-    const db = await openDB();
-    tx(db, STORES.history, "readwrite").clear();
-  } catch (e) {}
+  await savePartialState({ history: [] });
 }
 
-// ─── Cleanup ───
-
+// Cleanup
 export async function clearOfflineCache(): Promise<void> {
-  try {
-    const db = await openDB();
-    tx(db, STORES.songs, "readwrite").clear();
-    tx(db, STORES.searches, "readwrite").clear();
-  } catch (e) {}
+  await savePartialState({ songs: {}, searches: {} });
 }
 
-/** Evict search entries older than maxAge (default 1 hour) */
 export async function evictStaleSearches(maxAge = 60 * 60 * 1000): Promise<void> {
-  try {
-    const db = await openDB();
-    const store = tx(db, STORES.searches, "readwrite");
-    const cutoff = Date.now() - maxAge;
-    const idx = store.index("timestamp");
-    const range = IDBKeyRange.upperBound(cutoff);
-    const req = idx.openCursor(range);
-    req.onsuccess = () => {
-      const cursor = req.result;
-      if (cursor) {
-        cursor.delete();
-        cursor.continue();
-      }
-    };
-  } catch (e) {}
+  const state = await loadState();
+  const cutoff = Date.now() - maxAge;
+  const nextSearches: Record<string, SearchEntry> = {};
+
+  Object.entries(state.searches).forEach(([key, value]) => {
+    if ((value?.timestamp || 0) >= cutoff) {
+      nextSearches[key] = value;
+    }
+  });
+
+  await savePartialState({ searches: nextSearches });
 }

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, RotateCcw } from "lucide-react";
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 
 interface Band {
   frequency: number;
@@ -63,21 +64,38 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
 
   // Save/restore EQ settings
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("grovy-eq");
-      if (saved) {
-        const data = JSON.parse(saved) as { bands: number[]; preset: string };
+    let isActive = true;
+
+    void (async () => {
+      try {
+        const prefs = await getGrovyPrefs();
+        const data = prefs.equalizer as { bands?: number[]; preset?: string } | undefined;
+
+        if (!isActive || !data || !Array.isArray(data.bands)) return;
+
         data.bands.forEach((g, i) => {
-          if (filters[i]) filters[i].gain.value = g;
+          if (filters[i]) filters[i].gain.value = Number(g) || 0;
         });
-        setBands(prev => prev.map((b, i) => ({ ...b, gain: data.bands[i] ?? 0 })));
+
+        setBands((prev) => prev.map((b, i) => ({ ...b, gain: Number(data.bands?.[i]) || 0 })));
         setActivePreset(data.preset || "Flat");
+      } catch {
+        // Ignore preference hydration failures.
       }
-    } catch {}
+    })();
+
+    return () => {
+      isActive = false;
+    };
   }, [filters]);
 
   useEffect(() => {
-    localStorage.setItem("grovy-eq", JSON.stringify({ bands: bands.map(b => b.gain), preset: activePreset }));
+    void patchGrovyPrefs({
+      equalizer: {
+        bands: bands.map((b) => b.gain),
+        preset: activePreset,
+      },
+    });
   }, [bands, activePreset]);
 
   return (

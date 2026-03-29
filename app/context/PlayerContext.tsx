@@ -21,6 +21,7 @@ import {
   addToHistory,
   clearHistory as clearHistoryFromCache,
 } from "@/app/lib/offlineCache";
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
 import Hls from "hls.js";
 
@@ -165,53 +166,38 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Hydrate from IndexedDB & LocalStorage
+    // Hydrate persisted state from Appwrite-backed storage.
     (async () => {
       try {
-        const hist = await getHistory();
-        if (hist && hist.length > 0) setRecentlyPlayed(hist);
-        else {
-          const saved = localStorage.getItem("grovy-history");
-          if (saved) setRecentlyPlayed(JSON.parse(saved).slice(0, 20));
-        }
-        
-        const favs = await getFavorites();
-        if (favs && favs.length > 0) setFavorites(favs);
-        else {
-          const savedFavs = localStorage.getItem("grovy-favorites");
-          // Legacy check: if saved favorites are strings (IDs), we'll clear them and start over or try to hydrate.
-          // For simplicity, we just clear legacy favorites.
-          if (savedFavs) {
-            const parsed = JSON.parse(savedFavs);
-            if (parsed.length > 0 && typeof parsed[0] === 'string') {
-               setFavorites([]);
-               localStorage.removeItem("grovy-favorites");
-            } else {
-               setFavorites(parsed);
-            }
-          }
+        const [hist, favs, savedPlaylists, prefs] = await Promise.all([
+          getHistory(),
+          getFavorites(),
+          getPlaylists(),
+          getGrovyPrefs(),
+        ]);
+
+        if (hist.length > 0) {
+          setRecentlyPlayed(hist);
         }
 
-        const savedPlaylists = await getPlaylists();
-        if (savedPlaylists && savedPlaylists.length > 0) setPlaylists(savedPlaylists);
-        else {
-          const localPlaylists = localStorage.getItem("grovy-playlists");
-          if (localPlaylists) setPlaylists(JSON.parse(localPlaylists));
+        if (favs.length > 0) {
+          setFavorites(favs);
         }
 
-        // Restore persistent queue
-        const savedQueue = localStorage.getItem("grovy-queue");
-        if (savedQueue) {
-          const { songs: savedSongs, index } = JSON.parse(savedQueue);
-          if (Array.isArray(savedSongs) && savedSongs.length > 0) {
-            setSongs(savedSongs);
-            setCurrentSongIndex(Math.min(index || 0, savedSongs.length - 1));
-          }
+        if (savedPlaylists.length > 0) {
+          setPlaylists(savedPlaylists);
         }
 
-        // Restore playback speed
-        const savedSpeed = localStorage.getItem("grovy-speed");
-        if (savedSpeed) setPlaybackSpeedState(parseFloat(savedSpeed) || 1);
+        const savedQueue = prefs.queue as { songs?: Song[]; index?: number } | undefined;
+        if (savedQueue && Array.isArray(savedQueue.songs) && savedQueue.songs.length > 0) {
+          setSongs(savedQueue.songs);
+          setCurrentSongIndex(Math.min(savedQueue.index || 0, savedQueue.songs.length - 1));
+        }
+
+        const savedSpeed = Number(prefs.playbackSpeed);
+        if (!Number.isNaN(savedSpeed) && savedSpeed > 0) {
+          setPlaybackSpeedState(Math.max(0.25, Math.min(2, savedSpeed)));
+        }
       } catch (e) {}
     })();
 
@@ -518,42 +504,35 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
       eqFiltersRef.current = filters;
 
-      // Restore saved EQ — format is { bands: number[], preset: string }
-      try {
-        const savedEq = localStorage.getItem("grovy-eq");
-        if (savedEq) {
-          const parsed = JSON.parse(savedEq);
-          const gains = parsed?.bands ?? (Array.isArray(parsed) ? parsed : null);
-          if (Array.isArray(gains)) {
-            gains.forEach((g: number, i: number) => {
-              if (filters[i]) filters[i].gain.value = g;
-            });
-          }
-        }
-      } catch (e) {}
-
       setAudioContextState(ctx);
       setSourceNodeState(source);
       setEqFiltersState(filters);
       setGainNodeState(gainNode);
 
-      // Restore normalization preference
-      try {
-        const savedNorm = localStorage.getItem("grovy-normalization");
-        if (savedNorm === "true") {
-          setNormalizationEnabledState(true);
-          if (gainNode) gainNode.gain.value = 0.75;
-        }
-      } catch (e) {}
+      void (async () => {
+        try {
+          const prefs = await getGrovyPrefs();
 
-      // Restore crossfade preference
-      try {
-        const savedCf = localStorage.getItem("grovy-crossfade");
-        if (savedCf === "true") {
-          setCrossfadeEnabledState(true);
-          crossfadeRef.current = true;
+          const savedEq = prefs.equalizer as { bands?: number[] } | undefined;
+          if (savedEq && Array.isArray(savedEq.bands)) {
+            savedEq.bands.forEach((g, i) => {
+              if (filters[i]) filters[i].gain.value = Number(g) || 0;
+            });
+          }
+
+          if (prefs.normalizationEnabled === true) {
+            setNormalizationEnabledState(true);
+            if (gainNode) gainNode.gain.value = 0.75;
+          }
+
+          if (prefs.crossfadeEnabled === true) {
+            setCrossfadeEnabledState(true);
+            crossfadeRef.current = true;
+          }
+        } catch {
+          // Ignore preference hydration failures.
         }
-      } catch (e) {}
+      })();
     } catch (e) {
       console.warn("[PlayerContext] Web Audio API not available:", e);
     }
@@ -592,7 +571,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // Audio normalization toggle
   const setNormalizationEnabled = useCallback((enabled: boolean) => {
     setNormalizationEnabledState(enabled);
-    localStorage.setItem("grovy-normalization", String(enabled));
+    void patchGrovyPrefs({ normalizationEnabled: enabled });
     if (gainNodeRef.current) {
       gainNodeRef.current.gain.value = enabled ? 0.75 : 1.0;
     }
@@ -602,7 +581,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const setCrossfadeEnabled = useCallback((enabled: boolean) => {
     setCrossfadeEnabledState(enabled);
     crossfadeRef.current = enabled;
-    localStorage.setItem("grovy-crossfade", String(enabled));
+    void patchGrovyPrefs({ crossfadeEnabled: enabled });
   }, []);
 
   // Playback speed
@@ -611,7 +590,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setPlaybackSpeedState(clamped);
     if (audioRef.current) audioRef.current.playbackRate = clamped;
     if (ytPlayerRef.current?.setPlaybackRate) ytPlayerRef.current.setPlaybackRate(clamped);
-    localStorage.setItem("grovy-speed", clamped.toString());
+    void patchGrovyPrefs({ playbackSpeed: clamped });
   }, []);
 
   // Sync playback speed when source changes
@@ -620,10 +599,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (ytPlayerRef.current?.setPlaybackRate) ytPlayerRef.current.setPlaybackRate(playbackSpeed);
   }, [songs, currentSongIndex, playbackSpeed]);
 
-  // Persist queue to localStorage
+  // Persist queue to user preferences
   useEffect(() => {
     if (songs.length > 0) {
-      localStorage.setItem("grovy-queue", JSON.stringify({ songs, index: currentSongIndex }));
+      void patchGrovyPrefs({ queue: { songs, index: currentSongIndex } });
     }
   }, [songs, currentSongIndex]);
 
@@ -697,13 +676,26 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setVolumeState(newVol);
     if (audioRef.current) audioRef.current.volume = newVol;
     if (ytPlayerRef.current?.setVolume) ytPlayerRef.current.setVolume(newVol * 100);
-    localStorage.setItem("grovy-volume", newVol.toString());
+    void patchGrovyPrefs({ volume: newVol });
   }, []);
 
   // Hydrate Volume
   useEffect(() => {
-    const savedVol = localStorage.getItem("grovy-volume");
-    if (savedVol) changeVolume(parseFloat(savedVol));
+    let isActive = true;
+
+    void (async () => {
+      const prefs = await getGrovyPrefs();
+      if (!isActive) return;
+
+      const savedVol = Number(prefs.volume);
+      if (!Number.isNaN(savedVol) && savedVol >= 0 && savedVol <= 1) {
+        changeVolume(savedVol);
+      }
+    })();
+
+    return () => {
+      isActive = false;
+    };
   }, [changeVolume]);
 
   // Manage Source Change (with crossfade support)
@@ -843,21 +835,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setRecentlyPlayed((prev) => {
       const filtered = prev.filter((s) => s.id !== song.id);
       const updated = [song, ...filtered].slice(0, 20);
-      addToHistory(song); // IndexedDB
-      localStorage.setItem("grovy-history", JSON.stringify(updated));
+      addToHistory(song);
       return updated;
     });
   }, [currentSongIndex, songs]);
 
-  // Sync Favorites to LocalStorage & IndexedDB
+  // Sync Favorites to Appwrite-backed cache
   useEffect(() => {
-    localStorage.setItem("grovy-favorites", JSON.stringify(favorites));
     saveFavorites(favorites);
   }, [favorites]);
 
-  // Sync Playlists to LocalStorage & IndexedDB
+  // Sync Playlists to Appwrite-backed cache
   useEffect(() => {
-    localStorage.setItem("grovy-playlists", JSON.stringify(playlists));
     savePlaylists(playlists);
   }, [playlists]);
 
@@ -1121,7 +1110,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const isFavorite = useCallback((id: string) => favorites.some(s => s.id === id), [favorites]);
   const clearHistory = useCallback(() => {
     setRecentlyPlayed([]);
-    localStorage.removeItem("grovy-history");
     clearHistoryFromCache().catch(() => {});
   }, []);
 
