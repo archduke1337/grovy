@@ -29,6 +29,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "appwrite:setup": "node scripts/setup-appwrite.js",
     "test": "vitest run",
     "test:watch": "vitest"
   },
