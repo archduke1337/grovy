@@ -220,10 +220,14 @@ function HomeContent() {
   const [searchResults, setSearchResults] = useState<HomeSong[]>([]);
   const [searchError, setSearchError] = useState("");
   const [lastSubmittedQuery, setLastSubmittedQuery] = useState("");
+  const [hasSelectedPlayForQuery, setHasSelectedPlayForQuery] = useState(false);
+  const [isSuggestionMinHoldElapsed, setIsSuggestionMinHoldElapsed] = useState(true);
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
+  const suggestionHoldTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdStartedForQueryRef = useRef("");
   const searchRunIdRef = useRef(0);
   const hasHandledSharedSongRef = useRef(false);
   const handledUrlSearchRef = useRef("");
@@ -376,17 +380,6 @@ function HomeContent() {
     };
   }, [searchQuery]);
 
-  useEffect(() => {
-    const handler = (event: MouseEvent) => {
-      if (searchBoxRef.current && !searchBoxRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
   const runSearch = useCallback(
     async (rawQuery: string = searchQuery) => {
       const normalizedQuery = rawQuery.trim();
@@ -469,6 +462,11 @@ function HomeContent() {
     if (searchAbortRef.current) {
       searchAbortRef.current.abort();
     }
+    if (suggestionHoldTimerRef.current) {
+      clearTimeout(suggestionHoldTimerRef.current);
+      suggestionHoldTimerRef.current = null;
+    }
+    holdStartedForQueryRef.current = "";
     searchRunIdRef.current += 1;
     setSearchQuery("");
     setSearchResults([]);
@@ -476,6 +474,8 @@ function HomeContent() {
     setShowSuggestions(false);
     setSearchError("");
     setLastSubmittedQuery("");
+    setHasSelectedPlayForQuery(false);
+    setIsSuggestionMinHoldElapsed(true);
     setIsLoadingSuggestions(false);
     setIsSearching(false);
   }, []);
@@ -484,6 +484,9 @@ function HomeContent() {
     return () => {
       if (searchAbortRef.current) {
         searchAbortRef.current.abort();
+      }
+      if (suggestionHoldTimerRef.current) {
+        clearTimeout(suggestionHoldTimerRef.current);
       }
     };
   }, []);
@@ -499,11 +502,76 @@ function HomeContent() {
     return activeQuery.length > 0 && activeQuery === submittedQuery && visibleSearchResults.length > 0;
   }, [searchQuery, lastSubmittedQuery, visibleSearchResults.length]);
 
+  const shouldKeepSuggestionsVisible = useMemo(
+    () => hasResultsForActiveQuery && (!hasSelectedPlayForQuery || !isSuggestionMinHoldElapsed),
+    [hasResultsForActiveQuery, hasSelectedPlayForQuery, isSuggestionMinHoldElapsed]
+  );
+
   useEffect(() => {
-    if (showSuggestions && hasResultsForActiveQuery) {
+    const handler = (event: MouseEvent) => {
+      if (searchBoxRef.current && !searchBoxRef.current.contains(event.target as Node)) {
+        if (shouldKeepSuggestionsVisible) return;
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [shouldKeepSuggestionsVisible]);
+
+  useEffect(() => {
+    const activeQuery = lastSubmittedQuery.trim().toLowerCase();
+
+    if (!hasResultsForActiveQuery || !activeQuery) return;
+    if (holdStartedForQueryRef.current === activeQuery) return;
+
+    holdStartedForQueryRef.current = activeQuery;
+    setShowSuggestions(true);
+    setHasSelectedPlayForQuery(false);
+    setIsSuggestionMinHoldElapsed(false);
+
+    if (suggestionHoldTimerRef.current) {
+      clearTimeout(suggestionHoldTimerRef.current);
+    }
+
+    suggestionHoldTimerRef.current = setTimeout(() => {
+      setIsSuggestionMinHoldElapsed(true);
+    }, 6000);
+  }, [hasResultsForActiveQuery, lastSubmittedQuery]);
+
+  useEffect(() => {
+    if (showSuggestions && hasSelectedPlayForQuery && isSuggestionMinHoldElapsed) {
       setShowSuggestions(false);
     }
-  }, [showSuggestions, hasResultsForActiveQuery]);
+  }, [showSuggestions, hasSelectedPlayForQuery, isSuggestionMinHoldElapsed]);
+
+  useEffect(() => {
+    const activeQuery = searchQuery.trim().toLowerCase();
+    const heldQuery = holdStartedForQueryRef.current;
+
+    if (!activeQuery || (heldQuery && activeQuery !== heldQuery)) {
+      holdStartedForQueryRef.current = "";
+      setHasSelectedPlayForQuery(false);
+      setIsSuggestionMinHoldElapsed(true);
+
+      if (suggestionHoldTimerRef.current) {
+        clearTimeout(suggestionHoldTimerRef.current);
+        suggestionHoldTimerRef.current = null;
+      }
+    }
+  }, [searchQuery]);
+
+  const handlePlayFromResults = useCallback(
+    (song: HomeSong) => {
+      queueSongFromList(searchResults, song);
+      setHasSelectedPlayForQuery(true);
+
+      if (isSuggestionMinHoldElapsed) {
+        setShowSuggestions(false);
+      }
+    },
+    [queueSongFromList, searchResults, isSuggestionMinHoldElapsed]
+  );
 
   const resultSuggestions = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -573,6 +641,7 @@ function HomeContent() {
                 spellCheck={false}
                 onChange={(event) => {
                   setSearchQuery(event.target.value);
+                  setHasSelectedPlayForQuery(false);
                   setShowSuggestions(true);
                 }}
                 onFocus={() => setShowSuggestions(true)}
@@ -606,7 +675,7 @@ function HomeContent() {
             </div>
 
             <AnimatePresence>
-              {showSuggestions && searchQuery.trim().length >= 2 && !hasResultsForActiveQuery ? (
+              {showSuggestions && searchQuery.trim().length >= 2 ? (
                 <motion.div
                   initial={{ opacity: 0, y: -6, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -677,7 +746,7 @@ function HomeContent() {
                 <TrackCard
                   key={song.id}
                   song={song}
-                  onPlay={() => queueSongFromList(searchResults, song)}
+                  onPlay={() => handlePlayFromResults(song)}
                   onFavorite={toggleFavorite}
                   isFav={isFavorite(song.id)}
                 />
