@@ -88,7 +88,7 @@ export default function TermsOfService() {
         <section className="space-y-3 sm:space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">5. Privacy & Data</h2>
           <p className="text-[14px] sm:text-[15px] text-gray-600 dark:text-white/40 leading-relaxed">
-            Grovy respects your privacy. User preferences, playlists, favorites, playback history, and metadata caches are stored locally in your browser using localStorage and IndexedDB. Search and streaming requests are routed through Grovy API endpoints only to fetch music metadata or media from upstream providers. If the app is deployed on Vercel, privacy-focused aggregated usage metrics may also be processed through Vercel Web Analytics.
+            Grovy respects your privacy. Account authentication and synced user data are managed with Appwrite Authentication and Appwrite Databases. Some device-specific playback preferences may be cached locally during migration. Search and streaming requests are routed through Grovy API endpoints only to fetch music metadata or media from upstream providers. If the app is deployed on Vercel, privacy-focused aggregated usage metrics may also be processed through Vercel Web Analytics.
           </p>
         </section>
 

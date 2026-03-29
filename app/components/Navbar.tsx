@@ -4,10 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Home, Moon, Sun, Menu, X, Github, Code, Library } from "lucide-react";
+import { Home, Moon, Sun, Menu, X, Github, User, Library } from "lucide-react";
 import { useState, useEffect } from "react";
 
 import { usePlayer } from "@/app/context/PlayerContext";
+import { useAuth } from "@/app/hooks/useAuth";
 import { AddToPlaylistModal } from "./AddToPlaylistModal";
 
 const navItems = [
@@ -17,6 +18,7 @@ const navItems = [
 
 export const Navbar = () => {
   const pathname = usePathname();
+  const { user } = useAuth();
   const { 
     setCommandPaletteOpen, 
     colors, 
@@ -30,6 +32,8 @@ export const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
 
   const currentSong = songs[currentSongIndex];
+  const accountHref = user ? "/account" : "/auth/sign-in";
+  const accountLabel = user?.name?.trim() ? user.name.split(" ")[0] : "Sign In";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -153,6 +157,13 @@ export const Navbar = () => {
             </div>
             
             <div className="flex items-center gap-1 ml-2">
+              <Link
+                href={accountHref}
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
+              >
+                <User size={16} />
+                <span className="text-[12px] font-semibold">{accountLabel}</span>
+              </Link>
               <button
                 onClick={toggleTheme}
                 className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
@@ -172,6 +183,13 @@ export const Navbar = () => {
           </div>
 
           <div className="hidden lg:flex items-center gap-1">
+              <Link
+                href={accountHref}
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
+              >
+                <User size={16} />
+                <span className="text-[12px] font-semibold">{accountLabel}</span>
+              </Link>
               <button
                 onClick={toggleTheme}
                 className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
@@ -241,6 +259,14 @@ export const Navbar = () => {
                 >
                   <Github size={18} />
                   GitHub
+                </Link>
+                <Link
+                  href={accountHref}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-black/50 dark:text-white/40 text-[14px] font-semibold"
+                >
+                  <User size={18} />
+                  {user ? "Account" : "Sign In"}
                 </Link>
               </div>
             </motion.div>

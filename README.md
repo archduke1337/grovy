@@ -17,7 +17,7 @@
 - **💾 Local & Remote Playback**: Play your own files or stream from the cloud.
 - **🌑 Dark/Light Mode**: Seamless theme switching with persistent preferences.
 - **⚡ PWA Ready**: Installable as a native app on fast, modern devices.
-- **🔒 Privacy-First Storage**: Playlists, favorites, and history are stored locally in `localStorage` + `IndexedDB`; only search/stream requests hit API endpoints.
+- **☁️ Appwrite Cloud Sync**: Account auth and user library sync are powered by Appwrite Auth + Databases, with cross-device continuity.
 
 ## 🛠️ Tech Stack
 
@@ -53,13 +53,26 @@
    yarn install
    ```
 
-3. Run the development server:
+3. Configure environment variables:
+
+   ```bash
+   cp .env.example .env.local
+   ```
+
+   Then update `.env.local` with your Appwrite project values:
+
+   - `NEXT_PUBLIC_APPWRITE_ENDPOINT`
+   - `NEXT_PUBLIC_APPWRITE_PROJECT_ID`
+   - `NEXT_PUBLIC_APPWRITE_DATABASE_ID`
+   - `APPWRITE_API_KEY`
+
+4. Run the development server:
 
    ```bash
    npm run dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## 🎹 Keyboard Shortcuts
 
@@ -101,7 +114,12 @@ Playing correctly with the **Web Audio API** requires user interaction first. Cl
 
 ## 🛡️ Privacy Notes
 
-- Grovy does not require accounts or ad trackers.
-- Playback state and user libraries are persisted in your browser (`localStorage` and `IndexedDB`).
+- Grovy does not require ad trackers.
+- Account sessions are managed with Appwrite Authentication.
+- User library and synced data are stored in Appwrite Databases. Device-specific playback values may still be cached locally during migration.
 - Search and streaming metadata requests are proxied through Grovy API routes to upstream music providers.
 - If deployed on Vercel, aggregated site analytics may be collected via Vercel Web Analytics.
+
+## ☁️ Appwrite Migration
+
+- Detailed schema and auth rollout plan: `APPWRITE_MIGRATION_PLAN.md`.
