@@ -546,7 +546,7 @@ function HomeContent() {
               What's on your mind?
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-white/60 font-medium max-w-2xl">
-              A song, an artist, a lyric you half-remember — just type it in.
+              A song, an artist, a lyric you half-remember, just type it in.
             </p>
           </div>
 
