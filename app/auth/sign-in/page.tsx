@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useMemo, useState } from "react";
 
 import { AuthShell } from "@/app/components/AuthShell";
+import { sanitizeNextPath } from "@/app/lib/auth/redirect";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -15,8 +16,7 @@ export default function SignInPage() {
   const [error, setError] = useState("");
 
   const nextPath = useMemo(() => {
-    const next = searchParams.get("next") || "/account";
-    return next.startsWith("/") ? next : "/account";
+    return sanitizeNextPath(searchParams.get("next"));
   }, [searchParams]);
 
   const oauthFailed = searchParams.get("oauth") === "failed";
@@ -56,7 +56,7 @@ export default function SignInPage() {
         <span>
           New here?{" "}
           <Link
-            href="/auth/sign-up"
+            href={`/auth/sign-up?next=${encodeURIComponent(nextPath)}`}
             className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
           >
             Create account

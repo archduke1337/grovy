@@ -4,22 +4,30 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { AuthShell } from "@/app/components/AuthShell";
+import { sanitizeNextPath } from "@/app/lib/auth/redirect";
 
 export default function OAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId") || "";
   const secret = searchParams.get("secret") || "";
+  const state = searchParams.get("state") || "";
+  const oauthError =
+    searchParams.get("error_description") || searchParams.get("error") || "";
   const [error, setError] = useState("");
 
   const nextPath = useMemo(() => {
-    const next = searchParams.get("next") || "/account";
-    return next.startsWith("/") ? next : "/account";
+    return sanitizeNextPath(searchParams.get("next"));
   }, [searchParams]);
 
   useEffect(() => {
     async function completeOAuth() {
-      if (!userId || !secret) {
+      if (oauthError) {
+        setError(oauthError);
+        return;
+      }
+
+      if (!userId || !secret || !state) {
         setError("Missing OAuth callback credentials.");
         return;
       }
@@ -28,7 +36,7 @@ export default function OAuthCallbackPage() {
         const res = await fetch("/api/auth/oauth/complete", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, secret }),
+          body: JSON.stringify({ userId, secret, state }),
         });
 
         if (!res.ok) {
@@ -46,7 +54,7 @@ export default function OAuthCallbackPage() {
     }
 
     void completeOAuth();
-  }, [router, userId, secret, nextPath]);
+  }, [router, userId, secret, state, oauthError, nextPath]);
 
   return (
     <AuthShell

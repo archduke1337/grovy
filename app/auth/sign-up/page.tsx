@@ -1,23 +1,42 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, useMemo, useState } from "react";
 
 import { AuthShell } from "@/app/components/AuthShell";
+import { sanitizeNextPath } from "@/app/lib/auth/redirect";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const nextPath = useMemo(() => {
+    return sanitizeNextPath(searchParams.get("next"));
+  }, [searchParams]);
+
+  const postSignUpPath = useMemo(() => {
+    return nextPath.includes("?")
+      ? `${nextPath}&welcome=1`
+      : `${nextPath}?welcome=1`;
+  }, [nextPath]);
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      setLoading(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/auth/sign-up", {
@@ -31,7 +50,7 @@ export default function SignUpPage() {
         throw new Error(data?.error || "Could not create account");
       }
 
-      router.push("/account?welcome=1");
+      router.push(postSignUpPath);
       router.refresh();
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not create account";
@@ -49,7 +68,7 @@ export default function SignUpPage() {
         <span>
           Already have an account?{" "}
           <Link
-            href="/auth/sign-in"
+            href={`/auth/sign-in?next=${encodeURIComponent(nextPath)}`}
             className="font-semibold text-blue-600 dark:text-blue-400 hover:underline"
           >
             Sign in
@@ -104,6 +123,21 @@ export default function SignUpPage() {
           </p>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+            Confirm Password
+          </label>
+          <input
+            type="password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            autoComplete="new-password"
+            minLength={8}
+            required
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+          />
+        </div>
+
         {error ? (
           <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         ) : null}
@@ -116,6 +150,21 @@ export default function SignUpPage() {
           {loading ? "Creating Account..." : "Create Account"}
         </button>
       </form>
+
+      <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <a
+          href={`/api/auth/oauth/start?provider=google&next=${encodeURIComponent(nextPath)}`}
+          className="rounded-xl border border-black/10 dark:border-white/10 px-4 py-3 text-sm font-semibold text-center text-gray-800 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          Continue With Google
+        </a>
+        <a
+          href={`/api/auth/oauth/start?provider=github&next=${encodeURIComponent(nextPath)}`}
+          className="rounded-xl border border-black/10 dark:border-white/10 px-4 py-3 text-sm font-semibold text-center text-gray-800 dark:text-white/80 hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          Continue With GitHub
+        </a>
+      </div>
     </AuthShell>
   );
 }

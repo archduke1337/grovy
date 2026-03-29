@@ -1,8 +1,12 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
-import { attachSessionCookie } from "@/app/lib/appwrite/sessionCookie";
+import {
+  attachSessionCookie,
+  clearOAuthStateCookie,
+  readOAuthStateFromRequest,
+} from "@/app/lib/appwrite/sessionCookie";
 import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
@@ -10,11 +14,24 @@ export const runtime = "nodejs";
 const oauthCompleteSchema = z.object({
   userId: z.string().min(1),
   secret: z.string().min(1),
+  state: z.string().min(1),
 });
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const expectedState = readOAuthStateFromRequest(req);
+
   try {
     const payload = oauthCompleteSchema.parse(await req.json());
+
+    if (!expectedState || payload.state !== expectedState) {
+      const response = NextResponse.json(
+        { error: "Invalid OAuth state" },
+        { status: 400 }
+      );
+      clearOAuthStateCookie(response);
+      return response;
+    }
+
     const userAgent = req.headers.get("user-agent") || undefined;
     const { account } = createAdminAppwriteClients(userAgent);
 
@@ -25,15 +42,18 @@ export async function POST(req: Request) {
 
     const response = NextResponse.json({ ok: true });
     attachSessionCookie(response, session.secret, session.expire);
+    clearOAuthStateCookie(response);
     return response;
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: "Invalid OAuth completion payload", issues: error.flatten() },
-        { status: 422 }
-      );
-    }
+    const response =
+      error instanceof z.ZodError
+        ? NextResponse.json(
+            { error: "Invalid OAuth completion payload", issues: error.flatten() },
+            { status: 422 }
+          )
+        : appwriteErrorResponse(error, "OAuth completion failed", 400);
 
-    return appwriteErrorResponse(error, "OAuth completion failed", 400);
+    clearOAuthStateCookie(response);
+    return response;
   }
 }
