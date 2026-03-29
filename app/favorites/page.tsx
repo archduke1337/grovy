@@ -10,7 +10,7 @@ import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export default function FavoritesPage() {
   const router = useRouter();
-  const { favorites, setQueue, toggleFavorite } = usePlayer();
+  const { favorites, setQueue, toggleFavorite, isAuthenticated } = usePlayer();
 
   const handlePlayAll = () => {
     if (favorites.length > 0) {
@@ -116,14 +116,20 @@ export default function FavoritesPage() {
               <Heart size={48} />
            </div>
            <div className="space-y-3">
-              <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">No favorites yet</p>
-              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you love will appear here. Start exploring and mark some tracks!</p>
+              <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
+                {isAuthenticated ? "No favorites yet" : "Sign in to save favorites"}
+              </p>
+              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">
+                {isAuthenticated
+                  ? "Songs you love will appear here. Start exploring and mark some tracks!"
+                  : "Create an account to save your favorite songs and sync them across devices."}
+              </p>
            </div>
            <button 
-             onClick={() => router.push("/")}
+             onClick={() => router.push(isAuthenticated ? "/" : "/auth/sign-in")}
              className="px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
            >
-             Start Browsing
+             {isAuthenticated ? "Start Browsing" : "Sign In"}
            </button>
         </div>
       )}

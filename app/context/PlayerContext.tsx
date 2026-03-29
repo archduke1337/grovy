@@ -24,6 +24,8 @@ import {
 } from "@/app/lib/offlineCache";
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
+import { useAuth } from "@/app/hooks/useAuth";
+import { SignInPrompt } from "@/app/components/SignInPrompt";
 import Hls from "hls.js";
 
 interface Colors {
@@ -43,6 +45,7 @@ interface PlayerContextType {
   isShuffle: boolean;
   favorites: Song[];
   colors: Colors;
+  isAuthenticated: boolean;
   play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
@@ -115,6 +118,16 @@ YouTubeHiddenPlayer.displayName = "YouTubeHiddenPlayer";
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
+  const { authenticated: isAuthenticated } = useAuth();
+  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
+  const [signInMessage, setSignInMessage] = useState("");
+
+  const requireAuth = useCallback((action: string): boolean => {
+    if (isAuthenticated) return true;
+    setSignInMessage(`Sign in to ${action} and sync across devices.`);
+    setShowSignInPrompt(true);
+    return false;
+  }, [isAuthenticated]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const ytPlayerRef = useRef<any>(null);
@@ -952,6 +965,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const createPlaylist = useCallback((name: string, initialSongs?: Song[]): string => {
+    if (!requireAuth("create playlists")) return "";
     const newPlaylist: Playlist = {
       id: crypto.randomUUID(),
       name,
@@ -960,13 +974,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     setPlaylists(prev => [...prev, newPlaylist]);
     return newPlaylist.id;
-  }, []);
+  }, [requireAuth]);
 
   const deletePlaylist = useCallback((id: string) => {
+    if (!requireAuth("manage playlists")) return;
     setPlaylists(prev => prev.filter(p => p.id !== id));
-  }, []);
+  }, [requireAuth]);
 
   const addToPlaylist = useCallback((playlistId: string, song: Song) => {
+    if (!requireAuth("add songs to playlists")) return;
     setPlaylists(prev => prev.map(p => {
       if (p.id === playlistId) {
         if (p.songs.some(s => s.id === song.id)) return p;
@@ -974,21 +990,23 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return p;
     }));
-  }, []);
+  }, [requireAuth]);
 
   const removeFromPlaylist = useCallback((playlistId: string, songId: string) => {
+    if (!requireAuth("manage playlists")) return;
     setPlaylists(prev => prev.map(p => {
       if (p.id === playlistId) {
         return { ...p, songs: p.songs.filter(s => s.id !== songId) };
       }
       return p;
     }));
-  }, []);
+  }, [requireAuth]);
 
   const openPlaylistModal = useCallback((song: Song) => {
+    if (!requireAuth("add to playlists")) return;
     setPlaylistModalSong(song);
     setIsPlaylistModalOpen(true);
-  }, []);
+  }, [requireAuth]);
 
   const closePlaylistModal = useCallback(() => {
     setIsPlaylistModalOpen(false);
@@ -1129,6 +1147,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
   const toggleFavorite = useCallback((idOrSong: string | Song) => {
+    if (!requireAuth("save favorites")) return;
     const id = typeof idOrSong === 'string' ? idOrSong : idOrSong.id;
     setFavorites(prev => {
       // If already favorited, remove it
@@ -1150,7 +1169,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // This shouldn't happen but prevents data loss
       return prev;
     });
-  }, [recentlyPlayed]);
+  }, [recentlyPlayed, requireAuth]);
   const isFavorite = useCallback((id: string) => favorites.some(s => s.id === id), [favorites]);
   const clearHistory = useCallback(() => {
     setRecentlyPlayed([]);
@@ -1168,6 +1187,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     isShuffle,
     favorites,
     colors,
+    isAuthenticated,
     play,
     pause,
     togglePlayPause,
@@ -1214,7 +1234,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     removeFromQueue,
   }), [
     songs, currentSongIndex, isPlaying, currentTime, duration, volume,
-    isLoop, isShuffle, favorites, colors, play, pause, togglePlayPause,
+    isLoop, isShuffle, favorites, colors, isAuthenticated, play, pause, togglePlayPause,
     nextTrack, previousTrack, seek, changeVolume, toggleLoop, toggleShuffle,
     toggleFavorite, isFavorite, loadSongs, setQueue, startRadio, loadRelated,
     isCommandPaletteOpen, recentlyPlayed, clearHistory,
@@ -1252,6 +1272,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }}>
         {children}
       </div>
+      <SignInPrompt
+        isOpen={showSignInPrompt}
+        onClose={() => setShowSignInPrompt(false)}
+        message={signInMessage}
+      />
     </PlayerContext.Provider>
   );
 };

@@ -5,7 +5,7 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { PlayerControls } from "./PlayerControls";
 import { Playlist } from "./Playlist";
 import { motion, AnimatePresence } from "framer-motion";
-import { Music, Heart, ListPlus, LayoutList, ChevronDown, Settings2, Plus } from "lucide-react";
+import { Music, Heart, LayoutList, Settings2, Plus, AlignLeft } from "lucide-react";
 import { LyricsView } from "./LyricsView";
 import { RelatedTracks } from "./RelatedTracks";
 import { ArtistInfo } from "./ArtistInfo";
@@ -171,7 +171,7 @@ export const MusicPlayer: React.FC = () => {
                         className="text-white/40 hover:text-white transition-all hover:scale-110"
                         title="Lyrics"
                       >
-                        <Music size={22} />
+                        <AlignLeft size={22} />
                       </button>
                       <button 
                         onClick={() => currentSong && openPlaylistModal(currentSong)} 
