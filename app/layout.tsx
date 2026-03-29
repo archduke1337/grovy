@@ -111,7 +111,7 @@ export const metadata: Metadata = {
   },
   category: "Entertainment",
   referrer: "origin-when-cross-origin",
-  manifest: "/manifest.json",
+  manifest: "/manifest.webmanifest",
 };
 
 export const viewport: Viewport = {
@@ -228,8 +228,8 @@ export default function RootLayout({
               if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                   navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then((registration) => console.log('SW registered'))
-                    .catch((error) => console.log('SW registration failed:', error));
+                    .then((registration) => registration.update())
+                    .catch(() => {});
                 });
               }
             `,

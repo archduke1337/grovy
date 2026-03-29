@@ -18,7 +18,8 @@ import {
   getFavorites, 
   saveFavorites, 
   getHistory, 
-  addToHistory 
+  addToHistory,
+  clearHistory as clearHistoryFromCache,
 } from "@/app/lib/offlineCache";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
 import Hls from "hls.js";
@@ -993,8 +994,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     img.onload = async () => {
       if (!isMounted) return;
       try {
-        // @ts-ignore
-        const ColorThief = (await import("colorthief")).default;
+        type ColorThiefLike = {
+          getPalette: (image: HTMLImageElement, colorCount?: number) => [number, number, number][];
+        };
+        type ColorThiefCtor = new () => ColorThiefLike;
+
+        const colorThiefModule = await import("colorthief");
+        const ColorThief = (colorThiefModule.default || colorThiefModule) as unknown as ColorThiefCtor;
         const colorThief = new ColorThief();
         const palette = colorThief.getPalette(img, 3);
         const rgbToHex = (r: number, g: number, b: number) => 
@@ -1102,6 +1108,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const clearHistory = useCallback(() => {
     setRecentlyPlayed([]);
     localStorage.removeItem("grovy-history");
+    clearHistoryFromCache().catch(() => {});
   }, []);
 
   const value: PlayerContextType = useMemo(() => ({

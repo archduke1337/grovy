@@ -2,6 +2,35 @@ import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
+const SAAVN_ALLOWED_HOSTS = ["saavncdn.com", "jiosaavn.com"];
+
+function parseSaavnUrl(rawUrl: string): URL | null {
+  const candidates = [rawUrl];
+  try {
+    candidates.push(decodeURIComponent(rawUrl));
+  } catch {
+    // Ignore malformed encoded values; raw string may still be a valid URL.
+  }
+
+  for (const candidate of candidates) {
+    try {
+      return new URL(candidate);
+    } catch {
+      // Try next candidate.
+    }
+  }
+
+  return null;
+}
+
+function isAllowedSaavnUrl(url: URL): boolean {
+  if (url.protocol !== "https:") return false;
+  const host = url.hostname.toLowerCase();
+  return SAAVN_ALLOWED_HOSTS.some((allowedHost) => {
+    return host === allowedHost || host.endsWith(`.${allowedHost}`);
+  });
+}
+
 // CORS preflight handler
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,11 +54,20 @@ export async function GET(request: NextRequest) {
   // ═══ HANDLE SAAVN DIRECT DOWNLOAD ═══
   if (saavnUrl) {
     try {
-      const decodedUrl = decodeURIComponent(saavnUrl);
+      const parsedSaavnUrl = parseSaavnUrl(saavnUrl);
+      if (!parsedSaavnUrl || !isAllowedSaavnUrl(parsedSaavnUrl)) {
+        return Response.json({ error: "Invalid saavnUrl host" }, { status: 400 });
+      }
+
+      parsedSaavnUrl.username = "";
+      parsedSaavnUrl.password = "";
+      parsedSaavnUrl.hash = "";
+      const targetSaavnUrl = parsedSaavnUrl.toString();
+
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
       
-      const res = await fetch(decodedUrl, {
+      const res = await fetch(targetSaavnUrl, {
         signal: controller.signal,
         headers: {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",

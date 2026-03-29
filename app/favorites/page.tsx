@@ -118,7 +118,7 @@ export default function FavoritesPage() {
               <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you love will appear here. Start exploring and mark some tracks!</p>
            </div>
            <button 
-             onClick={() => window.location.href = "/browse"}
+             onClick={() => window.location.href = "/"}
              className="px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
            >
              Start Browsing

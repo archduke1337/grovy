@@ -71,8 +71,9 @@ export function OpenSourceContent() {
 
         <p className="text-[14px] sm:text-[15px] md:text-[17px] text-gray-500 dark:text-white/35 leading-[1.7] max-w-[640px]">
           Grovy started as a weekend project — a frustration with bloated music players 
-          that track everything you listen to. No ads, no accounts, no telemetry. 
-          Just a clean player that respects your time and your data. 
+          that track everything you listen to. No ads, no accounts, no invasive tracking. 
+          Just a clean player that respects your time and your data, with privacy-first local storage 
+          and optional aggregated analytics when deployed on Vercel.
           The entire source code is on GitHub under the MIT license.
         </p>
 
@@ -125,7 +126,7 @@ export function OpenSourceContent() {
             { 
               icon: Disc3, 
               title: "Runs entirely in the browser", 
-              body: "Playlists, favorites, play history, volume — everything is stored in localStorage. There is no backend database. Your data never leaves your device." 
+              body: "Playlists, favorites, play history, and cached metadata are stored locally in localStorage + IndexedDB. There is no app-managed user database." 
             },
           ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex gap-3 sm:gap-4 md:gap-5">

@@ -27,7 +27,7 @@ export const Sidebar = () => {
   const { playlists, createPlaylist } = usePlayer();
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 backdrop-blur-xl z-40 overflow-y-auto custom-scrollbar\">
+    <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 backdrop-blur-xl z-40 overflow-y-auto custom-scrollbar">
       <div className="p-6">
         <Link href="/" className="flex items-center gap-2.5 mb-10">
           <Image src="/icons/logo.png" alt="Grovy" width={28} height={28} className="w-7 h-7" />

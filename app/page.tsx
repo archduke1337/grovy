@@ -318,6 +318,7 @@ export default function Home() {
 }
 
 function HomeContent() {
+  const searchParams = useSearchParams();
   const { setQueue, songs, toggleFavorite, isFavorite } = usePlayer();
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -334,6 +335,7 @@ function HomeContent() {
   const [timeOfDay, setTimeOfDay] = useState("evening");
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasHandledSharedSongRef = useRef(false);
 
   // Set greeting based on time
   useEffect(() => {
@@ -378,6 +380,85 @@ function HomeContent() {
 
     return () => controller.abort();
   }, []);
+
+  // Play track from shared deep link (?play=...&title=...&artist=...)
+  useEffect(() => {
+    const playId = searchParams.get("play");
+    if (!playId || hasHandledSharedSongRef.current) return;
+
+    hasHandledSharedSongRef.current = true;
+    const sharedTitle = (searchParams.get("title") || "").trim();
+    const sharedArtist = (searchParams.get("artist") || "").trim();
+
+    const inMemoryMatch = [...songs, ...trending, ...charts, ...searchResults].find(
+      (song) => song?.id === playId
+    );
+    if (inMemoryMatch) {
+      setQueue([inMemoryMatch], 0);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const query = [sharedTitle, sharedArtist].filter(Boolean).join(" ").trim();
+        if (query) {
+          const candidates = await searchSongs(query, undefined, controller.signal);
+          const normalizedTitle = sharedTitle.toLowerCase();
+          const normalizedArtist = sharedArtist.toLowerCase();
+
+          const bestMatch =
+            candidates.find((song) => song.id === playId) ||
+            candidates.find((song) => {
+              const titleMatches = !!normalizedTitle && song.title.toLowerCase() === normalizedTitle;
+              const artistMatches =
+                !normalizedArtist ||
+                (song.artist || "").toLowerCase().includes(normalizedArtist);
+              return titleMatches && artistMatches;
+            }) ||
+            candidates[0];
+
+          if (!controller.signal.aborted && bestMatch) {
+            setQueue([bestMatch], 0);
+            return;
+          }
+        }
+
+        if (!controller.signal.aborted && playId.startsWith("yt-")) {
+          const ytId = playId.slice(3);
+          if (ytId) {
+            setQueue(
+              [
+                {
+                  id: playId,
+                  title: sharedTitle || "Shared Track",
+                  url: `/api/stream?id=${encodeURIComponent(ytId)}`,
+                  artist: sharedArtist || "Unknown Artist",
+                  cover: undefined,
+                  genre: "YouTube",
+                  duration: 0,
+                  source: "YouTube",
+                },
+              ],
+              0
+            );
+            return;
+          }
+        }
+
+        if (!controller.signal.aborted) {
+          setSearchError("Shared track could not be resolved.");
+        }
+      } catch {
+        if (!controller.signal.aborted) {
+          setSearchError("Failed to load shared track.");
+        }
+      }
+    })();
+
+    return () => controller.abort();
+  }, [searchParams, songs, trending, charts, searchResults, setQueue]);
 
   // Fetch suggestions with debounce
   useEffect(() => {

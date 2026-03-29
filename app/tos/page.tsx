@@ -59,7 +59,7 @@ export default function TermsOfService() {
         <section className="space-y-3 sm:space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">5. Privacy & Data</h2>
           <p className="text-[14px] sm:text-[15px] text-gray-600 dark:text-white/40 leading-relaxed">
-            Grovy respects your privacy. All user preferences, playlists, and playback history are stored locally in your browser's localStorage. We do not collect, store, or transmit any personal data to external servers. Search queries are routed through our API solely for the purpose of fetching music metadata.
+            Grovy respects your privacy. User preferences, playlists, favorites, playback history, and metadata caches are stored locally in your browser using localStorage and IndexedDB. Search and streaming requests are routed through Grovy API endpoints only to fetch music metadata or media from upstream providers. If the app is deployed on Vercel, privacy-focused aggregated usage metrics may also be processed through Vercel Web Analytics.
           </p>
         </section>
 

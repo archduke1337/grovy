@@ -213,6 +213,13 @@ export async function getHistory(): Promise<any[]> {
   }
 }
 
+export async function clearHistory(): Promise<void> {
+  try {
+    const db = await openDB();
+    tx(db, STORES.history, "readwrite").clear();
+  } catch (e) {}
+}
+
 // ─── Cleanup ───
 
 export async function clearOfflineCache(): Promise<void> {

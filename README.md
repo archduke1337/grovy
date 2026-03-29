@@ -17,10 +17,11 @@
 - **💾 Local & Remote Playback**: Play your own files or stream from the cloud.
 - **🌑 Dark/Light Mode**: Seamless theme switching with persistent preferences.
 - **⚡ PWA Ready**: Installable as a native app on fast, modern devices.
+- **🔒 Privacy-First Storage**: Playlists, favorites, and history are stored locally in `localStorage` + `IndexedDB`; only search/stream requests hit API endpoints.
 
 ## 🛠️ Tech Stack
 
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **State Management**: React Context + Hooks
@@ -97,3 +98,10 @@ Distributed under the MIT License. See `LICENSE` for more information.
 ---
 
 Playing correctly with the **Web Audio API** requires user interaction first. Click anywhere on the page to start the audio engine.
+
+## 🛡️ Privacy Notes
+
+- Grovy does not require accounts or ad trackers.
+- Playback state and user libraries are persisted in your browser (`localStorage` and `IndexedDB`).
+- Search and streaming metadata requests are proxied through Grovy API routes to upstream music providers.
+- If deployed on Vercel, aggregated site analytics may be collected via Vercel Web Analytics.

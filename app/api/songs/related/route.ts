@@ -63,7 +63,7 @@ export async function GET(request: NextRequest) {
             return {
               id: `saavn-${item.id}`,
               title: item.name || item.title,
-              url: downloadUrl || "",
+              url: downloadUrl ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}` : "",
               artist: art,
               cover,
               genre: "Related",
