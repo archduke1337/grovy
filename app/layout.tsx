@@ -50,7 +50,7 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     languages: {
-      "en-US": "https://grovy.vercel.app",
+      "en-US": APP_URL,
     },
   },
   openGraph: {
