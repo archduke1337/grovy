@@ -4,16 +4,20 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { AuthShell } from "@/app/components/AuthShell";
+import { useAuth } from "@/app/hooks/useAuth";
 
 type VerificationState = "idle" | "verifying" | "verified" | "failed";
 
 export default function VerifyEmailPage() {
   const searchParams = useSearchParams();
+  const { authenticated, user } = useAuth();
   const userId = searchParams.get("userId") || "";
   const secret = searchParams.get("secret") || "";
   const [state, setState] = useState<VerificationState>("idle");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+
+  const alreadyVerified = Boolean(authenticated && user?.emailVerification);
 
   const confirmVerification = useCallback(async () => {
     if (!userId || !secret) {
@@ -52,6 +56,12 @@ export default function VerifyEmailPage() {
   }, [userId, secret, confirmVerification]);
 
   async function sendVerificationEmail() {
+    if (alreadyVerified) {
+      setState("verified");
+      setMessage("Your email is already verified.");
+      return;
+    }
+
     setSending(true);
     setMessage("");
 
@@ -103,24 +113,32 @@ export default function VerifyEmailPage() {
           </p>
         ) : null}
 
-        {!userId || !secret ? (
+        {alreadyVerified && !userId && !secret ? (
+          <p className="text-sm text-emerald-600 dark:text-emerald-400">
+            Your email is already verified.
+          </p>
+        ) : null}
+
+        {(!userId || !secret) && !alreadyVerified ? (
           <p className="text-sm text-gray-600 dark:text-white/50">
             Open this page from the verification link in your email, or request a new verification message below.
           </p>
         ) : null}
 
         <div className="grid gap-3">
-          <button
-            onClick={() => {
-              void sendVerificationEmail();
-            }}
-            disabled={sending}
-            className="w-full rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black font-semibold py-3 disabled:opacity-60"
-          >
-            {sending ? "Sending..." : "Send Verification Email"}
-          </button>
+          {!alreadyVerified ? (
+            <button
+              onClick={() => {
+                void sendVerificationEmail();
+              }}
+              disabled={sending}
+              className="w-full rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black font-semibold py-3 disabled:opacity-60"
+            >
+              {sending ? "Sending..." : "Send Verification Email"}
+            </button>
+          ) : null}
 
-          {userId && secret ? (
+          {userId && secret && !alreadyVerified ? (
             <button
               onClick={() => {
                 void confirmVerification();

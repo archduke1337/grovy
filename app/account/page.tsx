@@ -18,6 +18,10 @@ export default function AccountPage() {
   const [working, setWorking] = useState(false);
 
   async function sendVerificationEmail() {
+    if (!user || user.emailVerification) {
+      return;
+    }
+
     setWorking(true);
     setStatusMessage("");
 
@@ -91,11 +95,13 @@ export default function AccountPage() {
           <p className="text-sm text-gray-600 dark:text-white/50">{user.email}</p>
         </div>
 
-        <div className="rounded-xl border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03] px-4 py-3">
-          <p className="text-sm text-gray-700 dark:text-white/70">
-            Email status: {user.emailVerification ? "Verified" : "Not verified"}
-          </p>
-        </div>
+        {!user.emailVerification ? (
+          <div className="rounded-xl border border-black/5 dark:border-white/10 bg-black/[0.02] dark:bg-white/[0.03] px-4 py-3">
+            <p className="text-sm text-gray-700 dark:text-white/70">
+              Email status: Not verified
+            </p>
+          </div>
+        ) : null}
 
         {statusMessage ? (
           <p className="text-sm text-gray-700 dark:text-white/70">{statusMessage}</p>
