@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
 import { sanitizeNextPath } from "@/app/lib/auth/redirect";
 import { attachOAuthStateCookie } from "@/app/lib/appwrite/sessionCookie";
-import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
+import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -26,7 +26,7 @@ export async function GET(req: Request) {
 
   try {
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createAdminAppwriteClients(userAgent);
+    const { account } = createPublicAppwriteClients(userAgent);
     const state = randomUUID();
     const successUrl = `${url.origin}/auth/oauth/callback?next=${encodeURIComponent(nextPath)}&state=${encodeURIComponent(state)}`;
     const failureUrl = `${url.origin}/auth/sign-in?oauth=failed&next=${encodeURIComponent(nextPath)}`;

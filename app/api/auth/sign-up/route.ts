@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { appwriteErrorResponse, toAuthUser } from "@/app/lib/appwrite/response";
 import { attachSessionCookie } from "@/app/lib/appwrite/sessionCookie";
-import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
+import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   try {
     const payload = signUpSchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createAdminAppwriteClients(userAgent);
+    const { account } = createPublicAppwriteClients(userAgent);
 
     const user = await account.create({
       userId: ID.unique(),

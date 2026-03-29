@@ -7,7 +7,7 @@ import {
   clearOAuthStateCookie,
   readOAuthStateFromRequest,
 } from "@/app/lib/appwrite/sessionCookie";
-import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
+import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
 
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createAdminAppwriteClients(userAgent);
+    const { account } = createPublicAppwriteClients(userAgent);
 
     const session = await account.createSession({
       userId: payload.userId,

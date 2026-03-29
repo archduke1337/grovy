@@ -27,7 +27,7 @@
     "dev": "node scripts/generate-manifest.js && next dev",
     "build": "node scripts/generate-manifest.js && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint app __tests__ scripts --ext .js,.jsx,.ts,.tsx",
     "type-check": "tsc --noEmit",
     "appwrite:setup": "node scripts/setup-appwrite.js",
     "test": "vitest run",
@@ -61,7 +61,7 @@
     "@types/node": "^20.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "eslint": "^8.50.0",
+    "eslint": "^9.39.4",
     "eslint-config-next": "^16.0.0",
     "jsdom": "^28.1.0",
     "vitest": "^4.0.18"
