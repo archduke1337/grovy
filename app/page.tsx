@@ -31,10 +31,16 @@ const fadeUp = {
 
 function resolveTimeGreeting(date = new Date()): string {
   const hour = date.getHours();
-  if (hour < 5) return "Night vibes";
+  if (hour < 5) return "Still up?";
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
+}
+
+function composeGreeting(timeGreeting: string, locationLabel: string): string {
+  if (!locationLabel.trim()) return timeGreeting;
+  if (timeGreeting.endsWith("?")) return `${timeGreeting} ${locationLabel}`;
+  return `${timeGreeting}, ${locationLabel}`;
 }
 
 function resolveLocationLabelFallback(): string {
@@ -213,6 +219,7 @@ function HomeContent() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<HomeSong[]>([]);
   const [searchError, setSearchError] = useState("");
+  const [lastSubmittedQuery, setLastSubmittedQuery] = useState("");
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -224,14 +231,14 @@ function HomeContent() {
   useEffect(() => {
     const timeGreeting = resolveTimeGreeting();
     const fallbackLabel = resolveLocationLabelFallback();
-    setGreeting(`${timeGreeting}, ${fallbackLabel}`);
+    setGreeting(composeGreeting(timeGreeting, fallbackLabel));
 
     const controller = new AbortController();
 
     (async () => {
       const ipLocationLabel = await resolveLocationLabelFromIp(controller.signal);
       if (!controller.signal.aborted && ipLocationLabel) {
-        setGreeting(`${timeGreeting}, ${ipLocationLabel}`);
+        setGreeting(composeGreeting(timeGreeting, ipLocationLabel));
       }
     })();
 
@@ -313,11 +320,11 @@ function HomeContent() {
         }
 
         if (!controller.signal.aborted) {
-          setSearchError("Shared song could not be resolved.");
+          setSearchError("Couldn't find that shared song. It may have been removed.");
         }
       } catch {
         if (!controller.signal.aborted) {
-          setSearchError("Failed to load shared song.");
+          setSearchError("Ran into a problem loading the shared song. Give it another try.");
         }
       }
     })();
@@ -396,6 +403,8 @@ function HomeContent() {
         return;
       }
 
+      setLastSubmittedQuery(normalizedQuery);
+
       const controller = new AbortController();
       searchAbortRef.current = controller;
 
@@ -412,14 +421,14 @@ function HomeContent() {
         setSearchResults(safeResults);
 
         if (safeResults.length === 0) {
-          setSearchError(`No results found for "${normalizedQuery}"`);
+          setSearchError("");
         }
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
         if (runId !== searchRunIdRef.current) return;
         console.error("Search failed:", error);
         setSearchResults([]);
-        setSearchError("Search failed. Please try again.");
+        setSearchError("Search hit a snag. Worth trying again.");
       } finally {
         if (runId === searchRunIdRef.current && !controller.signal.aborted) {
           setIsSearching(false);
@@ -466,6 +475,7 @@ function HomeContent() {
     setSuggestions([]);
     setShowSuggestions(false);
     setSearchError("");
+    setLastSubmittedQuery("");
     setIsLoadingSuggestions(false);
     setIsSearching(false);
   }, []);
@@ -479,6 +489,10 @@ function HomeContent() {
   }, []);
 
   const visibleSearchResults = useMemo(() => searchResults.slice(0, 24), [searchResults]);
+  const normalizedQuery = useMemo(
+    () => (lastSubmittedQuery || searchQuery).trim(),
+    [lastSubmittedQuery, searchQuery]
+  );
   const resultSuggestions = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) return [];
@@ -529,10 +543,10 @@ function HomeContent() {
           <div className="space-y-2">
             <p className="text-[11px] sm:text-[12px] font-extrabold uppercase tracking-[0.18em] text-sky-500">{greeting}</p>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.04] tracking-tight">
-              Search and play.
+              What's on your mind?
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-white/60 font-medium max-w-2xl">
-             search to find what you want.
+              A song, an artist, a lyric you half-remember — just type it in.
             </p>
           </div>
 
@@ -541,7 +555,7 @@ function HomeContent() {
               <Search size={20} className="text-gray-500 dark:text-white/45 shrink-0" />
               <input
                 type="text"
-                placeholder="Search music, artist, or album"
+                placeholder="Song, artist, album, mood..."
                 value={searchQuery}
                 autoComplete="off"
                 spellCheck={false}
@@ -586,10 +600,10 @@ function HomeContent() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -6, scale: 0.98 }}
                   transition={{ duration: 0.14 }}
-                  className="absolute top-full left-0 right-0 mt-3 z-60 bg-white dark:bg-gray-950 border border-gray-200/60 dark:border-white/10 rounded-2xl shadow-2xl overflow-y-auto custom-scrollbar max-h-80"
+                  className="mt-3 w-full bg-white dark:bg-gray-950 border border-gray-200/60 dark:border-white/10 rounded-2xl shadow-2xl overflow-y-auto custom-scrollbar max-h-80"
                 >
                   {isLoadingSuggestions ? (
-                    <div className="px-5 py-4 text-sm font-medium text-gray-500 dark:text-white/45">Loading suggestions...</div>
+                    <div className="px-5 py-4 text-sm font-medium text-gray-500 dark:text-white/45">Hang on...</div>
                   ) : suggestions.length > 0 ? (
                     suggestions.map((suggestion, index) => (
                       <button
@@ -607,7 +621,7 @@ function HomeContent() {
                       </button>
                     ))
                   ) : (
-                    <div className="px-5 py-4 text-sm font-medium text-gray-500 dark:text-white/45">No suggestions found.</div>
+                    <div className="px-5 py-4 text-sm font-medium text-gray-500 dark:text-white/45">No ideas — keep typing.</div>
                   )}
                 </motion.div>
               ) : null}
@@ -626,7 +640,7 @@ function HomeContent() {
             exit="hidden"
             className="space-y-6 sm:space-y-7"
           >
-            <SectionHeading icon={Search} title="Results" subtitle={`${visibleSearchResults.length} found`} />
+            <SectionHeading icon={Search} title="Here's what we found" subtitle={`${visibleSearchResults.length} results`} />
 
             {resultSuggestions.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -665,23 +679,23 @@ function HomeContent() {
         <motion.div variants={fadeUp} className="flex flex-col items-center justify-center py-12 sm:py-16 text-center">
           <Music size={48} className="text-gray-300 dark:text-white/12 mb-4" />
           {searchError ? (
-            <>
-              <p className="text-gray-700 dark:text-white/70 font-medium max-w-md">{searchError}</p>
-              <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Try a different search.</p>
-            </>
+            <p className="text-gray-700 dark:text-white/70 font-medium max-w-md">{searchError}</p>
           ) : (
             <>
-              <p className="text-gray-500 dark:text-white/50 font-medium">No results found for "{searchQuery}"</p>
-              <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Try a different keyword.</p>
+              <p className="text-gray-500 dark:text-white/50 font-medium">Nothing came up for "{normalizedQuery}"</p>
+              <p className="text-gray-400 dark:text-white/30 text-sm mt-2">Maybe try a different spelling?</p>
             </>
           )}
         </motion.div>
       ) : null}
 
       {!searchQuery ? (
-        <motion.section variants={fadeUp} className="py-12 sm:py-16 text-center">
+        <motion.section variants={fadeUp} className="py-12 sm:py-16 text-center space-y-2">
           <p className="text-sm sm:text-base text-gray-500 dark:text-white/45 font-medium">
-            Nothing here by design. Search to start listening.
+            Your queue is empty — go find something good.
+          </p>
+          <p className="text-xs sm:text-sm text-gray-400 dark:text-white/30 font-medium">
+            Search up top to get started.
           </p>
         </motion.section>
       ) : null}
