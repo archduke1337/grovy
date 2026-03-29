@@ -37,7 +37,7 @@ function resolveTimeGreeting(date = new Date()): string {
   return "Good evening";
 }
 
-function resolveLocationLabel(): string {
+function resolveLocationLabelFallback(): string {
   try {
     const locale = typeof navigator !== "undefined" ? navigator.language : "";
     const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
@@ -67,6 +67,24 @@ function resolveLocationLabel(): string {
   }
 
   return "your area";
+}
+
+async function resolveLocationLabelFromIp(signal?: AbortSignal): Promise<string | null> {
+  try {
+    const response = await fetch("/api/location", {
+      method: "GET",
+      signal,
+      cache: "no-store",
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+
+    const label = typeof data?.label === "string" ? data.label.trim() : "";
+    return label || null;
+  } catch {
+    return null;
+  }
 }
 
 type SectionHeadingProps = {
@@ -205,8 +223,19 @@ function HomeContent() {
 
   useEffect(() => {
     const timeGreeting = resolveTimeGreeting();
-    const locationLabel = resolveLocationLabel();
-    setGreeting(`${timeGreeting}, ${locationLabel}`);
+    const fallbackLabel = resolveLocationLabelFallback();
+    setGreeting(`${timeGreeting}, ${fallbackLabel}`);
+
+    const controller = new AbortController();
+
+    (async () => {
+      const ipLocationLabel = await resolveLocationLabelFromIp(controller.signal);
+      if (!controller.signal.aborted && ipLocationLabel) {
+        setGreeting(`${timeGreeting}, ${ipLocationLabel}`);
+      }
+    })();
+
+    return () => controller.abort();
   }, []);
 
   const queueSongFromList = useCallback(
