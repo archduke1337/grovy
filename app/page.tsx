@@ -29,6 +29,46 @@ const fadeUp = {
   },
 };
 
+function resolveTimeGreeting(date = new Date()): string {
+  const hour = date.getHours();
+  if (hour < 5) return "Night vibes";
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function resolveLocationLabel(): string {
+  try {
+    const locale = typeof navigator !== "undefined" ? navigator.language : "";
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+
+    let city = "";
+    if (timeZone.includes("/")) {
+      city = timeZone
+        .split("/")
+        .pop()
+        ?.replace(/_/g, " ")
+        .trim() || "";
+    }
+
+    const regionMatch = locale.match(/[-_]([A-Za-z]{2})$/);
+    const regionCode = regionMatch?.[1]?.toUpperCase() || "";
+
+    let country = "";
+    if (regionCode && typeof Intl.DisplayNames !== "undefined") {
+      const regionNames = new Intl.DisplayNames([locale || "en"], { type: "region" });
+      country = regionNames.of(regionCode) || "";
+    }
+
+    if (city) return city;
+    if (country) return country;
+  } catch {
+    // Fall through to default when locale APIs are unavailable.
+  }
+
+  return "your area";
+}
+
 type SectionHeadingProps = {
   title: string;
   subtitle?: string;
@@ -147,6 +187,7 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const { setQueue, songs, toggleFavorite, isFavorite } = usePlayer();
 
+  const [greeting, setGreeting] = useState("Hello");
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
@@ -157,8 +198,16 @@ function HomeContent() {
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const searchRunIdRef = useRef(0);
   const hasHandledSharedSongRef = useRef(false);
   const handledUrlSearchRef = useRef("");
+
+  useEffect(() => {
+    const timeGreeting = resolveTimeGreeting();
+    const locationLabel = resolveLocationLabel();
+    setGreeting(`${timeGreeting}, ${locationLabel}`);
+  }, []);
 
   const queueSongFromList = useCallback(
     (list: HomeSong[], song: HomeSong) => {
@@ -271,7 +320,7 @@ function HomeContent() {
                 .filter(Boolean)
             )
           );
-          setSuggestions(normalized);
+          setSuggestions(normalized.filter((item) => item.toLowerCase() !== trimmed.toLowerCase()));
         }
       } catch (error) {
         console.error("Failed to fetch suggestions:", error);
@@ -305,6 +354,11 @@ function HomeContent() {
   const runSearch = useCallback(
     async (rawQuery: string = searchQuery) => {
       const normalizedQuery = rawQuery.trim();
+      const runId = ++searchRunIdRef.current;
+
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
 
       if (normalizedQuery.length < 2) {
         setSearchResults([]);
@@ -313,27 +367,55 @@ function HomeContent() {
         return;
       }
 
+      const controller = new AbortController();
+      searchAbortRef.current = controller;
+
       setIsSearching(true);
       setSearchError("");
 
       try {
-        const results = (await searchSongs(normalizedQuery)) as HomeSong[];
-        setSearchResults(Array.isArray(results) ? results : []);
+        const results = (await searchSongs(normalizedQuery, undefined, controller.signal)) as HomeSong[];
+        if (controller.signal.aborted || runId !== searchRunIdRef.current) {
+          return;
+        }
 
-        if (!results || results.length === 0) {
+        const safeResults = Array.isArray(results) ? results : [];
+        setSearchResults(safeResults);
+
+        if (safeResults.length === 0) {
           setSearchError(`No results found for "${normalizedQuery}"`);
         }
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
+        if (runId !== searchRunIdRef.current) return;
         console.error("Search failed:", error);
         setSearchResults([]);
         setSearchError("Search failed. Please try again.");
       } finally {
-        setIsSearching(false);
+        if (runId === searchRunIdRef.current && !controller.signal.aborted) {
+          setIsSearching(false);
+        }
       }
     },
     [searchQuery]
   );
+
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+
+    if (trimmed.length < 2) {
+      setSearchResults([]);
+      setSearchError("");
+      setIsSearching(false);
+      return;
+    }
+
+    const id = setTimeout(() => {
+      void runSearch(trimmed);
+    }, 420);
+
+    return () => clearTimeout(id);
+  }, [searchQuery, runSearch]);
 
   useEffect(() => {
     const paramQuery = (searchParams.get("q") || searchParams.get("query") || "").trim();
@@ -346,15 +428,59 @@ function HomeContent() {
   }, [searchParams, runSearch]);
 
   const clearSearch = useCallback(() => {
+    if (searchAbortRef.current) {
+      searchAbortRef.current.abort();
+    }
+    searchRunIdRef.current += 1;
     setSearchQuery("");
     setSearchResults([]);
     setSuggestions([]);
     setShowSuggestions(false);
     setSearchError("");
     setIsLoadingSuggestions(false);
+    setIsSearching(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
+    };
   }, []);
 
   const visibleSearchResults = useMemo(() => searchResults.slice(0, 24), [searchResults]);
+  const resultSuggestions = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return [];
+
+    const fromResults = searchResults.flatMap((song) => {
+      const title = String(song?.title || "").trim();
+      const artist = String(song?.artist || "").trim();
+      return [title, artist].filter(Boolean);
+    });
+
+    const seen = new Set<string>();
+    const combined = [...suggestions, ...fromResults];
+    const ranked = combined
+      .map((item) => item.replace(/\s+/g, " ").trim())
+      .filter(Boolean)
+      .filter((item) => item.toLowerCase() !== normalizedQuery)
+      .filter((item) => {
+        const key = item.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => {
+        const aStarts = a.toLowerCase().startsWith(normalizedQuery) ? 0 : 1;
+        const bStarts = b.toLowerCase().startsWith(normalizedQuery) ? 0 : 1;
+        if (aStarts !== bStarts) return aStarts - bStarts;
+        return a.length - b.length;
+      });
+
+    return ranked.slice(0, 10);
+  }, [searchQuery, searchResults, suggestions]);
 
   return (
     <motion.div
@@ -372,12 +498,12 @@ function HomeContent() {
 
         <div className="relative space-y-5">
           <div className="space-y-2">
-            <p className="text-[11px] sm:text-[12px] font-extrabold uppercase tracking-[0.24em] text-sky-500">Home</p>
+            <p className="text-[11px] sm:text-[12px] font-extrabold uppercase tracking-[0.18em] text-sky-500">{greeting}</p>
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 dark:text-white leading-[1.04] tracking-tight">
               Search and play.
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 dark:text-white/60 font-medium max-w-2xl">
-              The homepage is intentionally clean. Use search to find what you want.
+             search to find what you want.
             </p>
           </div>
 
@@ -472,6 +598,24 @@ function HomeContent() {
             className="space-y-6 sm:space-y-7"
           >
             <SectionHeading icon={Search} title="Results" subtitle={`${visibleSearchResults.length} found`} />
+
+            {resultSuggestions.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {resultSuggestions.map((suggestion) => (
+                  <button
+                    key={suggestion}
+                    onClick={() => {
+                      setSearchQuery(suggestion);
+                      setShowSuggestions(false);
+                      void runSearch(suggestion);
+                    }}
+                    className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-gray-100 dark:bg-white/8 text-gray-700 dark:text-white/70 hover:bg-gray-200 dark:hover:bg-white/14 transition-colors"
+                  >
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4 md:gap-5">
               {visibleSearchResults.map((song) => (

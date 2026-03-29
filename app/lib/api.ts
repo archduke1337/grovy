@@ -53,12 +53,38 @@ export async function searchSongs(
 
   try {
     const songs = await request<Song[]>(`/api/songs?${params}`, { signal });
-    // Cache results in background
-    if (query && songs.length > 0) {
-      cacheSongs(songs).catch(() => {});
-      cacheSearchResults(`songs:${query}:${source || ""}`, songs).catch(() => {});
+
+    let mergedSongs = Array.isArray(songs) ? songs : [];
+
+    // When primary source is thin, enrich with dedicated search endpoint results.
+    if (query && mergedSongs.length < 12) {
+      try {
+        const fallbackResults = await request<Song[]>(
+          `/api/search?type=song&query=${encodeURIComponent(query)}`,
+          { signal }
+        );
+
+        if (Array.isArray(fallbackResults) && fallbackResults.length > 0) {
+          const deduped = new Map<string, Song>();
+          [...mergedSongs, ...fallbackResults].forEach((song) => {
+            if (!song?.id || !song?.title || !song?.url) return;
+            if (!deduped.has(song.id)) {
+              deduped.set(song.id, song);
+            }
+          });
+          mergedSongs = Array.from(deduped.values());
+        }
+      } catch {
+        // Keep primary results if fallback fails.
+      }
     }
-    return songs;
+
+    // Cache results in background
+    if (query && mergedSongs.length > 0) {
+      cacheSongs(mergedSongs).catch(() => {});
+      cacheSearchResults(`songs:${query}:${source || ""}`, mergedSongs).catch(() => {});
+    }
+    return mergedSongs;
   } catch (e) {
     // Attempt offline fallback
     if (query && typeof window !== "undefined") {
