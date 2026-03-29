@@ -173,6 +173,7 @@ async function syncLibraryToAppwrite(partial: {
     });
 
     if (!res.ok) {
+      console.warn(`[offlineCache] Library PUT failed: ${res.status} ${res.statusText}`);
       return;
     }
 
@@ -190,7 +191,8 @@ async function syncLibraryToAppwrite(partial: {
     }
 
     lastLibrarySyncAt = Date.now();
-  } catch {
+  } catch (err) {
+    console.warn("[offlineCache] Library sync error:", err);
     // Keep in-memory values when server sync is unavailable.
   }
 }
@@ -217,6 +219,7 @@ async function refreshLibraryFromAppwrite(force = false): Promise<void> {
       });
 
       if (!res.ok) {
+        console.warn(`[offlineCache] Library GET failed: ${res.status} ${res.statusText}`);
         return;
       }
 
@@ -244,7 +247,8 @@ async function refreshLibraryFromAppwrite(force = false): Promise<void> {
       memoryState.playlists = remotePlaylists;
       memoryState.favorites = remoteFavorites;
       lastLibrarySyncAt = Date.now();
-    } catch {
+    } catch (err) {
+      console.warn("[offlineCache] Library refresh error:", err);
       // Keep in-memory fallback if DB fetch fails.
     } finally {
       librarySyncPromise = null;

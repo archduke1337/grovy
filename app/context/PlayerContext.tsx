@@ -155,6 +155,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [colors, setColors] = useState<Colors>(DEFAULT_COLORS);
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const libraryLoadedRef = useRef(false);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
   const [playlistModalSong, setPlaylistModalSong] = useState<Song | null>(null);
 
@@ -883,7 +884,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
 
+    // Initial fetch: load library from DB before allowing any writes
     (async () => {
+      await refreshLibraryState();
+      if (isMounted) {
+        libraryLoadedRef.current = true;
+      }
+
       unsubscribe = await subscribeLibraryRealtime(() => {
         void refreshLibraryState();
       });
@@ -897,13 +904,15 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     };
   }, []);
 
-  // Sync Favorites to Appwrite-backed cache
+  // Sync Favorites to Appwrite-backed cache (only after initial load)
   useEffect(() => {
+    if (!libraryLoadedRef.current) return;
     saveFavorites(favorites);
   }, [favorites]);
 
-  // Sync Playlists to Appwrite-backed cache
+  // Sync Playlists to Appwrite-backed cache (only after initial load)
   useEffect(() => {
+    if (!libraryLoadedRef.current) return;
     savePlaylists(playlists);
   }, [playlists]);
 
