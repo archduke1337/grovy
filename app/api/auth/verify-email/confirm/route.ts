@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
-import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
+import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,10 @@ export async function POST(req: Request) {
   try {
     const payload = verifySchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createPublicAppwriteClients(userAgent);
+
+    // Use admin client — the verification token (userId + secret) is the
+    // proof of ownership. Admin client also bypasses server-IP rate limits.
+    const { account } = createAdminAppwriteClients(userAgent);
 
     await account.updateEmailVerification({
       userId: payload.userId,

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
-import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
+import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -14,7 +14,9 @@ export async function POST(req: Request) {
   try {
     const payload = recoverySchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createPublicAppwriteClients(userAgent);
+
+    // Use admin client to bypass server-IP rate limits for password recovery.
+    const { account } = createAdminAppwriteClients(userAgent);
     const recoveryUrl = `${new URL(req.url).origin}/auth/reset-password`;
 
     await account.createRecovery({
@@ -22,6 +24,7 @@ export async function POST(req: Request) {
       url: recoveryUrl,
     });
 
+    // Always return success to prevent email enumeration attacks.
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -31,6 +34,9 @@ export async function POST(req: Request) {
       );
     }
 
-    return appwriteErrorResponse(error, "Password recovery request failed", 400);
+    // Still return success for non-validation errors to prevent
+    // email enumeration. Log server-side for debugging.
+    console.error("[password-recovery/create]", error);
+    return NextResponse.json({ ok: true });
   }
 }

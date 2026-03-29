@@ -1,14 +1,14 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
 import { AuthShell } from "@/app/components/AuthShell";
 import { useAuth } from "@/app/hooks/useAuth";
 
 type VerificationState = "idle" | "verifying" | "verified" | "failed";
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams();
   const { authenticated, user } = useAuth();
   const userId = searchParams.get("userId") || "";
@@ -151,5 +151,13 @@ export default function VerifyEmailPage() {
         </div>
       </div>
     </AuthShell>
+  );
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense>
+      <VerifyEmailContent />
+    </Suspense>
   );
 }

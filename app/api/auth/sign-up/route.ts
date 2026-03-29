@@ -4,7 +4,7 @@ import { z } from "zod";
 
 import { appwriteErrorResponse, toAuthUser } from "@/app/lib/appwrite/response";
 import { attachSessionCookie } from "@/app/lib/appwrite/sessionCookie";
-import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
+import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -18,7 +18,11 @@ export async function POST(req: Request) {
   try {
     const payload = signUpSchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createPublicAppwriteClients(userAgent);
+
+    // Use admin client for account creation to bypass server-IP rate limits.
+    // Per Appwrite SSR docs, unauthenticated server requests should use an
+    // API key so they are not rate-limited as a single IP.
+    const { account } = createAdminAppwriteClients(userAgent);
 
     const user = await account.create({
       userId: ID.unique(),
@@ -27,6 +31,7 @@ export async function POST(req: Request) {
       name: payload.name,
     });
 
+    // Create a session for the newly registered user.
     const session = await account.createEmailPasswordSession({
       email: payload.email,
       password: payload.password,

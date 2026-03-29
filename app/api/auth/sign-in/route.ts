@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
 import { attachSessionCookie } from "@/app/lib/appwrite/sessionCookie";
-import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
+import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -16,7 +16,11 @@ export async function POST(req: Request) {
   try {
     const payload = signInSchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createPublicAppwriteClients(userAgent);
+
+    // Use admin client (API key) for session creation to bypass server-IP
+    // rate limits. Appwrite SSR docs: without an API key every request from
+    // the server IP shares the same rate-limit bucket.
+    const { account } = createAdminAppwriteClients(userAgent);
 
     const session = await account.createEmailPasswordSession({
       email: payload.email,

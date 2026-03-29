@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
-import { createPublicAppwriteClients } from "@/app/lib/appwrite/server";
+import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
 
@@ -16,7 +16,9 @@ export async function POST(req: Request) {
   try {
     const payload = confirmRecoverySchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
-    const { account } = createPublicAppwriteClients(userAgent);
+
+    // Use admin client to bypass server-IP rate limits.
+    const { account } = createAdminAppwriteClients(userAgent);
 
     await account.updateRecovery({
       userId: payload.userId,
