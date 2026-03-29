@@ -2,7 +2,7 @@
 
 ## Scope
 
-Migrate Grovy from browser-only persistence (localStorage + IndexedDB) to Appwrite for:
+Migrate Grovy from legacy browser persistence to Appwrite for:
 
 - Authentication and session management
 - Synced user data storage
@@ -10,7 +10,7 @@ Migrate Grovy from browser-only persistence (localStorage + IndexedDB) to Appwri
 
 ## Appwrite Services
 
-- Auth: Email/Password, OAuth2, Anonymous sessions
+- Auth: Email/Password and OAuth2
 - Databases: 1 database, 6 tables
 - Preferences: Appwrite Account preferences for compact user settings
 
@@ -160,7 +160,6 @@ Permissions:
 Enabled methods:
 - Email/password sign-up and sign-in
 - OAuth2 sign-in (Google, GitHub)
-- Anonymous guest sessions
 
 Session strategy:
 - Cookie name format: `a_session_<PROJECT_ID>`
@@ -190,8 +189,8 @@ Required:
 1. Add Appwrite SDKs and auth API routes
 2. Add auth pages and account page
 3. Add Appwrite repository layer for playlists/favorites/history/queue/search cache
-4. Migrate PlayerContext persistence calls from local storage wrappers to Appwrite repositories
+4. Migrate PlayerContext persistence calls from legacy persistence wrappers to Appwrite repositories
 5. Move compact settings to Appwrite Account preferences
-6. Add one-time import from existing local browser data on first authenticated session
-7. Remove legacy local storage + IndexedDB code paths
+6. Add one-time import from existing browser data on first authenticated session
+7. Remove legacy browser storage code paths
 8. Update tests to cover Appwrite-backed persistence and auth session behavior

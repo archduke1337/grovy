@@ -11,7 +11,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-// Mock offlineCache to avoid IndexedDB in API tests
+// Mock offlineCache so API tests stay isolated from persistence helpers
 vi.mock("../app/lib/offlineCache", () => ({
   cacheSongs: vi.fn().mockResolvedValue(undefined),
   cacheSearchResults: vi.fn().mockResolvedValue(undefined),

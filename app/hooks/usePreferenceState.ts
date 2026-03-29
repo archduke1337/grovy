@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 
 /**
- * Legacy API name retained for compatibility.
  * Persists state in Appwrite user preferences with an in-memory fallback.
  */
-export function useLocalStorageState<T>(
+export function usePreferenceState<T>(
   key: string,
   initialValue: T
 ): [T, (value: T | ((prev: T) => T)) => void] {
@@ -25,9 +24,8 @@ export function useLocalStorageState<T>(
           setState(prefs[key] as T);
         }
       } catch {
-        // noop — keep initial value
+        // Keep initial value when preference fetch fails.
       }
-
     })();
 
     return () => {
@@ -38,7 +36,10 @@ export function useLocalStorageState<T>(
   const setPersistedState = useCallback(
     (value: T | ((prev: T) => T)) => {
       setState((prev) => {
-        const next = typeof value === "function" ? (value as (prev: T) => T)(prev) : value;
+        const next =
+          typeof value === "function"
+            ? (value as (prev: T) => T)(prev)
+            : value;
         void patchGrovyPrefs({ [key]: next as unknown });
         return next;
       });

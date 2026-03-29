@@ -1,4 +1,4 @@
-const CACHE_VERSION = "grovy-v2";
+const CACHE_VERSION = "grovy-v3";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
@@ -20,9 +20,17 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys
-            .filter((key) => key !== STATIC_CACHE && key !== RUNTIME_CACHE)
-            .map((key) => caches.delete(key))
+          keys.map((key) => {
+            const isCurrent = key === STATIC_CACHE || key === RUNTIME_CACHE;
+            const isLegacy =
+              key.startsWith("grovy-v") || key.startsWith("workbox-");
+
+            if (!isCurrent && isLegacy) {
+              return caches.delete(key);
+            }
+
+            return Promise.resolve(false);
+          })
         )
       )
       .then(() => self.clients.claim())
@@ -34,25 +42,37 @@ function isNavigationRequest(request) {
 }
 
 function isRuntimeAsset(url) {
-  if (url.pathname.startsWith("/_next/static/")) return true;
-  return /\.(?:css|js|png|jpg|jpeg|svg|webp|ico|woff|woff2)$/i.test(url.pathname);
+  if (url.pathname.startsWith("/icons/")) return true;
+  return /\.(?:png|jpg|jpeg|svg|webp|ico|woff|woff2|mp3)$/i.test(url.pathname);
 }
 
-async function networkThenCache(request) {
+async function staleWhileRevalidate(request) {
   const cache = await caches.open(RUNTIME_CACHE);
-  const response = await fetch(request);
-  if (response.ok) {
-    cache.put(request, response.clone());
+  const cached = await cache.match(request);
+
+  const networkPromise = fetch(request)
+    .then((response) => {
+      if (response.ok) {
+        cache.put(request, response.clone());
+      }
+      return response;
+    })
+    .catch(() => null);
+
+  if (cached) {
+    return cached;
   }
-  return response;
-}
 
-async function cacheThenNetwork(request) {
-  const cached = await caches.match(request);
-  if (cached) return cached;
+  const networkResponse = await networkPromise;
+  if (networkResponse) {
+    return networkResponse;
+  }
 
-  const response = await networkThenCache(request);
-  return response;
+  return new Response("Offline", {
+    status: 503,
+    statusText: "Service Unavailable",
+    headers: { "Content-Type": "text/plain" },
+  });
 }
 
 self.addEventListener("fetch", (event) => {
@@ -68,7 +88,7 @@ self.addEventListener("fetch", (event) => {
 
   if (isNavigationRequest(request)) {
     event.respondWith(
-      networkThenCache(request).catch(async () => {
+      fetch(request).catch(async () => {
         const cachedPage = await caches.match(request);
         if (cachedPage) return cachedPage;
 
@@ -85,7 +105,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Never serve stale Next build chunks first.
+  if (url.pathname.startsWith("/_next/")) {
+    event.respondWith(
+      fetch(request).catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+
+        return new Response("Offline", {
+          status: 503,
+          statusText: "Service Unavailable",
+          headers: { "Content-Type": "text/plain" },
+        });
+      })
+    );
+    return;
+  }
+
   if (isRuntimeAsset(url)) {
-    event.respondWith(cacheThenNetwork(request));
+    event.respondWith(staleWhileRevalidate(request));
   }
 });

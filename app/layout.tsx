@@ -236,10 +236,20 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                  navigator.serviceWorker.register('/sw.js', { scope: '/' })
-                    .then((registration) => registration.update())
-                    .catch(() => {});
+                window.addEventListener('load', async () => {
+                  try {
+                    const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                    await registration.update();
+
+                    if ('caches' in window) {
+                      const keys = await caches.keys();
+                      await Promise.all(
+                        keys
+                          .filter((key) => key.startsWith('workbox-') || key.startsWith('grovy-v1') || key.startsWith('grovy-v2'))
+                          .map((key) => caches.delete(key))
+                      );
+                    }
+                  } catch (_) {}
                 });
               }
             `,

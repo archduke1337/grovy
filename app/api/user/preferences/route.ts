@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
-import { readSessionSecretFromRequest } from "@/app/lib/appwrite/sessionCookie";
+import {
+  clearSessionCookie,
+  readSessionSecretFromRequest,
+} from "@/app/lib/appwrite/sessionCookie";
 import { createSessionAppwriteClients } from "@/app/lib/appwrite/server";
 
 export const runtime = "nodejs";
@@ -21,6 +24,17 @@ export async function GET(req: NextRequest) {
   try {
     const userAgent = req.headers.get("user-agent") || undefined;
     const { account } = createSessionAppwriteClients(sessionSecret, userAgent);
+    const session = await account.getSession({ sessionId: "current" });
+
+    if (session.provider === "anonymous") {
+      const response = NextResponse.json(
+        { error: "Sign in to sync preferences" },
+        { status: 401 }
+      );
+      clearSessionCookie(response);
+      return response;
+    }
+
     const prefs = await account.getPrefs();
 
     return NextResponse.json({ prefs: prefs || {} });
@@ -40,6 +54,17 @@ export async function PATCH(req: NextRequest) {
     const payload = patchSchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
     const { account } = createSessionAppwriteClients(sessionSecret, userAgent);
+    const session = await account.getSession({ sessionId: "current" });
+
+    if (session.provider === "anonymous") {
+      const response = NextResponse.json(
+        { error: "Sign in to sync preferences" },
+        { status: 401 }
+      );
+      clearSessionCookie(response);
+      return response;
+    }
+
     const currentPrefs = await account.getPrefs();
 
     const nextPrefs = {

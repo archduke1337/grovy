@@ -19,6 +19,14 @@ export async function GET(req: NextRequest) {
   try {
     const userAgent = req.headers.get("user-agent") || undefined;
     const { account } = createSessionAppwriteClients(sessionSecret, userAgent);
+    const session = await account.getSession({ sessionId: "current" });
+
+    if (session.provider === "anonymous") {
+      const response = NextResponse.json({ authenticated: false, user: null });
+      clearSessionCookie(response);
+      return response;
+    }
+
     const user = await account.get();
 
     return NextResponse.json({

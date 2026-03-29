@@ -1,24 +1,9 @@
 const memoryPrefs: Record<string, unknown> = {};
 
-async function ensureAnonymousSession() {
-  if (typeof window === "undefined") return;
-
-  try {
-    await fetch("/api/auth/anonymous", {
-      method: "POST",
-      cache: "no-store",
-    });
-  } catch {
-    // Ignore network errors and fall back to in-memory storage.
-  }
-}
-
 export async function getGrovyPrefs(): Promise<Record<string, unknown>> {
   if (typeof window === "undefined") {
     return { ...memoryPrefs };
   }
-
-  await ensureAnonymousSession();
 
   try {
     const res = await fetch("/api/user/preferences", {
@@ -48,8 +33,6 @@ export async function patchGrovyPrefs(
   if (typeof window === "undefined") {
     return { ...memoryPrefs };
   }
-
-  await ensureAnonymousSession();
 
   try {
     const res = await fetch("/api/user/preferences", {

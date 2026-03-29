@@ -26,10 +26,10 @@ vi.mock("../app/lib/appwrite/prefsClient", () => ({
   patchGrovyPrefs: patchGrovyPrefsMock,
 }));
 
-import { useLocalStorageState } from "../app/hooks/useLocalStorageState";
+import { usePreferenceState } from "../app/hooks/usePreferenceState";
 import { useDebounceSearch } from "../app/hooks/useDebounceSearch";
 
-describe("useLocalStorageState", () => {
+describe("usePreferenceState", () => {
   beforeEach(() => {
     Object.keys(prefStore).forEach((key) => {
       delete prefStore[key];
@@ -39,13 +39,13 @@ describe("useLocalStorageState", () => {
   });
 
   it("should return initial value when preferences are empty", () => {
-    const { result } = renderHook(() => useLocalStorageState("test-key", 42));
+    const { result } = renderHook(() => usePreferenceState("test-key", 42));
     expect(result.current[0]).toBe(42);
   });
 
   it("should hydrate from preferences when key exists", async () => {
     prefStore["test-key"] = 7;
-    const { result } = renderHook(() => useLocalStorageState("test-key", 42));
+    const { result } = renderHook(() => usePreferenceState("test-key", 42));
 
     await act(async () => {
       await Promise.resolve();
@@ -55,7 +55,7 @@ describe("useLocalStorageState", () => {
   });
 
   it("should persist value to preferences on set", async () => {
-    const { result } = renderHook(() => useLocalStorageState("test-key", 0));
+    const { result } = renderHook(() => usePreferenceState("test-key", 0));
 
     await act(async () => {
       result.current[1](99);
@@ -67,7 +67,7 @@ describe("useLocalStorageState", () => {
   });
 
   it("should accept updater function", async () => {
-    const { result } = renderHook(() => useLocalStorageState("counter", 5));
+    const { result } = renderHook(() => usePreferenceState("counter", 5));
 
     await act(async () => {
       result.current[1]((prev) => prev + 10);
