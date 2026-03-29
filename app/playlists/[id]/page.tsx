@@ -29,7 +29,7 @@ export default function PlaylistDetailPage() {
   if (!playlist) {
     return (
       <div className="w-full min-h-[80vh] flex flex-col items-center justify-center gap-6 text-gray-400 p-6 text-center">
-        <div className="w-24 h-24 rounded-[2.5rem] bg-gray-100 dark:bg-white/[0.03] flex items-center justify-center">
+        <div className="w-24 h-24 rounded-[2.5rem] bg-gray-100 dark:bg-zinc-900 flex items-center justify-center">
           <Music size={48} className="opacity-20" />
         </div>
         <div className="space-y-2">
@@ -70,14 +70,14 @@ export default function PlaylistDetailPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-20"
+      className="w-full max-w-screen-2xl mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-20"
     >
       {/* Header Section */}
       <header className="flex flex-col md:flex-row items-center md:items-end gap-10 md:gap-12">
          <motion.div 
            initial={{ opacity: 0, scale: 0.9, y: 20 }}
            animate={{ opacity: 1, scale: 1, y: 0 }}
-           className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] relative group flex-shrink-0 bg-gray-100 dark:bg-white/[0.03]"
+           className="w-64 h-64 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-[2.5rem] sm:rounded-[3.5rem] overflow-hidden shadow-[0_32px_64px_-12px_rgba(0,0,0,0.3)] relative group shrink-0 bg-gray-100 dark:bg-zinc-900"
          >
             {playlist.songs.length > 0 && playlist.songs[0].cover ? (
                <Image 
@@ -130,14 +130,14 @@ export default function PlaylistDetailPage() {
                </button>
                <button
                  onClick={handleShuffle}
-                 className="p-4 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-white/[0.08] active:scale-95 transition-all"
+                 className="p-4 rounded-2xl bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-zinc-800 active:scale-95 transition-all"
                  title="Shuffle"
                >
                  <Shuffle size={20} />
                </button>
                <button
                  onClick={handleDelete}
-                 className="p-4 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-95"
+                 className="p-4 rounded-2xl bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-white/40 hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-95"
                  title="Delete Playlist"
                >
                  <Trash2 size={20} />
@@ -153,10 +153,10 @@ export default function PlaylistDetailPage() {
             <span className="text-[11px] font-black text-gray-400 dark:text-white/20 uppercase tracking-widest">{playlist.songs.length} Total</span>
          </div>
 
-         <div className="bg-white/50 dark:bg-white/[0.02] rounded-[2.5rem] border border-gray-100 dark:border-white/[0.05] overflow-hidden backdrop-blur-3xl shadow-2xl">
+        <div className="bg-white/50 dark:bg-zinc-950 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 overflow-hidden backdrop-blur-3xl shadow-2xl">
             {playlist.songs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 px-6 text-gray-400 space-y-6 text-center">
-                 <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-white/[0.03] flex items-center justify-center">
+              <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center">
                     <Music size={40} className="opacity-20" />
                  </div>
                  <div className="space-y-2">
@@ -171,7 +171,7 @@ export default function PlaylistDetailPage() {
                  </button>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-white/[0.03]">
+              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {playlist.songs.map((song, i) => {
                    const isCurrent = songs[currentSongIndex]?.id === song.id;
                    const favorite = isFavorite(song.id);
@@ -183,8 +183,8 @@ export default function PlaylistDetailPage() {
                        animate={{ opacity: 1, y: 0 }}
                        transition={{ delay: i * 0.02 }}
                        onClick={() => setQueue(playlist.songs, i)}
-                       className={`group flex items-center gap-4 sm:gap-6 px-4 py-3 sm:px-8 sm:py-5 cursor-pointer transition-all hover:bg-black/[0.03] dark:hover:bg-white/[0.04] relative ${
-                         isCurrent ? "bg-black/[0.02] dark:bg-white/[0.03]" : "" 
+                       className={`group flex items-center gap-4 sm:gap-6 px-4 py-3 sm:px-8 sm:py-5 cursor-pointer transition-all hover:bg-black/3 dark:hover:bg-zinc-800 relative ${
+                         isCurrent ? "bg-black/2 dark:bg-zinc-900" : "" 
                        }`}
                      >
                         {/* Play Indicator */}
@@ -193,7 +193,7 @@ export default function PlaylistDetailPage() {
                         )}
 
                         {/* Track Number / Play Icon */}
-                        <div className="w-6 sm:w-10 text-center flex-shrink-0 text-gray-400 font-black text-[11px] sm:text-sm tabular-nums">
+                        <div className="w-6 sm:w-10 text-center shrink-0 text-gray-400 font-black text-[11px] sm:text-sm tabular-nums">
                           {isCurrent && isPlaying ? (
                              <div className="flex items-center justify-center gap-1 h-4">
                                {[...Array(3)].map((_, j) => (
@@ -211,7 +211,7 @@ export default function PlaylistDetailPage() {
                           <Play size={14} className="hidden group-hover:block mx-auto text-gray-900 dark:text-white" fill="currentColor" />
                         </div>
 
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden bg-gray-200 dark:bg-white/[0.05] shrink-0 shadow-md relative transition-all duration-500 group-hover:scale-105 group-hover:shadow-xl">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl overflow-hidden bg-gray-200 dark:bg-zinc-800 shrink-0 shadow-md relative transition-all duration-500 group-hover:scale-105 group-hover:shadow-xl">
                            {song.cover ? (
                              <Image 
                                src={getHDThumbnail(song.cover) || ""} 
@@ -258,3 +258,4 @@ export default function PlaylistDetailPage() {
     </motion.div>
   );
 }
+

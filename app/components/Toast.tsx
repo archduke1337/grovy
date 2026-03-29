@@ -68,7 +68,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-[200] flex flex-col items-center gap-2 pointer-events-none w-full max-w-md px-4">
+      <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-full max-w-md px-4">
         <AnimatePresence mode="popLayout">
           {toasts.map((t) => (
             <motion.div
@@ -110,3 +110,4 @@ export const useToast = () => {
   if (!ctx) throw new Error("useToast must be used within ToastProvider");
   return ctx;
 };
+

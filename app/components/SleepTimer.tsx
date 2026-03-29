@@ -45,7 +45,7 @@ export const SleepTimerModal: React.FC<SleepTimerProps> = ({ isOpen, onClose, sl
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[130] bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xl flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
@@ -152,3 +152,4 @@ export const SleepTimerButton: React.FC<{
     </motion.button>
   );
 };
+

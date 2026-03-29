@@ -63,7 +63,7 @@ export default function PlaylistsPage() {
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="w-full max-w-[1400px] mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
+      className="w-full max-w-screen-2xl mx-auto px-6 md:px-10 pt-12 pb-40 space-y-12 sm:space-y-16"
     >
       <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-4 sm:pt-8">
         <div className="space-y-4">
@@ -80,14 +80,14 @@ export default function PlaylistsPage() {
           <button
             onClick={handleExportAll}
             disabled={playlists.length === 0}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-all disabled:opacity-20 active:scale-95"
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all disabled:opacity-20 active:scale-95"
           >
             <Download size={16} />
             <span>Export</span>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/[0.05] text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/[0.08] transition-all active:scale-95"
+            className="flex items-center gap-2 px-5 py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all active:scale-95"
           >
             <Upload size={16} />
             <span>Import</span>
@@ -102,7 +102,7 @@ export default function PlaylistsPage() {
           onClick={() => !isCreating && setIsCreating(true)}
           whileHover={{ scale: 1.02, y: -4 }}
           whileTap={{ scale: 0.98 }}
-          className="aspect-square rounded-[2rem] sm:rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/[0.06] hover:border-blue-500/50 dark:hover:border-blue-500/30 flex flex-col items-center justify-center gap-4 group transition-all cursor-pointer relative overflow-hidden bg-gray-50 dark:bg-white/[0.01]"
+          className="aspect-square rounded-4xl sm:rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/6 hover:border-blue-500/50 dark:hover:border-blue-500/30 flex flex-col items-center justify-center gap-4 group transition-all cursor-pointer relative overflow-hidden bg-gray-50 dark:bg-white/1"
         >
           {isCreating ? (
             <div className="w-full px-6 space-y-4 text-center z-10" onClick={(e) => e.stopPropagation()}>
@@ -145,17 +145,17 @@ export default function PlaylistsPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 whileHover={{ scale: 1.02, y: -8 }}
                 whileTap={{ scale: 0.98 }}
-                className="group aspect-square relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden shadow-xl bg-gray-100 dark:bg-white/[0.03]"
+                className="group aspect-square relative rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-xl bg-gray-100 dark:bg-white/3"
               >
                 {playlist.songs.length > 0 && playlist.songs[0].cover ? (
                   <Image src={playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/[0.02] dark:to-white/[0.05]">
+                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 dark:from-white/2 dark:to-white/5">
                     <Music size={48} className="text-gray-300 dark:text-white/10" />
                   </div>
                 )}
                 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8">
                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate leading-tight">{playlist.name}</h3>
                    <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">{playlist.songs.length} Tracks</p>
                    

@@ -22,7 +22,7 @@ export const AmbientBackground: React.FC<AmbientBackgroundProps> = ({ className 
     <div className={`fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-white dark:bg-black transition-colors duration-1000 ${className}`}>
       {/* Base gradient layer for depth - Darker for B&W focus */}
       <div 
-        className="absolute inset-0 opacity-20 dark:opacity-30 transition-colors duration-[2000ms]"
+        className="absolute inset-0 opacity-20 dark:opacity-30 transition-colors duration-2000"
         style={{
           background: `radial-gradient(circle at 50% 50%, ${colors.primary}10 0%, transparent 80%)`
         }}

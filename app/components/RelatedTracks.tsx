@@ -54,7 +54,7 @@ export const RelatedTracks: React.FC = () => {
       <div className="flex gap-4 sm:gap-5 overflow-x-auto custom-scrollbar pb-6 -mx-4 px-4 sm:-mx-2 sm:px-2">
         {isLoading ? (
           [...Array(5)].map((_, i) => (
-            <div key={i} className="min-w-[140px] sm:min-w-[160px] animate-pulse">
+            <div key={i} className="min-w-36 sm:min-w-44 animate-pulse">
               <div className="aspect-square bg-white/5 rounded-3xl mb-3" />
               <div className="h-4 bg-white/5 rounded-full w-3/4 mb-2" />
               <div className="h-3 bg-white/5 rounded-full w-1/2" />
@@ -67,9 +67,9 @@ export const RelatedTracks: React.FC = () => {
               whileHover={{ y: -12 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setQueue([song, ...related.filter(s => s.id !== song.id)], 0)}
-              className="min-w-[140px] sm:min-w-[160px] text-left group relative"
+              className="min-w-36 sm:min-w-44 text-left group relative"
             >
-              <div className="aspect-square rounded-[2rem] overflow-hidden mb-4 relative bg-zinc-900 shadow-xl group-hover:shadow-2xl transition-all duration-500 border border-white/5">
+              <div className="aspect-square rounded-3xl overflow-hidden mb-4 relative bg-zinc-900 shadow-xl group-hover:shadow-2xl transition-all duration-500 border border-white/5">
                 {song.cover ? (
                 <Image 
                   src={getHDThumbnail(song.cover) || song.cover} 
@@ -110,3 +110,4 @@ export const RelatedTracks: React.FC = () => {
     </div>
   );
 };
+

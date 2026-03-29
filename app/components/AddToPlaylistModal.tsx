@@ -40,7 +40,7 @@ export const AddToPlaylistModal: React.FC = () => {
   return (
     <AnimatePresence>
       {isPlaylistModalOpen && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-0 sm:p-4 pointer-events-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 pointer-events-auto">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -53,7 +53,7 @@ export const AddToPlaylistModal: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: 40 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 40 }}
-            className="w-full h-full sm:h-auto sm:max-w-md bg-white dark:bg-zinc-950 sm:rounded-[2rem] overflow-hidden shadow-2xl relative z-10 border-0 sm:border border-gray-100 dark:border-white/10 flex flex-col sm:block"
+            className="w-full h-full sm:h-auto sm:max-w-md bg-white dark:bg-zinc-950 sm:rounded-3xl overflow-hidden shadow-2xl relative z-10 border-0 sm:border border-gray-100 dark:border-white/10 flex flex-col sm:block"
           >
             <div className="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
               <div className="flex items-center justify-between">
@@ -89,13 +89,13 @@ export const AddToPlaylistModal: React.FC = () => {
               <div className="space-y-3 pb-6 sm:pb-0">
                 <button
                   onClick={() => setIsCreating(!isCreating)}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-[var(--color-primary)] hover:bg-[var(--color-primary)]/5 transition-all group"
+                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-500/5 transition-all group"
                   style={primaryColorStyle}
                 >
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-[var(--color-primary)] group-hover:text-white transition-colors">
+                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
                     <Plus size={20} />
                   </div>
-                  <span className="font-bold text-gray-600 dark:text-gray-300 group-hover:text-[var(--color-primary)]">New Playlist</span>
+                  <span className="font-bold text-gray-600 dark:text-gray-300 group-hover:text-blue-500">New Playlist</span>
                 </button>
 
                 <AnimatePresence>
@@ -112,7 +112,7 @@ export const AddToPlaylistModal: React.FC = () => {
                         value={newPlaylistName}
                         onChange={(e) => setNewPlaylistName(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                        className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-transparent focus:border-[var(--color-primary)] outline-none transition-all font-medium text-sm"
+                        className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-transparent focus:border-blue-500 outline-none transition-all font-medium text-sm"
                         style={primaryColorStyle}
                         autoFocus
                       />
@@ -141,7 +141,7 @@ export const AddToPlaylistModal: React.FC = () => {
                         className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-left group disabled:opacity-60 disabled:cursor-not-allowed"
                       >
                         <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-900 flex items-center justify-center shrink-0 shadow-sm border border-transparent dark:border-white/5">
+                          <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center shrink-0 shadow-sm border border-transparent dark:border-white/5">
                              {playlist.songs.length > 0 && playlist.songs[0].cover ? (
                                <Image 
                                  src={getHDThumbnail(playlist.songs[0].cover) || ""} 

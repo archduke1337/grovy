@@ -47,7 +47,7 @@ export function OpenSourceContent() {
       initial="hidden"
       animate="visible"
       variants={containerVariants}
-      className="w-full max-w-[860px] mx-auto px-4 sm:px-5 md:px-6 py-6 sm:py-10 md:py-16 pb-36 space-y-12 sm:space-y-16 md:space-y-24"
+      className="w-full max-w-4xl mx-auto px-4 sm:px-5 md:px-6 py-6 sm:py-10 md:py-16 pb-36 space-y-12 sm:space-y-16 md:space-y-24"
     >
       {/* Hero */}
       <motion.header variants={fadeUp} className="space-y-5 sm:space-y-6 md:space-y-8">
@@ -69,7 +69,7 @@ export function OpenSourceContent() {
           <span className="text-gray-300 dark:text-white/15">because music should be free.</span>
         </h1>
 
-        <p className="text-[14px] sm:text-[15px] md:text-[17px] text-gray-500 dark:text-white/35 leading-[1.7] max-w-[640px]">
+        <p className="text-[14px] sm:text-[15px] md:text-[17px] text-gray-500 dark:text-white/35 leading-[1.7] max-w-2xl">
           Grovy started as a weekend project — a frustration with bloated music players 
           that track everything you listen to. No ads, no accounts, no invasive tracking. 
           Just a clean player that respects your time and your data, with privacy-first local storage 
@@ -92,7 +92,7 @@ export function OpenSourceContent() {
             href="https://github.com/archduke1337/grovy/stargazers" 
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-transparent text-gray-600 dark:text-white/50 font-semibold text-[13px] hover:bg-gray-100 dark:hover:bg-white/[0.05] transition-all border border-gray-200 dark:border-white/[0.06]"
+            className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-transparent text-gray-600 dark:text-white/50 font-semibold text-[13px] hover:bg-gray-100 dark:hover:bg-zinc-800 transition-all border border-gray-200 dark:border-zinc-800"
           >
             <Star size={14} />
             Star on GitHub
@@ -130,8 +130,8 @@ export function OpenSourceContent() {
             },
           ].map(({ icon: Icon, title, body }) => (
             <div key={title} className="flex gap-3 sm:gap-4 md:gap-5">
-              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-100 dark:bg-white/[0.04] flex items-center justify-center shrink-0 mt-0.5">
-                <Icon size={15} className="text-gray-500 dark:text-white/30 sm:w-[17px] sm:h-[17px]" />
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-gray-100 dark:bg-zinc-900 flex items-center justify-center shrink-0 mt-0.5">
+                <Icon size={15} className="text-gray-500 dark:text-white/30 sm:w-4 sm:h-4" />
               </div>
               <div className="space-y-0.5 sm:space-y-1 min-w-0">
                 <h3 className="font-semibold text-[14px] sm:text-[15px] text-gray-900 dark:text-white tracking-tight">{title}</h3>
@@ -153,7 +153,7 @@ export function OpenSourceContent() {
           {TECH_STACK.map((item, i) => (
             <div 
               key={item.layer}
-              className={`px-4 py-3 rounded-xl border border-gray-100 dark:border-white/[0.04] ${i % 2 === 0 ? 'bg-gray-50/50 dark:bg-white/[0.01]' : ''}`}
+              className={`px-4 py-3 rounded-xl border border-gray-100 dark:border-zinc-800 ${i % 2 === 0 ? 'bg-gray-50/50 dark:bg-zinc-950' : ''}`}
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span className="font-medium text-[13px] text-gray-900 dark:text-white/70">{item.layer}</span>
@@ -165,10 +165,10 @@ export function OpenSourceContent() {
         </div>
 
         {/* Tablet+: table layout */}
-        <div className="hidden sm:block rounded-2xl border border-gray-150 dark:border-white/[0.05] overflow-hidden">
+        <div className="hidden sm:block rounded-2xl border border-gray-150 dark:border-zinc-800 overflow-hidden">
           <table className="w-full text-left">
             <thead>
-              <tr className="border-b border-gray-100 dark:border-white/[0.04]">
+              <tr className="border-b border-gray-100 dark:border-zinc-800">
                 <th className="px-4 md:px-5 py-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-white/20">Layer</th>
                 <th className="px-4 md:px-5 py-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-white/20">Tech</th>
                 <th className="px-4 md:px-5 py-3 text-[10px] sm:text-[11px] font-bold uppercase tracking-[0.12em] text-gray-400 dark:text-white/20 hidden md:table-cell">Role</th>
@@ -178,7 +178,7 @@ export function OpenSourceContent() {
               {TECH_STACK.map((item, i) => (
                 <tr 
                   key={item.layer} 
-                  className={`border-b border-gray-50 dark:border-white/[0.02] ${i % 2 === 0 ? 'bg-gray-50/50 dark:bg-white/[0.01]' : ''}`}
+                  className={`border-b border-gray-50 dark:border-zinc-900 ${i % 2 === 0 ? 'bg-gray-50/50 dark:bg-zinc-950' : ''}`}
                 >
                   <td className="px-4 md:px-5 py-2.5 sm:py-3 font-medium text-gray-900 dark:text-white/70">{item.layer}</td>
                   <td className="px-4 md:px-5 py-2.5 sm:py-3 font-mono text-gray-600 dark:text-white/40">{item.tech}</td>
@@ -196,7 +196,7 @@ export function OpenSourceContent() {
           API Routes
         </h2>
 
-        <div className="rounded-xl sm:rounded-2xl border border-gray-150 dark:border-white/[0.05] p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
+        <div className="rounded-xl sm:rounded-2xl border border-gray-150 dark:border-zinc-800 p-4 sm:p-5 md:p-6 space-y-2 sm:space-y-3">
           {API_ROUTES.map(({ method, path, desc }) => (
             <div key={path} className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5 py-1 sm:py-1.5">
               <code className="text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
@@ -220,7 +220,7 @@ export function OpenSourceContent() {
         </h2>
         <div className="flex gap-3 sm:gap-4">
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center shrink-0">
-            <Shield size={15} className="text-emerald-600 dark:text-emerald-400 sm:w-[17px] sm:h-[17px]" />
+            <Shield size={15} className="text-emerald-600 dark:text-emerald-400 sm:w-4 sm:h-4" />
           </div>
           <p className="text-[13px] sm:text-[14px] md:text-[15px] text-gray-600 dark:text-white/40 leading-[1.65]">
             MIT License. Do whatever you want with it — fork it, ship it, sell it, 
@@ -242,7 +242,7 @@ export function OpenSourceContent() {
         <h2 className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.15em] text-gray-400 dark:text-white/20">
           Contributing
         </h2>
-        <p className="text-[13px] sm:text-[14px] md:text-[15px] text-gray-500 dark:text-white/30 leading-[1.65] max-w-[600px]">
+        <p className="text-[13px] sm:text-[14px] md:text-[15px] text-gray-500 dark:text-white/30 leading-[1.65] max-w-2xl">
           If you find a bug or have an idea, open an issue. If you want to fix something 
           yourself, PRs are welcome — just keep the code clean and the UI minimal. 
           No contribution guidelines doc needed, just common sense.
@@ -252,7 +252,7 @@ export function OpenSourceContent() {
             href="https://github.com/archduke1337/grovy/issues" 
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-white/[0.04] text-gray-700 dark:text-white/50 font-medium text-[13px] hover:bg-gray-200 dark:hover:bg-white/[0.07] transition-all border border-gray-150 dark:border-white/[0.04]"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-zinc-900 text-gray-700 dark:text-white/50 font-medium text-[13px] hover:bg-gray-200 dark:hover:bg-zinc-800 transition-all border border-gray-150 dark:border-zinc-800"
           >
             <GitBranch size={14} />
             Issues
@@ -261,7 +261,7 @@ export function OpenSourceContent() {
             href="https://github.com/archduke1337/grovy/pulls" 
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-white/[0.04] text-gray-700 dark:text-white/50 font-medium text-[13px] hover:bg-gray-200 dark:hover:bg-white/[0.07] transition-all border border-gray-150 dark:border-white/[0.04]"
+            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gray-100 dark:bg-zinc-900 text-gray-700 dark:text-white/50 font-medium text-[13px] hover:bg-gray-200 dark:hover:bg-zinc-800 transition-all border border-gray-150 dark:border-zinc-800"
           >
             <Terminal size={14} />
             Pull Requests
@@ -270,7 +270,7 @@ export function OpenSourceContent() {
       </motion.section>
 
       {/* Footer */}
-      <motion.div variants={fadeUp} className="pt-4 border-t border-gray-100 dark:border-white/[0.04]">
+      <motion.div variants={fadeUp} className="pt-4 border-t border-gray-100 dark:border-zinc-800">
         <p className="text-[11px] sm:text-[12px] text-gray-400 dark:text-white/15 leading-relaxed">
           Grovy is not affiliated with YouTube, JioSaavn, or Google. 
           It is an independent project that uses publicly available APIs. 
