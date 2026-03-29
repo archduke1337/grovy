@@ -23,7 +23,7 @@ const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATIO
 export const metadata: Metadata = {
   applicationName: APP_NAME,
   title: {
-    default: `${APP_NAME} - Open-source Music Player`,
+    default: `${APP_NAME} - Opensource Music Player`,
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
