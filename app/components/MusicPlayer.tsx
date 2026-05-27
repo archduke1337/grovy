@@ -100,7 +100,7 @@ export const MusicPlayer: React.FC = () => {
                {/* Large Album Art */}
                <motion.div
                 layoutId={`art-${currentSongIndex}`}
-                className="relative aspect-square w-full max-w-80 sm:max-w-100 lg:max-w-120 group apple-shadow"
+                className={`relative aspect-square w-full max-w-80 sm:max-w-100 lg:max-w-120 group apple-shadow transition-opacity duration-300 ${isVideoActive ? 'opacity-30' : 'opacity-100'}`}
                >
                   <motion.div 
                     whileHover={{ scale: 1.02 }}
