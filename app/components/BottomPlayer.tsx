@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music, Minimize2 } from "lucide-react";
+import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music, Minimize2, Monitor } from "lucide-react";
 import dynamic from "next/dynamic";
 const MusicPlayer = dynamic(() => import("./MusicPlayer").then(m => ({ default: m.MusicPlayer })));
 import MiniPlayer from "./MiniPlayer";

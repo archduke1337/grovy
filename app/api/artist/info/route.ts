@@ -1,11 +1,6 @@
 
 import { NextRequest } from "next/server";
-
-function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
-}
+import { fetchWithTimeout } from "@/app/lib/apiHelpers";
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

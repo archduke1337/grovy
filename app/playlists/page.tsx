@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
-import { motion, AnimatePresence, type Variants } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { Music, Plus, PlayCircle, Folder, Download, Upload, Trash2, X, Search } from "lucide-react";
 import Image from "next/image";
