@@ -100,7 +100,7 @@ export default function PlaylistsPage() {
         </div>
       </header>
       
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8" style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 100px' }}>
         {/* Create New Card */}
         <motion.button
           onClick={() => !isCreating && setIsCreating(true)}

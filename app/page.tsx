@@ -667,6 +667,7 @@ function HomeContent() {
             animate="visible"
             exit="hidden"
             className="space-y-6 sm:space-y-7"
+            aria-live="polite"
           >
             <SectionHeading icon={Search} title="Here's what we found" subtitle={`${visibleSearchResults.length} results`} />
 

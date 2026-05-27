@@ -305,7 +305,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
                 });
               }
             } else {
-              console.log("[YTPlayer] Skipping to next track");
+              console.debug("[YTPlayer] Skipping to next track");
               nextTrackRef.current();
             }
           }
@@ -452,7 +452,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       
       if (stallRetryCountRef.current >= 3) {
         stallRetryCountRef.current = 0;
-        console.log("[Audio] Skipping song due to repeated errors");
+        console.debug("[Audio] Skipping song due to repeated errors");
         nextTrackRef.current();
       } else {
         // Delay retry to avoid rapid-fire error cascade
@@ -749,7 +749,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         if (ytPlayerRef.current?.loadVideoById) {
           const videoId = currentSong.id.replace("yt-", "");
-          console.log(`[PlayerContext] Switching to YT Player: ${videoId}`);
+          console.debug(`[PlayerContext] Switching to YT Player: ${videoId}`);
           if (isPlayingRef.current) ytPlayerRef.current.loadVideoById(videoId);
           else ytPlayerRef.current.cueVideoById(videoId);
         } else if (audio && currentSong.url) {
@@ -772,7 +772,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           const targetUrl = new URL(currentSong.url, window.location.origin).href;
           const isHLS = targetUrl.includes(".m3u8");
           if (audio.src !== targetUrl || isHLS) {
-            console.log(`[PlayerContext] Switching to Audio Player: ${targetUrl}`);
+            console.debug(`[PlayerContext] Switching to Audio Player: ${targetUrl}`);
             audio.pause();
             if (hlsRef.current) hlsRef.current.destroy();
             if (isHLS) {
@@ -842,7 +842,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         headers: { Range: "bytes=0-65535" }, 
         // Don't await — fire-and-forget prefetch
       }).catch(() => {});
-      console.log(`[PlayerContext] Pre-buffering next track: ${nextSong.title}`);
+      console.debug(`[PlayerContext] Pre-buffering next track: ${nextSong.title}`);
     } catch (e) {}
   }, [currentTime, duration, songs, currentSongIndex]);
 
@@ -1292,6 +1292,14 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 };
 
+/**
+ * Access the player context from any component within PlayerProvider.
+ * Provides playback controls, queue management, favorites, playlists,
+ * equalizer state, and crossfade/normalization settings.
+ *
+ * @returns The full PlayerContextType object
+ * @throws If used outside of a PlayerProvider
+ */
 export const usePlayer = () => {
   const context = useContext(PlayerContext);
   if (!context) throw new Error("usePlayer must be used within PlayerProvider");

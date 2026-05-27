@@ -5,12 +5,22 @@ import { motion, AnimatePresence } from "framer-motion";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { getLyrics } from "@/app/lib/api";
 import { X, Music } from "lucide-react";
+
+interface LyricLine {
+  time: number;
+  text: string;
+}
+
+interface LyricsData {
+  lyrics: LyricLine[];
+  [key: string]: unknown;
+}
 import NextImage from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({ isOpen, onClose }) => {
   const { songs, currentSongIndex, currentTime, duration, colors, isCommandPaletteOpen, seek } = usePlayer();
-  const [lyrics, setLyrics] = useState<any>(null);
+  const [lyrics, setLyrics] = useState<LyricsData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const currentSong = songs[currentSongIndex];
@@ -55,7 +65,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   const activeLineRef = useRef<HTMLDivElement>(null);
 
   // Sync lyrics with current time (memoized to avoid recomputing on every render)
-  const activeIndex = React.useMemo(() => lyrics?.lyrics?.findIndex((line: any, i: number) => {
+  const activeIndex = React.useMemo(() => lyrics?.lyrics?.findIndex((line: LyricLine, i: number) => {
     const nextLine = lyrics?.lyrics?.[i + 1];
     return currentTime >= line.time && (!nextLine || currentTime < nextLine.time);
   }) ?? -1, [lyrics, currentTime]);
@@ -123,7 +133,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                     <p className="font-black uppercase tracking-widest text-[10px] sm:text-xs">Finding Lyrics</p>
                  </div>
                ) : lyrics?.lyrics ? (
-                 lyrics.lyrics.map((line: any, i: number) => {
+                 lyrics.lyrics.map((line: LyricLine, i: number) => {
                     const isActive = activeIndex === i;
                     const isNearby = activeIndex !== -1 && Math.abs(activeIndex - i) <= 3;
                     const nextLine = lyrics.lyrics[i + 1];

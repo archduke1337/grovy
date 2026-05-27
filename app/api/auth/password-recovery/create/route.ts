@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { appwriteErrorResponse } from "@/app/lib/appwrite/response";
 import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
+import { checkRateLimit } from "@/app/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,14 @@ const recoverySchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "anonymous";
+    const rateLimitResult = checkRateLimit(`recovery:${ip}`, 3, 300000);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Too many recovery attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
     const payload = recoverySchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
 

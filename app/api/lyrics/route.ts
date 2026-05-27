@@ -23,6 +23,9 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "Upstream lyrics API error" }, { status: res.status });
     }
     const data = await res.json();
+    if (typeof data !== "object" || data === null || (typeof data.lyrics !== "string" && !data.error)) {
+      return Response.json({ error: "Upstream returned unexpected format" }, { status: 502 });
+    }
     return Response.json(data, {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" }
     });

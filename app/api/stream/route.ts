@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
       if (contentLength) responseHeaders["Content-Length"] = contentLength;
       if (contentRange) responseHeaders["Content-Range"] = contentRange;
 
-      console.log(`[StreamAPI] Saavn: ${contentType}, length: ${contentLength}`);
+      console.debug(`[StreamAPI] Saavn: ${contentType}, length: ${contentLength}`);
       return new Response(res.body, {
         status: res.status,
         headers: responseHeaders,
@@ -136,7 +136,7 @@ export async function GET(request: NextRequest) {
       quality: s.quality || s.audioQuality || "",
     })).filter(s => s.proxyUrl || s.directUrl);
 
-    console.log(`[StreamAPI] ${id}: ${allStreams.length} total streams, types: ${[...new Set(allStreams.map(s => s.mimeType))].join(', ')}`);
+    console.debug(`[StreamAPI] ${id}: ${allStreams.length} total streams, types: ${[...new Set(allStreams.map(s => s.mimeType))].join(', ')}`);
 
     // Prefer highest quality audio streams
     const audioStreams = allStreams
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
 
         const contentType = relayRes.headers.get("Content-Type") || "";
         if ((relayRes.ok || relayRes.status === 206) && (contentType.includes("audio") || contentType.includes("video") || contentType.includes("octet-stream"))) {
-          console.log(`[StreamAPI] Relaying ${id} (${contentType}, bitrate: best available)`);
+          console.debug(`[StreamAPI] Relaying ${id} (${contentType}, bitrate: best available)`);
           
           const responseHeaders: Record<string, string> = {
                "Content-Type": contentType.includes("audio") ? contentType : "audio/webm",
@@ -234,7 +234,7 @@ export async function GET(request: NextRequest) {
 
     // FINAL RESCUE: Proxy through ytapi instead of redirect (avoids CORS issues)
     const lastResort = `https://ytapi.gauravramyadav.workers.dev/api/proxy?url=${encodeURIComponent(candidates[0])}`;
-    console.log(`[StreamAPI] Falling back to remote proxy fetch for ${id}`);
+    console.debug(`[StreamAPI] Falling back to remote proxy fetch for ${id}`);
     try {
       const proxyController = new AbortController();
       const proxyTimeout = setTimeout(() => proxyController.abort(), 10000);
@@ -263,8 +263,9 @@ export async function GET(request: NextRequest) {
     } catch { /* proxy fallback also failed */ }
     return Response.json({ error: "Playback unavailable" }, { status: 500 });
 
-  } catch (error: any) {
-    console.error(`[StreamAPI] Critical Error:`, error.message);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`[StreamAPI] Critical Error:`, message);
     return Response.json({ error: "Playback unavailable" }, { status: 500 });
   }
 }

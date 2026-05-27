@@ -80,6 +80,16 @@ function parseDuration(value: any): number {
   return 0;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return Response.json(null, { status: 204, headers: corsHeaders });
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const source = searchParams.get("source");
@@ -176,7 +186,7 @@ export async function GET(request: NextRequest) {
           };
       }).filter((s: any) => s && s.url);
 
-      return Response.json(rawSongs);
+      return Response.json(rawSongs, { headers: corsHeaders });
     }
     if (source === "local") {
       const fs = require('fs');
@@ -187,7 +197,7 @@ export async function GET(request: NextRequest) {
       try {
         const manifestPath = path.join(process.cwd(), 'public', 'songs.json');
         if (fs.existsSync(manifestPath)) {
-          console.log("Reading local songs from manifest...");
+          console.debug("Reading local songs from manifest...");
           const content = fs.readFileSync(manifestPath, 'utf-8');
           localSongs = JSON.parse(content);
         }
@@ -253,7 +263,7 @@ export async function GET(request: NextRequest) {
         );
       }
 
-      return Response.json(localSongs);
+      return Response.json(localSongs, { headers: corsHeaders });
     }
 
     // Remote Logic
@@ -355,10 +365,15 @@ export async function GET(request: NextRequest) {
     }
 
     return Response.json(result.data, {
-      headers: { "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120" }
+      headers: {
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      }
     });
   } catch (error) {
     console.error("Error fetching songs:", error);
-    return Response.json([], { status: 500 });
+    return Response.json([], { status: 500, headers: corsHeaders });
   }
 }

@@ -176,7 +176,7 @@ export default function PlaylistDetailPage() {
                  </button>
               </div>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-zinc-800">
+              <div className="divide-y divide-gray-100 dark:divide-zinc-800" style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 100px' }}>
                 {playlist.songs.map((song, i) => {
                    const isCurrent = songs[currentSongIndex]?.id === song.id;
                    const favorite = isFavorite(song.id);

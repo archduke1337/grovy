@@ -98,8 +98,9 @@ async function getSessionContext(
       tables,
       databaseId,
     };
-  } catch (error: any) {
-    console.warn("[getSessionContext] Error:", error.message || error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.warn("[getSessionContext] Error:", message);
     const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     clearSessionCookie(response);
     return response;

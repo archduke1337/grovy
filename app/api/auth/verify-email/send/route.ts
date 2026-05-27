@@ -6,6 +6,7 @@ import {
   readSessionSecretFromRequest,
 } from "@/app/lib/appwrite/sessionCookie";
 import { createSessionAppwriteClients } from "@/app/lib/appwrite/server";
+import { checkRateLimit } from "@/app/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,15 @@ export async function POST(req: NextRequest) {
 
   if (!sessionSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "anonymous";
+  const rateLimitResult = checkRateLimit(`verify-email:${ip}`, 5, 600000);
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      { error: "Too many verification attempts. Please try again later." },
+      { status: 429 }
+    );
   }
 
   try {

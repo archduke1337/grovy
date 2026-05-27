@@ -55,6 +55,16 @@ function parseDuration(value: any): number {
   return 0;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return Response.json(null, { status: 204, headers: corsHeaders });
+}
+
 export async function GET(request: NextRequest) {
   try {
     const VALID_COUNTRIES = ["IN", "US", "GB", "CA", "AU", "DE", "FR", "JP", "BR", "KR"];
@@ -138,14 +148,24 @@ export async function GET(request: NextRequest) {
     }
 
     return Response.json(combined.slice(0, 50), {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" }
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      }
     });
 
   } catch (error) {
     console.error("Trending API Error:", error);
-    return Response.json([], { 
+    return Response.json([], {
       status: 500,
-      headers: { "Cache-Control": "public, s-maxage=60" }
+      headers: {
+        "Cache-Control": "public, s-maxage=60",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      }
     });
   }
 }

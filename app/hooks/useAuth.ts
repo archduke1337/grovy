@@ -11,6 +11,13 @@ interface UseAuthResult {
   refresh: () => Promise<void>;
 }
 
+/**
+ * Hook that provides authentication state and a refresh function.
+ * Automatically fetches the current user on mount and exposes
+ * loading state, user object, and a boolean `authenticated` flag.
+ *
+ * @returns UseAuthResult with loading, user, authenticated, and refresh
+ */
 export function useAuth(): UseAuthResult {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<AuthUser | null>(null);

@@ -72,6 +72,16 @@ function parseDuration(value: any): number {
   return 0;
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return Response.json(null, { status: 204, headers: corsHeaders });
+}
+
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const chartId = searchParams.get("id") || "songs"; // songs, albums, artists, playlists
@@ -229,14 +239,24 @@ export async function GET(request: NextRequest) {
     }
 
     return Response.json(combined.slice(0, chartId === "songs" ? 50 : 30), {
-      headers: { "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300" }
+      headers: {
+        "Cache-Control": "public, s-maxage=120, stale-while-revalidate=300",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      }
     });
 
   } catch (error) {
     console.error("Charts API Error:", error);
-    return Response.json([], { 
+    return Response.json([], {
       status: 500,
-      headers: { "Cache-Control": "public, s-maxage=60" }
+      headers: {
+        "Cache-Control": "public, s-maxage=60",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+      }
     });
   }
 }

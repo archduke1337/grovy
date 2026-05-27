@@ -351,6 +351,11 @@ async function teardownRealtimeSubscription(): Promise<void> {
   realtimeClient = null;
 }
 
+/**
+ * Subscribe to real-time library changes (playlists, favorites).
+ * Calls `listener` whenever a remote change is detected.
+ * Returns an unsubscribe function; tears down the subscription when all listeners are removed.
+ */
 export async function subscribeLibraryRealtime(
   listener: () => void
 ): Promise<() => void> {
@@ -366,7 +371,7 @@ export async function subscribeLibraryRealtime(
   };
 }
 
-// Song metadata cache
+/** Cache a single song's metadata in Appwrite preferences. */
 export async function cacheSong(song: SongRecord): Promise<void> {
   if (!song?.id) return;
 
@@ -379,6 +384,7 @@ export async function cacheSong(song: SongRecord): Promise<void> {
   });
 }
 
+/** Batch-cache multiple songs' metadata in Appwrite preferences. */
 export async function cacheSongs(songs: SongRecord[]): Promise<void> {
   if (!Array.isArray(songs) || songs.length === 0) return;
 
@@ -393,12 +399,14 @@ export async function cacheSongs(songs: SongRecord[]): Promise<void> {
   await savePartialState({ songs: nextSongs });
 }
 
+/** Retrieve a cached song by its ID, or null if not cached. */
 export async function getCachedSong(id: string): Promise<any | null> {
   const state = await loadState();
   return state.songs[id] ?? null;
 }
 
 // Search results cache
+/** Cache search results for a given query string. */
 export async function cacheSearchResults(query: string, results: any[]): Promise<void> {
   const normalized = normalizeQuery(query);
   if (!normalized) return;
@@ -415,6 +423,7 @@ export async function cacheSearchResults(query: string, results: any[]): Promise
   });
 }
 
+/** Return cached search results if not older than maxAge (default 5 minutes). */
 export async function getCachedSearch(query: string, maxAge = 5 * 60 * 1000): Promise<any[] | null> {
   const normalized = normalizeQuery(query);
   if (!normalized) return null;
@@ -429,6 +438,7 @@ export async function getCachedSearch(query: string, maxAge = 5 * 60 * 1000): Pr
 }
 
 // User playlists
+/** Persist playlists to Appwrite-backed storage, skipping if unchanged. */
 export async function savePlaylists(playlists: any[]): Promise<void> {
   const nextPlaylists = Array.isArray(playlists) ? [...playlists] : [];
   if (areCollectionsEqual(nextPlaylists, memoryState.playlists)) {
@@ -439,6 +449,7 @@ export async function savePlaylists(playlists: any[]): Promise<void> {
   await syncLibraryToAppwrite({ playlists: memoryState.playlists });
 }
 
+/** Fetch the current playlists, syncing with Appwrite if available. */
 export async function getPlaylists(): Promise<any[]> {
   await loadState();
   await refreshLibraryFromAppwrite();
@@ -446,6 +457,7 @@ export async function getPlaylists(): Promise<any[]> {
 }
 
 // Favorites
+/** Persist favorites to Appwrite-backed storage, skipping if unchanged. */
 export async function saveFavorites(favoriteSongs: any[]): Promise<void> {
   const nextFavorites = Array.isArray(favoriteSongs) ? [...favoriteSongs] : [];
   if (areCollectionsEqual(nextFavorites, memoryState.favorites)) {
@@ -456,6 +468,7 @@ export async function saveFavorites(favoriteSongs: any[]): Promise<void> {
   await syncLibraryToAppwrite({ favorites: memoryState.favorites });
 }
 
+/** Fetch the current favorites, syncing with Appwrite if available. */
 export async function getFavorites(): Promise<any[]> {
   await loadState();
   await refreshLibraryFromAppwrite();
@@ -463,6 +476,7 @@ export async function getFavorites(): Promise<any[]> {
 }
 
 // History
+/** Add a song to the recently-played history (max 50 entries). */
 export async function addToHistory(song: any): Promise<void> {
   if (!song?.id) return;
 
@@ -473,20 +487,24 @@ export async function addToHistory(song: any): Promise<void> {
   await savePartialState({ history: updated });
 }
 
+/** Get recently played songs sorted by most recent first. */
 export async function getHistory(): Promise<any[]> {
   const state = await loadState();
   return [...state.history].sort((a, b) => (b?.timestamp || 0) - (a?.timestamp || 0));
 }
 
+/** Clear all recently played history. */
 export async function clearHistory(): Promise<void> {
   await savePartialState({ history: [] });
 }
 
 // Cleanup
+/** Clear all cached songs and search results. */
 export async function clearOfflineCache(): Promise<void> {
   await savePartialState({ songs: {}, searches: {} });
 }
 
+/** Remove cached searches older than maxAge (default 1 hour). */
 export async function evictStaleSearches(maxAge = 60 * 60 * 1000): Promise<void> {
   const state = await loadState();
   const cutoff = Date.now() - maxAge;

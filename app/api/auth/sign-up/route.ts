@@ -5,6 +5,7 @@ import { z } from "zod";
 import { appwriteErrorResponse, toAuthUser } from "@/app/lib/appwrite/response";
 import { attachSessionCookie } from "@/app/lib/appwrite/sessionCookie";
 import { createAdminAppwriteClients } from "@/app/lib/appwrite/server";
+import { checkRateLimit } from "@/app/lib/rateLimit";
 
 export const runtime = "nodejs";
 
@@ -16,6 +17,14 @@ const signUpSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "anonymous";
+    const rateLimitResult = checkRateLimit(`signup:${ip}`, 3, 300000);
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { error: "Too many sign up attempts. Please try again later." },
+        { status: 429 }
+      );
+    }
     const payload = signUpSchema.parse(await req.json());
     const userAgent = req.headers.get("user-agent") || undefined;
 

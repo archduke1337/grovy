@@ -8,10 +8,38 @@ import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 import { getArtistInfo } from "@/app/lib/api";
 
+interface ArtistStats {
+  listeners?: number | string;
+  [key: string]: unknown;
+}
+
+interface ArtistBio {
+  summary?: string;
+  [key: string]: unknown;
+}
+
+interface ArtistTags {
+  tag?: Array<{ name: string }>;
+  [key: string]: unknown;
+}
+
+interface ArtistData {
+  name: string;
+  stats?: ArtistStats;
+  bio?: ArtistBio;
+  tags?: ArtistTags;
+  [key: string]: unknown;
+}
+
+interface ArtistInfoData {
+  artist: ArtistData;
+  [key: string]: unknown;
+}
+
 export const ArtistInfo: React.FC = () => {
   const { songs, currentSongIndex, colors, isCommandPaletteOpen } = usePlayer();
   const [isOpen, setIsOpen] = useState(false);
-  const [info, setInfo] = useState<any>(null);
+  const [info, setInfo] = useState<ArtistInfoData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const currentSong = songs[currentSongIndex];
@@ -148,7 +176,7 @@ export const ArtistInfo: React.FC = () => {
 
                   {Array.isArray(info.artist.tags?.tag) && info.artist.tags.tag.length > 0 && (
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-2">
-                       {info.artist.tags.tag.slice(0, 5).map((tag: any) => (
+                       {info.artist.tags.tag.slice(0, 5).map((tag: { name: string }) => (
                          <span key={tag.name} 
                                className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-400 hover:text-white hover:bg-white/10 transition-all flex items-center gap-1.5 cursor-default">
                             <Tag size={10} />

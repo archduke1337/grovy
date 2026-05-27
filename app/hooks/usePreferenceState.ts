@@ -4,7 +4,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 
 /**
- * Persists state in Appwrite user preferences with an in-memory fallback.
+ * Hook that manages state persisted in Appwrite user preferences.
+ * On mount, hydrates from the stored preference (if any) using `initialValue` as fallback.
+ * Writes are patched to preferences in the background.
+ *
+ * @param key - Preference key to read/write
+ * @param initialValue - Default value when no stored preference exists
+ * @returns Tuple of [state, setState] matching the useState API
  */
 export function usePreferenceState<T>(
   key: string,

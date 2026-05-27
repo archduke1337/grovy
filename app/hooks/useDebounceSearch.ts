@@ -10,6 +10,11 @@ interface UseDebounceSearchOptions {
 /**
  * Hook that manages debounced search input.
  * Returns the search term, a setter, the debounced value, and a clear function.
+ * The debounced value only updates after the user pauses typing for `delay` ms
+ * and the input meets the `minLength` threshold.
+ *
+ * @param options - Configuration for delay (default 400ms) and minLength (default 2)
+ * @returns Object with searchTerm, debouncedTerm, setSearch, and clear
  */
 export function useDebounceSearch(options: UseDebounceSearchOptions = {}) {
   const { delay = 400, minLength = 2 } = options;

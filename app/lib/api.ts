@@ -52,7 +52,15 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   }
 }
 
-// ─── Songs ───────────────────────────────────────────────
+/**
+ * Search for songs across all configured sources (YouTube, Saavn, etc.).
+ * Deduplicates results and falls back to cached results when offline.
+ *
+ * @param query - Search query string (optional; omit for trending)
+ * @param source - Preferred source name (e.g. "youtube", "saavn")
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Deduplicated list of Song objects
+ */
 export async function searchSongs(
   query?: string,
   source?: string,
@@ -114,6 +122,15 @@ export async function getSongsByEntity(
   return request<Song[]>(`/api/songs?type=${type}&id=${id}`, { signal });
 }
 
+/**
+ * Fetch radio/autoplay songs seeded by a specific track.
+ * Returns a list of similar songs for continuous playback.
+ *
+ * @param songId - ID of the seed song
+ * @param opts - Optional metadata (title, artist) to improve radio relevance
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns List of Song objects for the radio queue
+ */
 export async function getRadioSongs(
   songId: string,
   opts?: { title?: string; artist?: string },
@@ -131,6 +148,14 @@ export async function getRadioSongs(
   return request<Song[]>(`/api/songs/radio?${params}`, { signal });
 }
 
+/**
+ * Fetch songs related to a specific track for "up next" suggestions.
+ *
+ * @param songId - ID of the source song
+ * @param opts - Optional metadata (title, artist) to improve relevance
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns List of related Song objects
+ */
 export async function getRelatedSongs(
   songId: string,
   opts?: { title?: string; artist?: string },
@@ -149,6 +174,15 @@ export async function getRelatedSongs(
 }
 
 // ─── Search ──────────────────────────────────────────────
+/**
+ * Generic search for songs, artists, or albums.
+ * Falls back to cached results when offline.
+ *
+ * @param query - Search query string
+ * @param type - Entity type to search for ("song", "artist", "album")
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Array of search result objects
+ */
 export async function search(
   query: string,
   type: string = "song",
@@ -172,6 +206,13 @@ export async function search(
   }
 }
 
+/**
+ * Fetch autocomplete suggestions for a partial search query.
+ *
+ * @param query - Partial search string
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Array of suggestion strings
+ */
 export async function getSearchSuggestions(
   query: string,
   signal?: AbortSignal
@@ -183,6 +224,14 @@ export async function getSearchSuggestions(
 }
 
 // ─── Metadata ────────────────────────────────────────────
+/**
+ * Fetch synchronized lyrics for a song by title and artist.
+ *
+ * @param title - Song title
+ * @param artist - Artist name
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Lyrics data with timed lines
+ */
 export async function getLyrics(
   title: string,
   artist: string,
@@ -194,6 +243,14 @@ export async function getLyrics(
   );
 }
 
+/**
+ * Fetch track metadata (album, duration, etc.) by title and artist.
+ *
+ * @param title - Song title
+ * @param artist - Artist name
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Track metadata object
+ */
 export async function getTrackInfo(
   title: string,
   artist: string,
@@ -205,6 +262,13 @@ export async function getTrackInfo(
   );
 }
 
+/**
+ * Fetch artist biography, stats, and tag information.
+ *
+ * @param artist - Artist name
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Artist info object with name, bio, stats, and tags
+ */
 export async function getArtistInfo(
   artist: string,
   signal?: AbortSignal
@@ -216,10 +280,23 @@ export async function getArtistInfo(
 }
 
 // ─── Trending & Charts ────────────────────────────────────────────
+/**
+ * Fetch trending songs across all sources.
+ *
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Array of trending Song objects
+ */
 export async function getTrendingSongs(signal?: AbortSignal): Promise<any[]> {
   return request<any[]>(`/api/trending`, { signal });
 }
 
+/**
+ * Fetch chart/playlist data by chart ID.
+ *
+ * @param chartId - Chart identifier (default: "songs")
+ * @param signal - Optional AbortSignal to cancel the request
+ * @returns Array of Song objects in the chart
+ */
 export async function getCharts(
   chartId: string = "songs",
   signal?: AbortSignal

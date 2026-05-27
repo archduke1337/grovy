@@ -24,7 +24,7 @@ const libraryNav = [
 
 export const Sidebar = () => {
   const pathname = usePathname();
-  const { playlists = [], createPlaylist, isAuthenticated } = usePlayer();
+  const { playlists = [], createPlaylist } = usePlayer();
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 backdrop-blur-xl z-40 overflow-y-auto custom-scrollbar">

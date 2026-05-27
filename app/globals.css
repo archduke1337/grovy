@@ -239,3 +239,19 @@ html.lenis body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ──────────────────────────────────────────────
+   Utility Classes
+   ────────────────────────────────────────────── */
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+.overflow-y-auto, .overflow-auto {
+  touch-action: pan-y;
+}

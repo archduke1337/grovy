@@ -121,10 +121,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f5f5f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-  ],
   width: "device-width",
   initialScale: 1,
   maximumScale: 5,
@@ -197,6 +193,8 @@ export default function RootLayout({
         {/* Preconnect for critical resources */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preconnect" href="https://ytapi.gauravramyadav.workers.dev" />
+        <link rel="preconnect" href="https://jiosaavn-api.gauravramyadav.workers.dev" />
         
         {/* Pixel font for brand name */}
         <link href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&display=swap" rel="stylesheet" />
@@ -206,7 +204,21 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
         <meta name="color-scheme" content="dark" />
+        <meta name="theme-color" content="#000000" />
         <meta name="msapplication-TileColor" content="#000000" />
+
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              const updateThemeColor = () => {
+                const meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.content = document.documentElement.classList.contains('dark') ? '#000000' : '#f5f5f7';
+              };
+              updateThemeColor();
+              new MutationObserver(updateThemeColor).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+            `,
+          }}
+        />
         
         <link rel="icon" type="image/png" href="/icons/logo.png" />
         <link rel="shortcut icon" href="/icons/logo.png" />

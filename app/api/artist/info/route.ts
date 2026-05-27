@@ -22,6 +22,9 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "Upstream artist info API error" }, { status: res.status });
     }
     const data = await res.json();
+    if (typeof data !== "object" || data === null || (data.error && !data.name && !data.songs)) {
+      return Response.json({ error: "Upstream returned unexpected format" }, { status: 502 });
+    }
     return Response.json(data, {
       headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=7200" }
     });

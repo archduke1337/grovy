@@ -169,7 +169,7 @@ export const PlayerControls: React.FC = () => {
             setPlaybackSpeed(speeds[(idx + 1) % speeds.length]);
           }}
           aria-label={`Playback speed: ${playbackSpeed}x`}
-          className={`px-2 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-colors duration-200 ${
+          className={`px-2 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold tabular-nums transition-colors duration-200 ${
             playbackSpeed !== 1
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
               : "text-white/40 hover:text-white active:text-white"
