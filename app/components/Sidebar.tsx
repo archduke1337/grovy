@@ -45,7 +45,7 @@ export const Sidebar = () => {
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                     isActive 
                       ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                       : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
@@ -70,7 +70,7 @@ export const Sidebar = () => {
                   <Link
                     key={item.name}
                     href={item.path}
-                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                       isActive 
                         ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                         : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
@@ -92,6 +92,7 @@ export const Sidebar = () => {
               </h3>
               <button 
                 onClick={() => createPlaylist("New Playlist")}
+                aria-label="Create playlist"
                 className="p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10 text-gray-400 transition-colors"
               >
                 <Plus size={14} />
@@ -100,7 +101,7 @@ export const Sidebar = () => {
             <div className="space-y-1">
               <Link
                 href="/playlists"
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${
                   pathname === "/playlists" 
                     ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                     : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5"
@@ -115,7 +116,7 @@ export const Sidebar = () => {
                 <Link
                   key={pl.id}
                   href={`/playlists/${pl.id}`}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all truncate ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 truncate ${
                     pathname === `/playlists/${pl.id}` 
                       ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
                       : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5"

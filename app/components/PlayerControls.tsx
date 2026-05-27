@@ -90,6 +90,7 @@ export const PlayerControls: React.FC = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); toggleShuffle(); }}
+          aria-label={isShuffle ? "Disable shuffle" : "Enable shuffle"}
           className={`p-2 rounded-full transition-all ${
             isShuffle
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
@@ -112,6 +113,7 @@ export const PlayerControls: React.FC = () => {
                  setVolume(0);
                }
              }}
+             aria-label={volume === 0 ? "Unmute" : "Mute"}
              className="text-white/60 hover:text-white active:text-white transition-colors p-1"
           >
             {volume === 0 ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}
@@ -144,6 +146,7 @@ export const PlayerControls: React.FC = () => {
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); toggleLoop(); }}
+          aria-label={isLoop ? "Disable loop" : "Enable loop"}
           className={`p-2 rounded-full transition-all ${
             isLoop
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
@@ -165,6 +168,7 @@ export const PlayerControls: React.FC = () => {
             const idx = speeds.indexOf(playbackSpeed);
             setPlaybackSpeed(speeds[(idx + 1) % speeds.length]);
           }}
+          aria-label={`Playback speed: ${playbackSpeed}x`}
           className={`px-2 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all ${
             playbackSpeed !== 1
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"

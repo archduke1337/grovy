@@ -173,14 +173,14 @@ export const Navbar = () => {
             <div className="flex items-center gap-1 ml-2">
               <Link
                 href={accountHref}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
               >
                 <User size={16} />
                 <span className="text-[12px] font-semibold">{accountLabel}</span>
               </Link>
               <button
                 onClick={toggleTheme}
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
                 aria-label="Toggle theme"
                 suppressHydrationWarning
               >
@@ -190,7 +190,7 @@ export const Navbar = () => {
                 href="https://github.com/archduke1337/grovy"
                 target="_blank"
                 aria-label="GitHub"
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
               >
                 <Github size={16} className="group-hover:scale-110 transition-transform" />
               </Link>
@@ -200,14 +200,14 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-1">
               <Link
                 href={accountHref}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
               >
                 <User size={16} />
                 <span className="text-[12px] font-semibold">{accountLabel}</span>
               </Link>
               <button
                 onClick={toggleTheme}
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
                 aria-label="Toggle theme"
                 suppressHydrationWarning
               >
@@ -217,7 +217,7 @@ export const Navbar = () => {
                 href="https://github.com/archduke1337/grovy"
                 target="_blank"
                 aria-label="GitHub"
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
               >
                 <Github size={16} className="group-hover:scale-110 transition-transform" />
               </Link>
@@ -236,7 +236,7 @@ export const Navbar = () => {
             <button
                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                aria-label={isMobileMenuOpen ? "Close menu" : "Toggle menu"}
-               className={`p-2 rounded-xl transition-all text-black dark:text-white ${!isMobileMenuOpen ? "hover:bg-black/5 dark:hover:bg-white/5" : "bg-black/5 dark:bg-white/10"}`}
+               className={`p-2 rounded-xl transition-colors transition-shadow duration-300 text-black dark:text-white ${!isMobileMenuOpen ? "hover:bg-black/5 dark:hover:bg-white/5" : "bg-black/5 dark:bg-white/10"}`}
             >
               {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -259,7 +259,7 @@ export const Navbar = () => {
                     key={item.name}
                     href={item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-[14px] font-semibold ${
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors transition-shadow duration-300 text-[14px] font-semibold ${
                       pathname === item.path 
                         ? "bg-black/5 dark:bg-white/[0.08] text-black dark:text-white" 
                         : "text-black/50 dark:text-white/40 hover:bg-black/[0.03] dark:hover:bg-white/[0.04]"
@@ -284,14 +284,14 @@ export const Navbar = () => {
           <div className="hidden lg:flex items-center gap-1">
               <Link
                 href={accountHref}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
+                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
               >
                 <User size={16} />
                 <span className="text-[12px] font-semibold">{accountLabel}</span>
               </Link>
               <button
                 onClick={toggleTheme}
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
                 aria-label="Toggle theme"
                 suppressHydrationWarning
               >
@@ -301,7 +301,7 @@ export const Navbar = () => {
                 href="https://github.com/archduke1337/grovy"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-all group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
+                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
               >
                   <Github size={18} />
                   GitHub
