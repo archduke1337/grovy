@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 import { APP_NAME } from "@/app/lib/seo";
 
-export const runtime = "edge";
 export const alt = `${APP_NAME} social preview`;
 export const size = {
   width: 1200,

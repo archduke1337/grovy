@@ -123,6 +123,7 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
             exit={{ scale: 0.95, y: 20 }}
             onClick={(e) => e.stopPropagation()}
             className="bg-zinc-950 border border-white/10 rounded-3xl w-full max-w-lg p-6 sm:p-8 space-y-6"
+            style={{ overscrollBehavior: "contain" }}
           >
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-white tracking-tight">Equalizer</h2>
@@ -142,6 +143,7 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
                 <button
                   key={name}
                   onClick={() => applyPreset(name)}
+                  aria-pressed={activePreset === name}
                   className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${
                     activePreset === name
                       ? "bg-white text-black"

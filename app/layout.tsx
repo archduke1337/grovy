@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-page-custom-font, @next/next/google-font-preconnect */
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
-import { Analytics } from "@vercel/analytics/next"
+const Analytics = dynamic(() => import("@vercel/analytics/next").then(m => ({ default: m.Analytics })), { ssr: false });
 import { PlayerProvider } from "@/app/context/PlayerContext";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
@@ -205,6 +205,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
+        <meta name="color-scheme" content="dark" />
         <meta name="msapplication-TileColor" content="#000000" />
         
         <link rel="icon" type="image/png" href="/icons/logo.png" />

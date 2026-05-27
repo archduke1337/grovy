@@ -1,7 +1,6 @@
 import { ImageResponse } from "next/og";
 import { APP_NAME } from "@/app/lib/seo";
 
-export const runtime = "edge";
 export const alt = `${APP_NAME} open-source web music player`;
 export const size = {
   width: 1200,

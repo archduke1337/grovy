@@ -7,11 +7,19 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**",
+        hostname: "i.ytimg.com",
       },
       {
-        protocol: "http",
-        hostname: "**",
+        protocol: "https",
+        hostname: "**.saavncdn.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.googleusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.yt3.ggpht.com",
       },
     ],
     // Optimize image delivery

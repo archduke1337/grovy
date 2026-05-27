@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
 
       const response = await fetchWithTimeout(endpoint);
       if (!response.ok) {
-        return Response.json([], { status: 200 });
+        return Response.json([], { status: 502 });
       }
       const data = await response.json();
 
@@ -357,6 +357,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching songs:", error);
-    return Response.json([], { status: 200 });
+    return Response.json([], { status: 500 });
   }
 }

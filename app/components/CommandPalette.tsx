@@ -181,7 +181,8 @@ export const CommandPalette: React.FC = () => {
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
             className="fixed left-1/2 top-[10%] sm:top-[20%] -translate-x-1/2 w-full max-w-2xl z-[151] px-4"
           >
-            <div className="glass-effect dark:glass-effect-dark rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 dark:border-white/10">
+            <div             className="glass-effect dark:glass-effect-dark rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 dark:border-white/10"
+              style={{ overscrollBehavior: "contain" }}>
               <div className="relative flex items-center p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">
                 {isSearching ? (
                   <Loader2 className="text-blue-500 mr-4 animate-spin shrink-0" size={20} />

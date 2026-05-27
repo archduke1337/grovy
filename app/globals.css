@@ -11,6 +11,12 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
 html {
   background-color: #f5f5f7;
   -webkit-text-size-adjust: 100%;
@@ -20,6 +26,7 @@ html {
 
 html.dark {
   background-color: #000000;
+  color-scheme: dark;
 }
 
 body {
@@ -219,5 +226,16 @@ html.lenis body {
 @media (max-width: 374px) {
   .text-responsive-hero {
     font-size: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

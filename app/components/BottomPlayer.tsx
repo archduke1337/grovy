@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, SkipBack, SkipForward, ChevronUp, Music, Minimize2 } from "lucide-react";
-import { MusicPlayer } from "./MusicPlayer";
+import dynamic from "next/dynamic";
+const MusicPlayer = dynamic(() => import("./MusicPlayer").then(m => ({ default: m.MusicPlayer })));
 import MiniPlayer from "./MiniPlayer";
 import NextImage from "next/image";
 
@@ -29,7 +30,7 @@ export const BottomPlayer = () => {
         >
           <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between gap-8">
             {/* Song Info */}
-            <div className="flex items-center gap-4 w-1/4 min-w-0 group cursor-pointer" onClick={() => setIsExpanded(true)}>
+            <button className="flex items-center gap-4 w-1/4 min-w-0 group cursor-pointer text-left" onClick={() => setIsExpanded(true)} aria-label="Expand player">
               <div className="w-14 h-14 rounded-lg overflow-hidden shadow-lg border border-black/5 dark:border-white/5 relative shrink-0">
                 {currentSong?.cover ? (
                   <NextImage src={currentSong.cover} alt={currentSong.title} width={56} height={56} className="w-full h-full object-cover" />
@@ -50,23 +51,24 @@ export const BottomPlayer = () => {
                   {currentSong?.artist}
                 </p>
               </div>
-            </div>
+            </button>
 
             {/* Controls & Progress */}
             <div className="flex flex-col items-center gap-2 flex-1 max-w-2xl">
               <div className="flex items-center gap-6">
-                <button onClick={previousTrack} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                <button onClick={previousTrack} aria-label="Previous track" className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                   <SkipBack size={20} fill="currentColor" strokeWidth={0} />
                 </button>
                 <motion.button 
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={togglePlayPause}
+                  aria-label={isPlaying ? "Pause" : "Play"}
                   className="w-10 h-10 rounded-full bg-gray-900 dark:bg-white text-white dark:text-black flex items-center justify-center shadow-md hover:brightness-110"
                 >
                   {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-1" />}
                 </motion.button>
-                <button onClick={nextTrack} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+                <button onClick={nextTrack} aria-label="Next track" className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
                   <SkipForward size={20} fill="currentColor" strokeWidth={0} />
                 </button>
               </div>
@@ -101,6 +103,7 @@ export const BottomPlayer = () => {
             <div className="flex items-center gap-4 w-1/4 justify-end">
               <button
                 onClick={() => setIsMiniMode(true)}
+                aria-label="Mini player"
                 className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
                 title="Mini player"
               >
@@ -145,9 +148,10 @@ export const BottomPlayer = () => {
           <div className="px-2.5 sm:px-3 md:px-5 py-2 sm:py-2.5 md:py-3 flex items-center justify-between gap-2.5 sm:gap-3 md:gap-4 relative z-20">
             
             {/* Song Info */}
-            <div 
-              className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group"
+            <button 
+              className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group text-left"
               onClick={() => setIsExpanded(true)}
+              aria-label="Expand player"
             >
               <div className="w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-full overflow-hidden relative shadow-lg border border-white/10 shrink-0">
                 <AnimatePresence mode="wait">
@@ -181,12 +185,13 @@ export const BottomPlayer = () => {
                   {currentSong?.artist}
                 </p>
               </div>
-            </div>
+            </button>
 
             {/* Controls */}
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4 lg:gap-6 z-20">
               <button 
                 onClick={(e) => { e.stopPropagation(); previousTrack(); }}
+                aria-label="Previous track"
                 className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-all hidden sm:block hover:scale-110 active:scale-95"
               >
                 <SkipBack size={20} fill="currentColor" strokeWidth={0} />
@@ -196,6 +201,7 @@ export const BottomPlayer = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+                aria-label={isPlaying ? "Pause" : "Play"}
                 className="p-2 sm:p-2.5 md:p-3 rounded-full bg-white text-black shadow-lg flex items-center justify-center shrink-0 hover:brightness-110 transition-all"
               >
                 {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
@@ -203,6 +209,7 @@ export const BottomPlayer = () => {
 
               <button 
                 onClick={(e) => { e.stopPropagation(); nextTrack(); }}
+                aria-label="Next track"
                 className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-all hover:scale-110 active:scale-95"
               >
                 <SkipForward size={20} fill="currentColor" strokeWidth={0} />
@@ -238,6 +245,7 @@ export const BottomPlayer = () => {
             
             <button 
               onClick={() => setIsExpanded(false)}
+              aria-label="Close"
               className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2.5 sm:p-3 rounded-full bg-black/20 text-white/40 hover:text-white hover:bg-white/10 transition-all z-50 backdrop-blur-md"
             >
               <ChevronUp size={20} className="rotate-180" />

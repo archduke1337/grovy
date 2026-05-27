@@ -75,6 +75,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-120 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-0"
+          style={{ overscrollBehavior: "contain" }}
         >
           <button 
             onClick={onClose}
