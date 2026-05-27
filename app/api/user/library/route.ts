@@ -68,6 +68,7 @@ async function getSessionContext(
   req: NextRequest
 ): Promise<SessionContext | NextResponse> {
   const sessionSecret = readSessionSecretFromRequest(req);
+  console.log(`[getSessionContext] Cookie check:`, !!sessionSecret);
 
   if (!sessionSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -98,7 +99,8 @@ async function getSessionContext(
       tables,
       databaseId,
     };
-  } catch {
+  } catch (error: any) {
+    console.warn("[getSessionContext] Error:", error.message || error);
     const response = NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     clearSessionCookie(response);
     return response;
@@ -514,8 +516,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
+  console.log(`[PUT /api/user/library] Request received`);
   const context = await getSessionContext(req);
   if (isNextResponse(context)) {
+    console.log(`[PUT /api/user/library] auth failed`);
     return context;
   }
 
