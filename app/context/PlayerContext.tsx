@@ -26,6 +26,7 @@ import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
 import { useAuth } from "@/app/hooks/useAuth";
 import { SignInPrompt } from "@/app/components/SignInPrompt";
+import { useToast } from "@/app/components/Toast";
 import Hls from "hls.js";
 
 interface Colors {
@@ -91,6 +92,8 @@ interface PlayerContextType {
   setCrossfadeEnabled: (enabled: boolean) => void;
   moveSongInQueue: (from: number, to: number) => void;
   removeFromQueue: (index: number) => void;
+  videoMode: boolean;
+  setVideoMode: (enabled: boolean) => void;
 }
 
 const DEFAULT_COLORS: Colors = {
@@ -109,9 +112,30 @@ declare global {
 }
 
 
-const YouTubeHiddenPlayer = React.memo(() => {
+const YouTubeHiddenPlayer = React.memo(({ videoMode }: { videoMode: boolean }) => {
+  if (videoMode) {
+    return (
+      <div
+        id="yt-player-hidden"
+        style={{
+          position: 'fixed',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: 'min(90vw, 480px)',
+          aspectRatio: '16 / 9',
+          zIndex: 60,
+          borderRadius: '1rem',
+          overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.1)',
+          boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)',
+          pointerEvents: 'auto',
+        }}
+      />
+    );
+  }
   return <div id="yt-player-hidden" style={{ position: 'absolute', top: '-9999px', left: '-9999px' }} />;
-}, () => true);
+}, (prev, next) => prev.videoMode === next.videoMode);
 
 YouTubeHiddenPlayer.displayName = "YouTubeHiddenPlayer";
 
@@ -119,6 +143,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const { authenticated: isAuthenticated } = useAuth();
+  const { toast } = useToast();
   const [showSignInPrompt, setShowSignInPrompt] = useState(false);
   const [signInMessage, setSignInMessage] = useState("");
 
@@ -178,6 +203,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [normalizationEnabled, setNormalizationEnabledState] = useState(false);
   const [crossfadeEnabled, setCrossfadeEnabledState] = useState(false);
   const crossfadeRef = useRef(false);
+  const [videoMode, setVideoModeState] = useState(false);
+  const videoModeRef = useRef(false);
 
   // Initialize YouTube IFrame API and Hydrate History
   useEffect(() => {
@@ -214,6 +241,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         const savedSpeed = Number(prefs.playbackSpeed);
         if (!Number.isNaN(savedSpeed) && savedSpeed > 0) {
           setPlaybackSpeedState(Math.max(0.25, Math.min(2, savedSpeed)));
+        }
+
+        if (prefs.videoMode === true) {
+          setVideoModeState(true);
+          videoModeRef.current = true;
         }
       } catch (e) {}
     })();
@@ -601,6 +633,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     void patchGrovyPrefs({ crossfadeEnabled: enabled });
   }, []);
 
+  // Video mode toggle
+  const setVideoMode = useCallback((enabled: boolean) => {
+    setVideoModeState(enabled);
+    videoModeRef.current = enabled;
+    void patchGrovyPrefs({ videoMode: enabled });
+  }, []);
+
   // Playback speed
   const setPlaybackSpeed = useCallback((speed: number) => {
     const clamped = Math.max(0.25, Math.min(2, speed));
@@ -943,9 +982,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return [];
       console.error("loadSongs error:", e);
+      toast("Search failed", {
+        type: "error",
+        action: {
+          label: "Retry",
+          onClick: () => { void loadSongs(query, source); },
+        },
+      });
       return [];
     }
-  }, []);
+  }, [toast]);
 
   const setQueue = useCallback((newSongs: Song[], index: number) => {
     // Resume AudioContext on user interaction (browser autoplay policy)
@@ -963,17 +1009,31 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       if (Array.isArray(data) && data.length > 0) setQueue(data, 0);
     } catch (e) {
       console.error("startRadio error:", e);
+      toast("Failed to start radio", {
+        type: "error",
+        action: {
+          label: "Retry",
+          onClick: () => { void startRadio(id, opts); },
+        },
+      });
     }
-  }, [setQueue]);
+  }, [setQueue, toast]);
 
   const loadRelated = useCallback(async (id: string, opts?: { title?: string; artist?: string }, signal?: AbortSignal) => {
     try {
       return await getRelatedSongs(id, opts, signal);
     } catch (e) {
       console.error("loadRelated error:", e);
+      toast("Failed to load related songs", {
+        type: "error",
+        action: {
+          label: "Retry",
+          onClick: () => { void loadRelated(id, opts); },
+        },
+      });
       return [];
     }
-  }, []);
+  }, [toast]);
 
   const createPlaylist = useCallback((name: string, initialSongs?: Song[]): string => {
     if (!requireAuth("create playlists")) return "";
@@ -1243,6 +1303,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setCrossfadeEnabled,
     moveSongInQueue,
     removeFromQueue,
+    videoMode,
+    setVideoMode,
   }), [
     songs, currentSongIndex, isPlaying, currentTime, duration, volume,
     isLoop, isShuffle, favorites, colors, isAuthenticated, play, pause, togglePlayPause,
@@ -1256,6 +1318,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     gainNodeState, normalizationEnabled, setNormalizationEnabled,
     crossfadeEnabled, setCrossfadeEnabled,
     moveSongInQueue, removeFromQueue,
+    videoMode, setVideoMode,
   ]);
 
   // Browser Media Session integration (lock screen, media keys)
@@ -1275,7 +1338,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <PlayerContext.Provider value={value}>
-      <YouTubeHiddenPlayer />
+      <YouTubeHiddenPlayer videoMode={videoMode} />
       <div style={{ display: 'contents', 
           // @ts-ignore
           '--player-primary': colors.primary, 

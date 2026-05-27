@@ -2,36 +2,7 @@ import { NextRequest } from "next/server";
 import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
-
-// Helper: fetch with timeout to prevent hanging on slow external APIs
-function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
-}
-
-function pickArtist(item: any): string {
-  if (Array.isArray(item?.artists) && item.artists.length > 0) {
-    return item.artists
-      .map((a: any) => (typeof a === "string" ? a : a?.name || ""))
-      .filter(Boolean)
-      .join(", ");
-  }
-  if (typeof item?.artist === "string" && item.artist.trim()) return item.artist;
-  if (typeof item?.author === "string" && item.author.trim()) return item.author;
-  if (item?.channel?.name) return String(item.channel.name);
-  return "YouTube Artist";
-}
-
-function parseDuration(value: any): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value !== "string") return 0;
-  const chunks = value.split(":").map((part) => Number(part));
-  if (chunks.some((part) => Number.isNaN(part))) return 0;
-  if (chunks.length === 2) return chunks[0] * 60 + chunks[1];
-  if (chunks.length === 3) return chunks[0] * 3600 + chunks[1] * 60 + chunks[2];
-  return 0;
-}
+import { fetchWithTimeout, parseDuration } from "@/app/lib/apiHelpers";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

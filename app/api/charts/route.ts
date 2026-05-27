@@ -1,75 +1,21 @@
 import { NextRequest } from "next/server";
-import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
+import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
 
-function fetchWithTimeout(url: string, timeout = 8000): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
-}
-
-const VALID_COUNTRIES = new Set(["IN", "US", "GB", "KR", "JP", "BR", "DE", "FR", "CA", "AU"]);
+const VALID_COUNTRIES_SET = new Set(VALID_COUNTRIES);
 
 function resolveCountry(request: NextRequest): string {
   const queryCountry = (request.nextUrl.searchParams.get("country") || "").toUpperCase();
-  if (VALID_COUNTRIES.has(queryCountry)) return queryCountry;
+  if (VALID_COUNTRIES_SET.has(queryCountry as any)) return queryCountry;
 
   const edgeCountry = (request.headers.get("x-vercel-ip-country") || "").toUpperCase();
-  if (VALID_COUNTRIES.has(edgeCountry)) return edgeCountry;
+  if (VALID_COUNTRIES_SET.has(edgeCountry as any)) return edgeCountry;
 
   const acceptLanguage = request.headers.get("accept-language") || "";
   const langMatch = acceptLanguage.match(/-([A-Za-z]{2})(?:,|;|$)/);
   const langCountry = (langMatch?.[1] || "").toUpperCase();
-  if (VALID_COUNTRIES.has(langCountry)) return langCountry;
+  if (VALID_COUNTRIES_SET.has(langCountry as any)) return langCountry;
 
   return "IN";
-}
-
-function pickArtist(item: any): string {
-  if (Array.isArray(item?.artists) && item.artists.length > 0) {
-    return item.artists
-      .map((a: any) => (typeof a === "string" ? a : a?.name || ""))
-      .filter(Boolean)
-      .join(", ");
-  }
-
-  if (typeof item?.artist === "string" && item.artist.trim()) return item.artist;
-  if (typeof item?.author === "string" && item.author.trim()) return item.author;
-  if (typeof item?.primaryArtists === "string" && item.primaryArtists.trim()) return item.primaryArtists;
-  if (item?.channel?.name) return String(item.channel.name);
-  return "Unknown Artist";
-}
-
-function pickCover(item: any): string | undefined {
-  if (Array.isArray(item?.image) && item.image.length > 0) {
-    return item.image[item.image.length - 1]?.url || item.image[0]?.url;
-  }
-
-  const bestThumb = getBestThumbnail(item?.thumbnails);
-  if (bestThumb) return bestThumb;
-
-  if (typeof item?.thumbnail === "string" && item.thumbnail) {
-    return getHDThumbnail(item.thumbnail);
-  }
-
-  return getHDThumbnail(item?.thumbnails?.[0]?.url);
-}
-
-function pickSaavnDownloadUrl(item: any): string {
-  const direct =
-    item?.downloadUrl?.[item.downloadUrl.length - 1]?.url ||
-    (Array.isArray(item?.downloadUrl) ? item.downloadUrl[0]?.url : item?.downloadUrl);
-  return typeof direct === "string" ? direct : "";
-}
-
-function parseDuration(value: any): number {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value !== "string") return 0;
-
-  const chunks = value.split(":").map((part) => Number(part));
-  if (chunks.some((part) => Number.isNaN(part))) return 0;
-  if (chunks.length === 2) return chunks[0] * 60 + chunks[1];
-  if (chunks.length === 3) return chunks[0] * 3600 + chunks[1] * 60 + chunks[2];
-  return 0;
 }
 
 const corsHeaders = {
