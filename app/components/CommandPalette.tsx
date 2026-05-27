@@ -198,7 +198,7 @@ export const CommandPalette: React.FC = () => {
                   placeholder="Search groovymusic globally..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none text-lg sm:text-xl text-gray-900 dark:text-white placeholder-gray-400"
+                  className="w-full bg-transparent outline-none text-lg sm:text-xl text-gray-900 dark:text-white placeholder-gray-400"
                 />
                 <button onClick={() => setCommandPaletteOpen(false)} aria-label="Close" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white sm:hidden">
                   <X size={20} />
