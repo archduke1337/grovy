@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Play, Music, Trash2, RotateCcw } from "lucide-react";
+import { Clock, Play, Music, Trash2, RotateCcw, Search } from "lucide-react";
 import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 

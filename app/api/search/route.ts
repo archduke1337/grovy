@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
-import { fetchWithTimeout, parseDuration } from "@/app/lib/apiHelpers";
+import { fetchWithTimeout, pickArtist, parseDuration } from "@/app/lib/apiHelpers";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

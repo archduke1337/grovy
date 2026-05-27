@@ -11,6 +11,7 @@ import {
   Shuffle,
   Volume2,
   VolumeX,
+  Monitor,
 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
@@ -33,6 +34,8 @@ export const PlayerControls: React.FC = () => {
     sleepTimerMinutes,
     setSleepTimer,
     sleepTimerEndTime,
+    videoMode,
+    setVideoMode,
   } = usePlayer();
 
   const [isSleepTimerOpen, setIsSleepTimerOpen] = useState(false);
@@ -177,6 +180,24 @@ export const PlayerControls: React.FC = () => {
           title={`Playback speed: ${playbackSpeed}x`}
         >
           {playbackSpeed}x
+        </motion.button>
+
+        <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />
+
+        {/* Video Mode Toggle */}
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={(e) => { e.stopPropagation(); setVideoMode(!videoMode); }}
+          aria-label={videoMode ? "Disable video mode" : "Enable video mode"}
+          className={`p-2 rounded-full transition-colors duration-200 ${
+            videoMode
+              ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+              : "text-white/40 hover:text-white active:text-white"
+          }`}
+          title={videoMode ? "Video mode on" : "Video mode off"}
+        >
+          <Monitor size={18} className="sm:w-5 sm:h-5" />
         </motion.button>
 
         <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />

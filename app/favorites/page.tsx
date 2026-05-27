@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Play, Music, Trash2, Shuffle } from "lucide-react";
+import { Heart, Play, Music, Trash2, Shuffle, Search } from "lucide-react";
 import Image from "next/image";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
@@ -126,15 +126,16 @@ export default function FavoritesPage() {
               </p>
               <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">
                 {isAuthenticated
-                  ? "Songs you love will appear here. Start exploring and mark some tracks!"
+                  ? "Your favorite tracks will appear here. Search for music, tap the heart icon on any song, and build your personal collection."
                   : "Create an account to save your favorite songs and sync them across devices."}
               </p>
            </div>
            <button 
              onClick={() => router.push(isAuthenticated ? "/" : "/auth/sign-in")}
-             className="px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
+             className="flex items-center gap-2.5 mx-auto px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
            >
-             {isAuthenticated ? "Start Browsing" : "Sign In"}
+             <Search size={18} />
+             {isAuthenticated ? "Discover Music" : "Sign In"}
            </button>
         </div>
       )}
