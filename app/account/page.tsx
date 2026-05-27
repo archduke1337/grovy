@@ -78,6 +78,8 @@ function AccountContent() {
     }
   }
 
+  const totalSongsInPlaylists = useMemo(() => playlists.reduce((sum, pl) => sum + pl.songs.length, 0), [playlists]);
+
   if (loading) {
     return (
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-40">
@@ -120,8 +122,6 @@ function AccountContent() {
       </motion.div>
     );
   }
-
-  const totalSongsInPlaylists = useMemo(() => playlists.reduce((sum, pl) => sum + pl.songs.length, 0), [playlists]);
 
   const stats = [
     {
