@@ -2,7 +2,7 @@ import { list } from "@vercel/blob";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
 import { NextRequest } from "next/server";
-import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration, GENRES } from "@/app/lib/apiHelpers";
+import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration, GENRES, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -195,9 +195,8 @@ export async function GET(request: NextRequest) {
       return Response.json([]);
     }
 
-    const VALID_COUNTRIES = ["IN", "US", "GB", "KR", "JP", "BR", "DE", "FR", "CA", "AU"];
     const rawCountry = searchParams.get("country") || "IN";
-    const country = VALID_COUNTRIES.includes(rawCountry) ? rawCountry : "IN";
+    const country = (VALID_COUNTRIES as readonly string[]).includes(rawCountry) ? rawCountry : "IN";
     
     // Parallel fetch from both sources
     const saavnUrl = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent(query)}&limit=15`;

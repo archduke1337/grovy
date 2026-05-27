@@ -431,6 +431,8 @@ function HomeContent() {
 
         if (safeResults.length === 0) {
           setSearchError("");
+        } else {
+          addToSearchHistory(normalizedQuery);
         }
       } catch (error) {
         if (error instanceof Error && error.name === "AbortError") return;
@@ -444,7 +446,7 @@ function HomeContent() {
         }
       }
     },
-    [searchQuery]
+    [searchQuery, addToSearchHistory]
   );
 
   useEffect(() => {
@@ -466,10 +468,48 @@ function HomeContent() {
     setSearchResults([]);
     setSuggestions([]);
     setShowSuggestions(false);
+    setShowSearchHistory(false);
     setSearchError("");
     setLastSubmittedQuery("");
     setIsLoadingSuggestions(false);
     setIsSearching(false);
+  }, []);
+
+  const addToSearchHistory = useCallback((query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return;
+
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
+      const updated = [trimmed, ...filtered].slice(0, 10);
+      try {
+        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
+      } catch {
+        // Ignore storage errors
+      }
+      return updated;
+    });
+  }, []);
+
+  const removeFromSearchHistory = useCallback((query: string) => {
+    setSearchHistory((prev) => {
+      const updated = prev.filter((item) => item !== query);
+      try {
+        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
+      } catch {
+        // Ignore storage errors
+      }
+      return updated;
+    });
+  }, []);
+
+  const clearSearchHistory = useCallback(() => {
+    setSearchHistory([]);
+    try {
+      localStorage.removeItem("grovy-search-history");
+    } catch {
+      // Ignore storage errors
+    }
   }, []);
 
   useEffect(() => {
@@ -500,6 +540,7 @@ function HomeContent() {
     const handler = (event: MouseEvent) => {
       if (searchBoxRef.current && !searchBoxRef.current.contains(event.target as Node)) {
         setShowSuggestions(false);
+        setShowSearchHistory(false);
       }
     };
 
@@ -557,6 +598,7 @@ function HomeContent() {
 
       setSearchQuery(suggestion);
       setShowSuggestions(false);
+      setShowSearchHistory(false);
       setSearchError("");
       void runSearch(suggestion);
     },
@@ -611,11 +653,12 @@ function HomeContent() {
                     setLastSubmittedQuery("");
                   }
                 }}
-                onFocus={() => setShowSuggestions(true)}
+                onFocus={() => { setShowSuggestions(true); setShowSearchHistory(true); }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
                     event.preventDefault();
                     setShowSuggestions(false);
+                    setShowSearchHistory(false);
                     void runSearch();
                   }
                 }}
@@ -668,6 +711,52 @@ function HomeContent() {
                   ) : (
                     <div className="px-5 py-4 text-sm font-medium text-gray-500 dark:text-white/45">No ideas — keep typing.</div>
                   )}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+
+            <AnimatePresence>
+              {showSearchHistory && !searchQuery.trim() && searchHistory.length > 0 ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -6, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -6, scale: 0.98 }}
+                  transition={{ duration: 0.14 }}
+                  className="mt-3 w-full bg-white dark:bg-gray-950 border border-gray-200/60 dark:border-white/10 rounded-2xl shadow-2xl overflow-hidden"
+                >
+                  <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100/70 dark:border-white/5">
+                    <span className="text-xs font-bold uppercase tracking-widest text-gray-400 dark:text-white/30">Recent Searches</span>
+                    <button
+                      onClick={clearSearchHistory}
+                      className="text-xs font-bold text-gray-400 hover:text-red-500 dark:text-white/30 dark:hover:text-red-400 transition-colors"
+                    >
+                      Clear all
+                    </button>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                    {searchHistory.map((query, index) => (
+                      <div
+                        key={`${query}-${index}`}
+                        className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50 dark:hover:bg-white/7 transition-colors group"
+                      >
+                        <Clock size={15} className="text-gray-400 dark:text-white/25 shrink-0" />
+                        <button
+                          onMouseDown={(event) => event.preventDefault()}
+                          onClick={() => applySuggestionSelection(query)}
+                          className="flex-1 text-left text-sm font-medium text-gray-800 dark:text-white/75 truncate"
+                        >
+                          {query}
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeFromSearchHistory(query); }}
+                          className="p-1 rounded-full text-gray-400 hover:text-red-500 dark:text-white/25 dark:hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all"
+                          aria-label="Remove from history"
+                        >
+                          <X size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 </motion.div>
               ) : null}
             </AnimatePresence>

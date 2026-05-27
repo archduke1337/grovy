@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration } from "@/app/lib/apiHelpers";
+import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,9 +13,8 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   try {
-    const VALID_COUNTRIES = ["IN", "US", "GB", "CA", "AU", "DE", "FR", "JP", "BR", "KR"];
     const rawCountry = request.nextUrl.searchParams.get("country") || "IN";
-    const country = VALID_COUNTRIES.includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : "IN";
+    const country = (VALID_COUNTRIES as readonly string[]).includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : "IN";
 
     // Use documented endpoints that consistently return playable track data.
     const saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent("trending songs")}&limit=30`;
