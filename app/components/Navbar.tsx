@@ -85,7 +85,7 @@ export const Navbar = () => {
     <div className="fixed top-0 left-0 right-0 z-[60] px-3 sm:px-4 py-2 md:py-3 pointer-events-none">
       <nav 
         className={`
-          mx-auto max-w-5xl pointer-events-auto transition-all duration-500 ease-out
+          mx-auto max-w-5xl pointer-events-auto transition-colors transition-shadow duration-500 ease-out
           ${scrolled 
             ? "rounded-2xl px-4 sm:px-5 py-2.5 backdrop-blur-2xl bg-white/70 dark:bg-white/[0.06] shadow-lg shadow-black/[0.04] dark:shadow-black/20 border border-black/[0.04] dark:border-white/[0.08]" 
             : "rounded-2xl px-4 sm:px-6 py-3 sm:py-4 bg-transparent"}
@@ -151,7 +151,7 @@ export const Navbar = () => {
                   <Link
                     key={item.name}
                     href={item.path}
-                    className={`relative px-4 py-2 rounded-lg text-[12px] font-semibold transition-all duration-300 ${
+                    className={`relative px-4 py-2 rounded-lg text-[12px] font-semibold transition-colors transition-shadow duration-300 ${
                       isActive
                         ? "text-black dark:text-white"
                         : "text-black/40 dark:text-white/35 hover:text-black/70 dark:hover:text-white/60"

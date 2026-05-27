@@ -48,6 +48,7 @@ export const PlayerControls: React.FC = () => {
           whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
           whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); previousTrack(); }}
+          aria-label="Previous track"
           className="p-3 sm:p-4 rounded-full text-white/70 hover:text-white active:text-white transition-all bg-transparent hover:bg-white/10 active:bg-white/10"
         >
           <SkipBack size={24} className="sm:w-8 sm:h-8 md:w-9 md:h-9" fill="currentColor" strokeWidth={0} />
@@ -57,6 +58,7 @@ export const PlayerControls: React.FC = () => {
           whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(255,255,255,0.3)" }}
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
+          aria-label={isPlaying ? "Pause" : "Play"}
           className="flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full relative group overflow-hidden border border-white/20 backdrop-blur-2xl"
           style={{ 
             background: "radial-gradient(circle at center, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%)",
@@ -75,6 +77,7 @@ export const PlayerControls: React.FC = () => {
           whileHover={{ scale: 1.1, backgroundColor: "rgba(255,255,255,0.1)" }}
           whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); nextTrack(); }}
+          aria-label="Next track"
           className="p-3 sm:p-4 rounded-full text-white/70 hover:text-white active:text-white transition-all bg-transparent hover:bg-white/10 active:bg-white/10"
         >
           <SkipForward size={24} className="sm:w-8 sm:h-8 md:w-9 md:h-9" fill="currentColor" strokeWidth={0} />
