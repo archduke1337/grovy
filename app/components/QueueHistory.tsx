@@ -45,6 +45,7 @@ export const QueueHistory: React.FC = () => {
                   width={36}
                   height={36}
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">

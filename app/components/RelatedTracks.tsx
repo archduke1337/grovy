@@ -77,6 +77,7 @@ export const RelatedTracks: React.FC = () => {
                   width={160}
                   height={160}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 opacity-90 group-hover:opacity-100" 
+                  loading="lazy"
                 />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">

@@ -149,6 +149,7 @@ export const AddToPlaylistModal: React.FC = () => {
                                  width={44}
                                  height={44}
                                  className="w-full h-full object-cover rounded-xl" 
+                                 loading="lazy"
                                />
                              ) : (
                                <Music size={18} className="text-gray-400" />

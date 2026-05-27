@@ -124,6 +124,7 @@ export const Playlist: React.FC = () => {
                    width={44} 
                    height={44} 
                    className="w-full h-full object-cover" 
+                   loading={isCurrent ? "eager" : "lazy"}
                  />
                ) : (
                  <div className="w-full h-full flex items-center justify-center bg-white/5">
