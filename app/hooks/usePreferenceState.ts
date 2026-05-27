@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
 
 /**
@@ -11,6 +11,8 @@ export function usePreferenceState<T>(
   initialValue: T
 ): [T, (value: T | ((prev: T) => T)) => void] {
   const [state, setState] = useState<T>(initialValue);
+  const stateRef = useRef(state);
+  stateRef.current = state;
 
   useEffect(() => {
     let isActive = true;
@@ -35,14 +37,10 @@ export function usePreferenceState<T>(
 
   const setPersistedState = useCallback(
     (value: T | ((prev: T) => T)) => {
-      setState((prev) => {
-        const next =
-          typeof value === "function"
-            ? (value as (prev: T) => T)(prev)
-            : value;
-        return next;
-      });
-      const nextValue = typeof value === "function" ? value : value;
+      const nextValue = typeof value === "function"
+        ? (value as (prev: T) => T)(stateRef.current)
+        : value;
+      setState(nextValue);
       void patchGrovyPrefs({ [key]: nextValue as unknown });
     },
     [key]

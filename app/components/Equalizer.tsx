@@ -41,7 +41,7 @@ interface EqualizerProps {
 export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioContext, sourceNode, filters }) => {
   const [bands, setBands] = useState<Band[]>(DEFAULT_BANDS.map(b => ({ ...b })));
   const [activePreset, setActivePreset] = useState("Flat");
-  const saveTimerRef = useRef<NodeJS.Timeout>();
+  const saveTimerRef = useRef<NodeJS.Timeout>(undefined);
 
   const handleGainChange = useCallback((index: number, gain: number) => {
     setBands(prev => {
