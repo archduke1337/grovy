@@ -278,34 +278,6 @@ export const Navbar = () => {
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-3 rounded-xl text-black/50 dark:text-white/40 text-[14px] font-semibold"
                 >
-                <Github size={16} className="group-hover:scale-110 transition-transform" />
-              </Link>
-            </div>
-          </div>
-
-          <div className="hidden lg:flex items-center gap-1">
-              <Link
-                href={accountHref}
-                className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 text-black/40 dark:text-white/40 hover:text-black/70 dark:hover:text-white/70"
-              >
-                <User size={16} />
-                <span className="text-[12px] font-semibold">{accountLabel}</span>
-              </Link>
-              <button
-                onClick={toggleTheme}
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
-                aria-label="Toggle theme"
-                suppressHydrationWarning
-              >
-                {isDark ? <Sun size={16} className="group-hover:rotate-45 transition-transform" /> : <Moon size={16} className="group-hover:-rotate-12 transition-transform" />}
-              </button>
-                <Link
-                  href="https://github.com/archduke1337/grovy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-black/50 dark:text-white/40 text-[14px] font-semibold"
-                >
                   <Github size={18} />
                   GitHub
                 </Link>

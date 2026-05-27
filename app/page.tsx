@@ -159,7 +159,7 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
               onPlay();
             }}
             aria-label="Play"
-            className="w-14 h-14 bg-sky-500 hover:bg-sky-600 rounded-full flex items-center justify-center shadow-2xl transition-all"
+            className="w-14 h-14 bg-sky-500 hover:bg-sky-600 rounded-full flex items-center justify-center shadow-2xl transition-colors transition-transform"
           >
             <Play size={22} fill="white" className="text-white ml-0.5" />
           </motion.button>
@@ -173,7 +173,7 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
             onFavorite(song);
           }}
           aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-all backdrop-blur-sm z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-colors transition-opacity backdrop-blur-sm z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           title={isFav ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-sky-400" : "text-white"} />
