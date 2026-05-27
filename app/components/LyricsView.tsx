@@ -78,6 +78,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           aria-modal="true"
           aria-label="Lyrics"
           className="fixed inset-0 z-120 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-0"
+          style={{ overscrollBehavior: "contain" }}
         >
           <button 
             onClick={onClose}

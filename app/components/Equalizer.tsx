@@ -126,6 +126,7 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
             aria-modal="true"
             aria-label="Equalizer"
             className="bg-zinc-950 border border-white/10 rounded-3xl w-full max-w-lg p-6 sm:p-8 space-y-6"
+            style={{ overscrollBehavior: "contain" }}
           >
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-white tracking-tight">Equalizer</h2>

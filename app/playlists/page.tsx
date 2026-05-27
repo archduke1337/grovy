@@ -84,14 +84,14 @@ export default function PlaylistsPage() {
           <button
             onClick={handleExportAll}
             disabled={playlists.length === 0}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all disabled:opacity-20 active:scale-95"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-colors transition-shadow duration-300 disabled:opacity-20 active:scale-95"
           >
             <Download size={16} />
             <span>Export</span>
           </button>
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-all active:scale-95"
+            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-colors transition-shadow duration-300 active:scale-95"
           >
             <Upload size={16} />
             <span>Import</span>
@@ -102,11 +102,11 @@ export default function PlaylistsPage() {
       
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
         {/* Create New Card */}
-        <motion.div
+        <motion.button
           onClick={() => !isCreating && setIsCreating(true)}
           whileHover={{ scale: 1.02, y: -4 }}
           whileTap={{ scale: 0.98 }}
-          className="aspect-square rounded-4xl sm:rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/6 hover:border-blue-500/50 dark:hover:border-blue-500/30 flex flex-col items-center justify-center gap-4 group transition-all cursor-pointer relative overflow-hidden bg-gray-50 dark:bg-white/1"
+          className="aspect-square rounded-4xl sm:rounded-[2.5rem] border-2 border-dashed border-gray-200 dark:border-white/6 hover:border-blue-500/50 dark:hover:border-blue-500/30 flex flex-col items-center justify-center gap-4 group cursor-pointer relative overflow-hidden bg-gray-50 dark:bg-white/1"
         >
           {isCreating ? (
             <div className="w-full px-6 space-y-4 text-center z-10" onClick={(e) => e.stopPropagation()}>
@@ -132,13 +132,13 @@ export default function PlaylistsPage() {
             </div>
           ) : (
             <>
-              <div className="w-16 h-16 rounded-3xl bg-blue-500/10 flex items-center justify-center transition-all group-hover:scale-110 group-hover:bg-blue-500 group-hover:shadow-2xl group-hover:shadow-blue-500/40">
+              <div className="w-16 h-16 rounded-3xl bg-blue-500/10 flex items-center justify-center transition-colors transition-shadow duration-300 group-hover:scale-110 group-hover:bg-blue-500 group-hover:shadow-2xl group-hover:shadow-blue-500/40">
                 <Plus size={32} className="text-blue-500 group-hover:text-white transition-colors" />
               </div>
               <span className="font-black text-[13px] sm:text-[14px] text-gray-400 dark:text-white/20 uppercase tracking-widest">New Playlist</span>
             </>
           )}
-        </motion.div>
+        </motion.button>
 
         {/* Existing Playlists */}
         <AnimatePresence>
@@ -163,7 +163,7 @@ export default function PlaylistsPage() {
                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate leading-tight">{playlist.name}</h3>
                    <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">{playlist.songs.length} Tracks</p>
                    
-                   <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-all duration-500 scale-90 group-hover:scale-100">
+                   <div className="absolute top-6 right-6 opacity-0 group-hover:opacity-100 transition-colors transition-shadow duration-300 duration-500 scale-90 group-hover:scale-100">
                       <div className="w-14 h-14 rounded-full bg-white/95 dark:bg-white/10 backdrop-blur-2xl flex items-center justify-center shadow-2xl">
                         <PlayCircle size={32} className="text-black dark:text-white" />
                       </div>
