@@ -4,7 +4,7 @@ import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } fr
 import NextImage from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Heart, Music, Play, Search, X } from "lucide-react";
+import { Heart, Music, Play, Search, X, Clock, Trash2 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { getSearchSuggestions, searchSongs } from "@/app/lib/api";
 import { getHDThumbnail } from "./lib/thumbnail";
@@ -225,6 +225,8 @@ function HomeContent() {
   const [searchResults, setSearchResults] = useState<HomeSong[]>([]);
   const [searchError, setSearchError] = useState("");
   const [lastSubmittedQuery, setLastSubmittedQuery] = useState("");
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [showSearchHistory, setShowSearchHistory] = useState(false);
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -259,6 +261,21 @@ function HomeContent() {
   useEffect(() => {
     searchResultsRef.current = searchResults;
   }, [searchResults]);
+
+  // Load search history from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("grovy-search-history");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          setSearchHistory(parsed.slice(0, 10));
+        }
+      }
+    } catch {
+      // Ignore parse errors
+    }
+  }, []);
 
   useEffect(() => {
     const playId = searchParams.get("play");

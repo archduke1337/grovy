@@ -101,6 +101,12 @@ export const BottomPlayer = () => {
 
             {/* Extra Controls */}
             <div className="flex items-center gap-4 w-1/4 justify-end">
+              {videoMode && currentSong?.source === "YouTube" && (
+                <div className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-white/10 text-white/60" title="Video mode active">
+                  <Monitor size={14} />
+                  <span className="text-[10px] font-medium">VIDEO</span>
+                </div>
+              )}
               <button
                 onClick={() => setIsMiniMode(true)}
                 aria-label="Mini player"
@@ -178,9 +184,14 @@ export const BottomPlayer = () => {
               </div>
               
               <div className="flex flex-col min-w-0 justify-center">
-                <h4 className="font-bold text-white truncate text-[12px] sm:text-[13px] md:text-sm tracking-wide">
-                  {currentSong?.title}
-                </h4>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-white truncate text-[12px] sm:text-[13px] md:text-sm tracking-wide">
+                    {currentSong?.title}
+                  </h4>
+                  {videoMode && currentSong?.source === "YouTube" && (
+                    <Monitor size={12} className="text-white/40 shrink-0" />
+                  )}
+                </div>
                 <p className="text-[11px] sm:text-xs text-white/40 truncate font-medium">
                   {currentSong?.artist}
                 </p>
