@@ -169,7 +169,7 @@ export default function PlaylistsPage() {
                       </div>
                    </div>
                 </div>
-              </motion.div>
+        </motion.button>
             </Link>
           ))}
         </AnimatePresence>

@@ -78,45 +78,48 @@ function SignUpForm() {
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+          <label htmlFor="sign-up-name" className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
             Name
           </label>
           <input
+            id="sign-up-name"
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoComplete="name"
             required
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus:border-blue-500/60"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+          <label htmlFor="sign-up-email" className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
             Email
           </label>
           <input
+            id="sign-up-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             required
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus:border-blue-500/60"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+          <label htmlFor="sign-up-password" className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
             Password
           </label>
           <input
+            id="sign-up-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
             minLength={8}
             required
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus:border-blue-500/60"
           />
           <p className="text-xs text-gray-500 dark:text-white/40">
             Use at least 8 characters.
@@ -124,17 +127,18 @@ function SignUpForm() {
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+          <label htmlFor="sign-up-confirm-password" className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
             Confirm Password
           </label>
           <input
+            id="sign-up-confirm-password"
             type="password"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             autoComplete="new-password"
             minLength={8}
             required
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus:border-blue-500/60"
           />
         </div>
 
