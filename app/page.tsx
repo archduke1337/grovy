@@ -487,10 +487,13 @@ function HomeContent() {
 
   const handlePlayFromResults = useCallback(
     (song: HomeSong) => {
-      queueSongFromList(searchResults, song);
+      const index = searchResults.findIndex((s) => s.id === song.id);
+      if (index !== -1) {
+        setQueue(searchResults, index);
+      }
       setShowSuggestions(false);
     },
-    [queueSongFromList, searchResults]
+    [setQueue, searchResults]
   );
 
   const resultSuggestions = useMemo(() => {

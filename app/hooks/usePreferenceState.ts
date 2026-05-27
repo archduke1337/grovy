@@ -12,7 +12,10 @@ export function usePreferenceState<T>(
 ): [T, (value: T | ((prev: T) => T)) => void] {
   const [state, setState] = useState<T>(initialValue);
   const stateRef = useRef(state);
-  stateRef.current = state;
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     let isActive = true;

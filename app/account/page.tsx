@@ -121,6 +121,8 @@ function AccountContent() {
     );
   }
 
+  const totalSongsInPlaylists = useMemo(() => playlists.reduce((sum, pl) => sum + pl.songs.length, 0), [playlists]);
+
   const stats = [
     {
       icon: Heart,
@@ -147,8 +149,6 @@ function AccountContent() {
       href: "/history",
     },
   ];
-
-  const totalSongsInPlaylists = useMemo(() => playlists.reduce((sum, pl) => sum + pl.songs.length, 0), [playlists]);
 
   return (
     <motion.div
