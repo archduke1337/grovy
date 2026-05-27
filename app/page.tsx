@@ -227,6 +227,8 @@ function HomeContent() {
   const searchRunIdRef = useRef(0);
   const hasHandledSharedSongRef = useRef(false);
   const handledUrlSearchRef = useRef("");
+  const songsRef = useRef(songs);
+  const searchResultsRef = useRef(searchResults);
 
   useEffect(() => {
     const timeGreeting = resolveTimeGreeting();
@@ -245,17 +247,13 @@ function HomeContent() {
     return () => controller.abort();
   }, []);
 
-  const queueSongFromList = useCallback(
-    (list: HomeSong[], song: HomeSong) => {
-      const index = list.findIndex((item) => item.id === song.id);
-      if (index >= 0) {
-        setQueue(list, index);
-        return;
-      }
-      setQueue([song], 0);
-    },
-    [setQueue]
-  );
+  useEffect(() => {
+    songsRef.current = songs;
+  }, [songs]);
+
+  useEffect(() => {
+    searchResultsRef.current = searchResults;
+  }, [searchResults]);
 
   useEffect(() => {
     const playId = searchParams.get("play");
@@ -265,7 +263,7 @@ function HomeContent() {
     const sharedTitle = (searchParams.get("title") || "").trim();
     const sharedArtist = (searchParams.get("artist") || "").trim();
 
-    const inMemoryMatch = [...songs, ...searchResults].find((song) => song?.id === playId) as HomeSong | undefined;
+    const inMemoryMatch = [...songsRef.current, ...searchResultsRef.current].find((song) => song?.id === playId) as HomeSong | undefined;
 
     if (inMemoryMatch) {
       setQueue([inMemoryMatch], 0);
@@ -330,7 +328,7 @@ function HomeContent() {
     })();
 
     return () => controller.abort();
-  }, [searchParams, songs, searchResults, setQueue]);
+  }, [searchParams, setQueue]);
 
   useEffect(() => {
     const trimmed = searchQuery.trim();

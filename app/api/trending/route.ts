@@ -57,11 +57,13 @@ function parseDuration(value: any): number {
 
 export async function GET(request: NextRequest) {
   try {
-    const country = request.nextUrl.searchParams.get("country") || "IN";
+    const VALID_COUNTRIES = ["IN", "US", "GB", "CA", "AU", "DE", "FR", "JP", "BR", "KR"];
+    const rawCountry = request.nextUrl.searchParams.get("country") || "IN";
+    const country = VALID_COUNTRIES.includes(rawCountry.toUpperCase()) ? rawCountry.toUpperCase() : "IN";
 
     // Use documented endpoints that consistently return playable track data.
     const saavnEndpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/search/songs?query=${encodeURIComponent("trending songs")}&limit=30`;
-    const ytTrendingEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/trending?country=${country}`;
+    const ytTrendingEndpoint = `https://ytapi.gauravramyadav.workers.dev/api/trending?country=${encodeURIComponent(country)}`;
 
     const [saavnRes, ytRes] = await Promise.all([
       fetchWithTimeout(saavnEndpoint).then(res => res.json()).catch(() => ({ success: false })),

@@ -18,7 +18,7 @@ const AUTH_PAGES = ["/auth/sign-in", "/auth/sign-up"];
 
 function getSessionCookieName(): string {
   const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID?.trim();
-  if (!projectId) return "a_session_unknown";
+  if (!projectId) throw new Error("NEXT_PUBLIC_APPWRITE_PROJECT_ID is not set");
   return `a_session_${projectId}`;
 }
 

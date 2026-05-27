@@ -45,7 +45,7 @@ export default function HistoryPage() {
           <AnimatePresence>
             {recentlyPlayed.map((song, i) => (
               <motion.div
-                key={`${song.id}-${i}`}
+                key={song.id}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -55,7 +55,7 @@ export default function HistoryPage() {
                 onClick={() => setQueue(recentlyPlayed, i)}
                 className="group cursor-pointer space-y-3"
               >
-                <div className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-100 dark:bg-white/3 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                <div className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-100 dark:bg-white/5 shadow-lg group-hover:shadow-2xl transition-all duration-500">
                   {song.cover ? (
                     <Image src={getHDThumbnail(song.cover) || ""} alt={song.title} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
                   ) : (

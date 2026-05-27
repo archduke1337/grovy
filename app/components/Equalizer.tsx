@@ -41,6 +41,7 @@ interface EqualizerProps {
 export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioContext, sourceNode, filters }) => {
   const [bands, setBands] = useState<Band[]>(DEFAULT_BANDS.map(b => ({ ...b })));
   const [activePreset, setActivePreset] = useState("Flat");
+  const saveTimerRef = useRef<NodeJS.Timeout>();
 
   const handleGainChange = useCallback((index: number, gain: number) => {
     setBands(prev => {
@@ -94,12 +95,16 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
   }, [filters]);
 
   useEffect(() => {
-    void patchGrovyPrefs({
-      equalizer: {
-        bands: bands.map((b) => b.gain),
-        preset: activePreset,
-      },
-    });
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      void patchGrovyPrefs({
+        equalizer: {
+          bands: bands.map((b) => b.gain),
+          preset: activePreset,
+        },
+      });
+    }, 500);
+    return () => clearTimeout(saveTimerRef.current);
   }, [bands, activePreset]);
 
   return (

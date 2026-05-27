@@ -1,10 +1,13 @@
 "use client";
 
 import { useEffect, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 
 export default function SmoothScroll({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
   useEffect(() => {
     // Respect prefers-reduced-motion for accessibility
     if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -36,6 +39,13 @@ export default function SmoothScroll({ children }: { children: ReactNode }) {
       lenis.destroy();
     };
   }, []);
+
+  // Scroll to top on route change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   return <>{children}</>;
 }

@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid verification payload", issues: error.flatten() },
+        { error: "Invalid verification payload" },
         { status: 422 }
       );
     }

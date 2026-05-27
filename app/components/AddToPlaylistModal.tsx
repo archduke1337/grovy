@@ -132,7 +132,7 @@ export const AddToPlaylistModal: React.FC = () => {
 
                 <div className="space-y-1 mt-4">
                   {playlists.map((playlist) => {
-                    const alreadyIn = playlist.songs.some(s => s.id === playlistModalSong.id);
+                    const alreadyIn = playlist.songs?.some(s => s.id === playlistModalSong.id) || false;
                     return (
                       <button
                         key={playlist.id}

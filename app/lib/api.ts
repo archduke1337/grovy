@@ -18,12 +18,14 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   const timeoutId = setTimeout(() => controller.abort(), CLIENT_TIMEOUT);
 
   // If caller provides a signal, abort our controller when theirs fires
+  let abortHandler: (() => void) | null = null;
   if (options?.signal) {
     if (options.signal.aborted) {
       clearTimeout(timeoutId);
       controller.abort();
     } else {
-      options.signal.addEventListener('abort', () => controller.abort(), { once: true });
+      abortHandler = () => controller.abort();
+      options.signal.addEventListener('abort', abortHandler, { once: true });
     }
   }
 
@@ -35,9 +37,18 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
     if (!res.ok) {
       throw new ApiError(`Request failed: ${res.statusText}`, res.status);
     }
-    return res.json();
+    let data: any;
+    try {
+      data = await res.json();
+    } catch {
+      throw new ApiError("Invalid JSON response", res.status);
+    }
+    return data;
   } finally {
     clearTimeout(timeoutId);
+    if (abortHandler && options?.signal) {
+      options.signal.removeEventListener('abort', abortHandler);
+    }
   }
 }
 

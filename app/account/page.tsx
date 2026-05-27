@@ -148,7 +148,7 @@ function AccountContent() {
     },
   ];
 
-  const totalSongsInPlaylists = playlists.reduce((sum, pl) => sum + pl.songs.length, 0);
+  const totalSongsInPlaylists = useMemo(() => playlists.reduce((sum, pl) => sum + pl.songs.length, 0), [playlists]);
 
   return (
     <motion.div

@@ -61,7 +61,11 @@ export default function PlaylistDetailPage() {
 
   const handleShuffle = () => {
     if (playlist.songs.length > 0) {
-      const shuffled = [...playlist.songs].sort(() => Math.random() - 0.5);
+      const shuffled = [...playlist.songs];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
       setQueue(shuffled, 0);
     }
   };
@@ -184,7 +188,7 @@ export default function PlaylistDetailPage() {
                        transition={{ delay: i * 0.02 }}
                        onClick={() => setQueue(playlist.songs, i)}
                        className={`group flex items-center gap-3 sm:gap-6 px-3 py-3 sm:px-8 sm:py-5 cursor-pointer transition-all hover:bg-black/3 dark:hover:bg-zinc-800 relative ${
-                         isCurrent ? "bg-black/2 dark:bg-zinc-900" : "" 
+                         isCurrent ? "bg-black/5 dark:bg-zinc-900" : "" 
                        }`}
                      >
                         {/* Play Indicator */}

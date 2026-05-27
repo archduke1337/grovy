@@ -244,7 +244,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             // Request highest available quality for best audio
             try {
               event.target.setPlaybackQuality('hd1080');
-            } catch (e) {}
+      } catch (e) { console.warn("[PlayerContext] Hydration failed:", e); }
           },
           onStateChange: (event: any) => {
             // Only process YT state changes when the current song is a YouTube song.
@@ -624,6 +624,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [songs, currentSongIndex]);
 
   const seek = useCallback((time: number) => {
+    if (!songs[currentSongIndex]) return;
     const currentSong = songs[currentSongIndex];
     if (currentSong?.source === "YouTube" && ytPlayerRef.current?.seekTo) {
       ytPlayerRef.current.seekTo(time, true);
@@ -641,7 +642,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setCurrentSongIndex((prev) => {
       if (isShuffle && songs.length > 1) {
         let next;
-        do { next = Math.floor(Math.random() * songs.length); } while (next === prev);
+        let attempts = 0;
+        do { next = Math.floor(Math.random() * songs.length); attempts++; } while (next === prev && attempts < songs.length);
         return next;
       }
       return (prev + 1) % songs.length;
@@ -816,7 +818,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       loadNewSource();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentSongIndex, songs[currentSongIndex]?.id, songs[currentSongIndex]?.url]);
+  }, [currentSongIndex, songs[currentSongIndex]?.id, songs[currentSongIndex]?.url, normalizationEnabled]);
 
   // Gapless pre-buffer: prefetch next track's stream URL when near end
   const prefetchedUrlRef = useRef<string | null>(null);
@@ -852,9 +854,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setRecentlyPlayed((prev) => {
       const filtered = prev.filter((s) => s.id !== song.id);
       const updated = [song, ...filtered].slice(0, 20);
-      addToHistory(song);
       return updated;
     });
+    addToHistory(song);
   }, [currentSongIndex, songs]);
 
   // Realtime sync for playlists and favorites across tabs/devices.
@@ -1152,7 +1154,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isPlaying, nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
+  }, [nextTrack, previousTrack, seek, togglePlayPause, toggleLoop, changeVolume, isCommandPaletteOpen]);
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
   const toggleFavorite = useCallback((idOrSong: string | Song) => {

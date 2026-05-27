@@ -29,8 +29,8 @@ type PlaylistPayload = z.infer<typeof playlistSchema>;
 
 const updateLibrarySchema = z
   .object({
-    playlists: z.array(playlistSchema).optional(),
-    favorites: z.array(SongSchema).optional(),
+    playlists: z.array(playlistSchema).max(100).optional(),
+    favorites: z.array(SongSchema).max(500).optional(),
   })
   .refine(
     (payload) =>
@@ -68,7 +68,6 @@ async function getSessionContext(
   req: NextRequest
 ): Promise<SessionContext | NextResponse> {
   const sessionSecret = readSessionSecretFromRequest(req);
-  console.log(`[getSessionContext] Cookie check:`, !!sessionSecret);
 
   if (!sessionSecret) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -417,17 +416,34 @@ async function persistPlaylists(
       },
     });
 
-    await tables.deleteRows({
+    const existingTrackRows = await listAllRows(
+      tables,
       databaseId,
-      tableId: APPWRITE_TABLE_IDS.playlistTracks,
-      queries: [
-        Query.equal("userId", userId),
-        Query.equal("playlistId", playlist.rowId),
-      ],
-    });
+      APPWRITE_TABLE_IDS.playlistTracks,
+      [Query.equal("userId", userId), Query.equal("playlistId", playlist.rowId)]
+    );
+
+    const desiredSongIds = new Set(playlist.songs.map((s) => s.songId));
+
+    const existingSongIds = new Set<string>();
+    for (const row of existingTrackRows) {
+      const rowData = row as Record<string, unknown>;
+      const songId = normalizeString(rowData.songId, "", 128);
+      if (songId && !desiredSongIds.has(songId)) {
+        await tables.deleteRow({
+          databaseId,
+          tableId: APPWRITE_TABLE_IDS.playlistTracks,
+          rowId: row.$id,
+        });
+      } else if (songId) {
+        existingSongIds.add(songId);
+      }
+    }
 
     for (let index = 0; index < playlist.songs.length; index += 1) {
       const song = playlist.songs[index];
+      if (existingSongIds.has(song.songId)) continue;
+
       await tables.createRow({
         databaseId,
         tableId: APPWRITE_TABLE_IDS.playlistTracks,
@@ -471,15 +487,38 @@ async function persistFavorites(
     normalizedFavorites.push(normalized);
   }
 
-  await tables.deleteRows({
+  const existingFavoriteRows = await listAllRows(
+    tables,
     databaseId,
-    tableId: APPWRITE_TABLE_IDS.favorites,
-    queries: [Query.equal("userId", userId)],
-  });
+    APPWRITE_TABLE_IDS.favorites,
+    [Query.equal("userId", userId)]
+  );
+
+  const desiredSongIds = new Set(normalizedFavorites.map((s) => s.songId));
+
+  for (const row of existingFavoriteRows) {
+    const rowData = row as Record<string, unknown>;
+    const songId = normalizeString(rowData.songId, "", 128);
+    if (songId && !desiredSongIds.has(songId)) {
+      await tables.deleteRow({
+        databaseId,
+        tableId: APPWRITE_TABLE_IDS.favorites,
+        rowId: row.$id,
+      });
+    }
+  }
+
+  const existingSongIds = new Set<string>();
+  for (const row of existingFavoriteRows) {
+    const rowData = row as Record<string, unknown>;
+    const songId = normalizeString(rowData.songId, "", 128);
+    if (songId) existingSongIds.add(songId);
+  }
 
   const baseTimestamp = Date.now();
   for (let index = 0; index < normalizedFavorites.length; index += 1) {
     const song = normalizedFavorites[index];
+    if (existingSongIds.has(song.songId)) continue;
 
     await tables.createRow({
       databaseId,
@@ -516,10 +555,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  console.log(`[PUT /api/user/library] Request received`);
   const context = await getSessionContext(req);
   if (isNextResponse(context)) {
-    console.log(`[PUT /api/user/library] auth failed`);
     return context;
   }
 

@@ -116,7 +116,7 @@ export async function GET(request: NextRequest) {
   try {
     const controller = new AbortController();
     const metaTimeout = setTimeout(() => controller.abort(), 8000);
-    const metaRes = await fetch(`https://ytapi.gauravramyadav.workers.dev/api/stream?id=${id}`, { signal: controller.signal });
+    const metaRes = await fetch(`https://ytapi.gauravramyadav.workers.dev/api/stream?id=${encodeURIComponent(id)}`, { signal: controller.signal });
     clearTimeout(metaTimeout);
     if (!metaRes.ok) return Response.json({ error: "Meta API Down" }, { status: 502 });
 

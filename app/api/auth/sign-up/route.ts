@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid sign up payload", issues: error.flatten() },
+        { error: "Invalid sign up payload" },
         { status: 422 }
       );
     }

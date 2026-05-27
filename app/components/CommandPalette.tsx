@@ -122,6 +122,12 @@ export const CommandPalette: React.FC = () => {
   }, [query]);
 
   useEffect(() => {
+    if (selectedIndex >= filteredItems.length) {
+      setSelectedIndex(Math.max(0, filteredItems.length - 1));
+    }
+  }, [filteredItems.length, selectedIndex]);
+
+  useEffect(() => {
     if (query.trim().length === 0) {
       setApiResults([]);
       return;
@@ -166,14 +172,14 @@ export const CommandPalette: React.FC = () => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setCommandPaletteOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-xl z-150"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[150]"
           />
 
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
-            className="fixed left-1/2 top-[10%] sm:top-[20%] -translate-x-1/2 w-full max-w-2xl z-151 px-4"
+            className="fixed left-1/2 top-[10%] sm:top-[20%] -translate-x-1/2 w-full max-w-2xl z-[151] px-4"
           >
             <div className="glass-effect dark:glass-effect-dark rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 dark:border-white/10">
               <div className="relative flex items-center p-5 sm:p-6 border-b border-gray-100 dark:border-white/10">

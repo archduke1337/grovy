@@ -38,6 +38,10 @@ export default function PlaylistsPage() {
     reader.onload = () => {
       try {
         const parsed = JSON.parse(reader.result as string);
+        if (typeof parsed !== "object" || parsed === null) {
+          alert("Invalid playlist file format.");
+          return;
+        }
         const imported = parsed.playlists || (Array.isArray(parsed) ? parsed : []);
         if (!Array.isArray(imported) || imported.length === 0) {
           alert("No playlists found in file.");
@@ -150,12 +154,12 @@ export default function PlaylistsPage() {
                 {playlist.songs.length > 0 && playlist.songs[0].cover ? (
                   <Image src={playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-gray-100 to-gray-200 dark:from-white/2 dark:to-white/5">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/2 dark:to-white/5">
                     <Music size={48} className="text-gray-300 dark:text-white/10" />
                   </div>
                 )}
                 
-                <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6 sm:p-8">
                    <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate leading-tight">{playlist.name}</h3>
                    <p className="text-[11px] font-black text-white/40 uppercase tracking-[0.2em] mt-1">{playlist.songs.length} Tracks</p>
                    

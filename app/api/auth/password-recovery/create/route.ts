@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid recovery payload", issues: error.flatten() },
+        { error: "Invalid recovery payload" },
         { status: 422 }
       );
     }

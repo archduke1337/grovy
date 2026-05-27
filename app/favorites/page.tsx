@@ -20,7 +20,11 @@ export default function FavoritesPage() {
 
   const handleShufflePlay = () => {
     if (favorites.length > 0) {
-      const shuffled = [...favorites].sort(() => Math.random() - 0.5);
+      const shuffled = [...favorites];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
       setQueue(shuffled, 0);
     }
   };
@@ -53,7 +57,7 @@ export default function FavoritesPage() {
             </button>
             <button
               onClick={handleShufflePlay}
-              className="flex items-center gap-2.5 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white text-sm sm:text-base font-black hover:bg-gray-200 dark:hover:bg-white/8 active:scale-95 transition-all"
+              className="flex items-center gap-2.5 px-5 sm:px-8 py-3 sm:py-4 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-900 dark:text-white text-sm sm:text-base font-black hover:bg-gray-200 dark:hover:bg-white/10 active:scale-95 transition-all"
             >
               <Shuffle size={20} />
               Shuffle
@@ -78,7 +82,7 @@ export default function FavoritesPage() {
               >
                 <div 
                   onClick={() => setQueue(favorites, i)}
-                  className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/3 shadow-lg group-hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                  className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/5 shadow-lg group-hover:shadow-2xl transition-all duration-500 cursor-pointer"
                 >
                   {song.cover ? (
                     <Image src={getHDThumbnail(song.cover) || ""} alt={song.title} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />

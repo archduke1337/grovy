@@ -71,11 +71,14 @@ function hasPref(prefs: Record<string, unknown>, key: string): boolean {
 }
 
 function areCollectionsEqual(a: any[], b: any[]): boolean {
-  try {
-    return JSON.stringify(a) === JSON.stringify(b);
-  } catch {
-    return false;
+  if (a.length !== b.length) return false;
+  const aIds = new Set(a.map(item => item?.id).filter(Boolean));
+  const bIds = new Set(b.map(item => item?.id).filter(Boolean));
+  if (aIds.size !== bIds.size) return false;
+  for (const id of aIds) {
+    if (!bIds.has(id)) return false;
   }
+  return true;
 }
 
 function buildLibraryRealtimeChannels(databaseId: string): string[] {

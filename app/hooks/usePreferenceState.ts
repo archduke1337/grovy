@@ -40,9 +40,10 @@ export function usePreferenceState<T>(
           typeof value === "function"
             ? (value as (prev: T) => T)(prev)
             : value;
-        void patchGrovyPrefs({ [key]: next as unknown });
         return next;
       });
+      const nextValue = typeof value === "function" ? value : value;
+      void patchGrovyPrefs({ [key]: nextValue as unknown });
     },
     [key]
   );

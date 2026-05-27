@@ -45,14 +45,23 @@ function formatLabel(city: string, country: string): string {
   return "";
 }
 
+// NOTE: Platform-set headers (cf-connecting-ip) are trusted because they are
+// set by Cloudflare/Vercel and cannot be spoofed by clients. Client-sent headers
+// like x-forwarded-for and x-real-ip are less trusted and only used as fallback.
 function getClientIp(request: NextRequest): string {
+  const platformIp = pickFirstHeader(request.headers, [
+    "cf-connecting-ip",
+    "x-real-ip",
+  ]);
+  if (platformIp) return platformIp;
+
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
     const first = forwardedFor.split(",")[0]?.trim() || "";
     if (first) return first;
   }
 
-  return pickFirstHeader(request.headers, ["cf-connecting-ip", "x-real-ip"]);
+  return "";
 }
 
 function isPrivateOrLocalIp(ip: string): boolean {

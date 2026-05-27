@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Invalid password reset payload", issues: error.flatten() },
+        { error: "Invalid password reset payload" },
         { status: 422 }
       );
     }

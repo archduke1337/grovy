@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Share2, Link2, Check, X } from "lucide-react";
 import { Song } from "@/app/types/song";
@@ -14,12 +14,17 @@ interface ShareButtonProps {
 export const ShareButton: React.FC<ShareButtonProps> = ({ song, className = "", size = 16 }) => {
   const [showPopup, setShowPopup] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+
+  useEffect(() => {
+    if (song) {
+      setShareUrl(
+        `${window.location.origin}/?play=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist || "")}`
+      );
+    }
+  }, [song]);
 
   if (!song) return null;
-
-  const shareUrl = typeof window !== "undefined"
-    ? `${window.location.origin}/?play=${encodeURIComponent(song.id)}&title=${encodeURIComponent(song.title)}&artist=${encodeURIComponent(song.artist || "")}`
-    : "";
 
   const handleCopyLink = async () => {
     try {

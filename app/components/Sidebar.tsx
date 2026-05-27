@@ -24,7 +24,7 @@ const libraryNav = [
 
 export const Sidebar = () => {
   const pathname = usePathname();
-  const { playlists, createPlaylist, isAuthenticated } = usePlayer();
+  const { playlists = [], createPlaylist, isAuthenticated } = usePlayer();
 
   return (
     <aside className="hidden lg:flex flex-col w-64 h-screen fixed left-0 top-0 border-r border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-black/20 backdrop-blur-xl z-40 overflow-y-auto custom-scrollbar">
@@ -48,7 +48,7 @@ export const Sidebar = () => {
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                     isActive 
                       ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
-                      : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
+                      : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                   }`}
                 >
                   <item.icon size={18} className={isActive ? "text-sky-500 dark:text-sky-400" : ""} />
@@ -73,7 +73,7 @@ export const Sidebar = () => {
                     className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                       isActive 
                         ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
-                        : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
+                        : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
                     <item.icon size={18} className={isActive ? "text-sky-500 dark:text-sky-400" : ""} />
@@ -103,7 +103,7 @@ export const Sidebar = () => {
                 className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
                   pathname === "/playlists" 
                     ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
-                    : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5"
+                    : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5"
                 }`}
               >
                 <div className="w-4 h-4 flex items-center justify-center">
@@ -118,7 +118,7 @@ export const Sidebar = () => {
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all truncate ${
                     pathname === `/playlists/${pl.id}` 
                       ? "bg-black/5 dark:bg-white/10 text-sky-500 dark:text-sky-400"
-                      : "text-gray-600 dark:text-white/50 hover:bg-black/3 dark:hover:bg-white/5"
+                      : "text-gray-600 dark:text-white/50 hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   <Music size={16} className="shrink-0" />

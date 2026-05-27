@@ -76,7 +76,6 @@ function VerifyEmailContent() {
       }
 
       setMessage("Verification email sent. Check your inbox.");
-      if (state === "idle") setState("idle");
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Could not send verification email";
