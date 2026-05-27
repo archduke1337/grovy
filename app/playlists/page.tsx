@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Music, Plus, PlayCircle, Folder, Download, Upload, Trash2, X } from "lucide-react";
+import { Music, Plus, PlayCircle, Folder, Download, Upload, Trash2, X, Search } from "lucide-react";
 import Image from "next/image";
 
 export default function PlaylistsPage() {
@@ -174,6 +174,17 @@ export default function PlaylistsPage() {
           ))}
         </AnimatePresence>
       </div>
+
+      {playlists.length === 0 && (
+        <motion.div variants={fadeUp} className="text-center space-y-4 pt-8">
+          <p className="text-gray-500 dark:text-white/45 font-medium">
+            Create your first playlist to organize your favorite tracks.
+          </p>
+          <p className="text-xs text-gray-400 dark:text-white/30 font-medium">
+            You can also import playlists from a JSON file using the button above.
+          </p>
+        </motion.div>
+      )}
     </motion.div>
   );
 }

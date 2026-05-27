@@ -84,14 +84,14 @@ export default function HistoryPage() {
            </div>
            <div className="space-y-3">
               <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">Your history is empty</p>
-              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you listen to will appear here for quick access. Let&apos;s start the music!</p>
+              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">Songs you listen to will appear here for quick access. Start playing music to build your listening history.</p>
            </div>
            <button 
              onClick={() => router.push("/")}
              className="flex items-center gap-2.5 mx-auto px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
            >
-             <RotateCcw size={18} />
-             Start Listening
+             <Search size={18} />
+             Find Music
            </button>
         </div>
       )}

@@ -38,6 +38,7 @@ export const MusicPlayer: React.FC = () => {
     audioContext,
     sourceNode,
     eqFilters,
+    videoMode,
   } = usePlayer();
 
   const [isLyricsOpen, setIsLyricsOpen] = useState(false);
@@ -54,6 +55,7 @@ export const MusicPlayer: React.FC = () => {
 
   const currentSong = songs[currentSongIndex];
   const favorite = currentSong ? isFavorite(currentSong.id) : false;
+  const isVideoActive = videoMode && currentSong?.source === "YouTube";
 
   return (
     <div className="fixed inset-0 w-full h-dvh flex flex-col items-center justify-center bg-black overflow-hidden touch-none">
