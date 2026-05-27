@@ -126,7 +126,6 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.97 }}
       className="group cursor-pointer relative"
-      onClick={onPlay}
     >
       <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-linear-to-br from-slate-300 to-slate-400 dark:from-white/8 dark:to-white/2 shadow-md group-hover:shadow-2xl transition-shadow transition-transform duration-300">
         {coverSrc ? (
@@ -148,14 +147,15 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
 
         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <motion.button
+            <motion.button
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             onClick={(event) => {
               event.stopPropagation();
               onPlay();
             }}
-            className="w-14 h-14 bg-sky-500 hover:bg-sky-600 rounded-full flex items-center justify-center shadow-2xl transition-colors transition-transform"
+            aria-label="Play"
+            className="w-14 h-14 bg-sky-500 hover:bg-sky-600 rounded-full flex items-center justify-center shadow-2xl transition-all"
           >
             <Play size={22} fill="white" className="text-white ml-0.5" />
           </motion.button>
@@ -168,7 +168,8 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
             event.stopPropagation();
             onFavorite(song);
           }}
-          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-colors transition-opacity backdrop-blur-sm z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
+          aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
+          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-all backdrop-blur-sm z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           title={isFav ? "Remove from favorites" : "Add to favorites"}
         >
           <Heart size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-sky-400" : "text-white"} />
@@ -597,7 +598,7 @@ function HomeContent() {
                     void runSearch();
                   }
                 }}
-                className="w-full bg-transparent border-none outline-none text-sm sm:text-base text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/35 px-3 font-medium"
+                className="w-full bg-transparent border-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none text-sm sm:text-base text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-white/35 px-3 font-medium"
               />
 
               {searchQuery ? (

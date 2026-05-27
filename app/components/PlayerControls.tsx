@@ -49,7 +49,7 @@ export const PlayerControls: React.FC = () => {
           whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); previousTrack(); }}
           aria-label="Previous track"
-          className="p-3 sm:p-4 rounded-full text-white/70 hover:text-white active:text-white transition-all bg-transparent hover:bg-white/10 active:bg-white/10"
+          className="p-3 sm:p-4 rounded-full text-white/70 hover:text-white active:text-white transition-colors duration-200 bg-transparent hover:bg-white/10 active:bg-white/10"
         >
           <SkipBack size={24} className="sm:w-8 sm:h-8 md:w-9 md:h-9" fill="currentColor" strokeWidth={0} />
         </motion.button>
@@ -78,7 +78,7 @@ export const PlayerControls: React.FC = () => {
           whileTap={{ scale: 0.9 }}
           onClick={(e) => { e.stopPropagation(); nextTrack(); }}
           aria-label="Next track"
-          className="p-3 sm:p-4 rounded-full text-white/70 hover:text-white active:text-white transition-all bg-transparent hover:bg-white/10 active:bg-white/10"
+          className="p-3 sm:p-4 rounded-full text-white/70 hover:text-white active:text-white transition-colors duration-200 bg-transparent hover:bg-white/10 active:bg-white/10"
         >
           <SkipForward size={24} className="sm:w-8 sm:h-8 md:w-9 md:h-9" fill="currentColor" strokeWidth={0} />
         </motion.button>
@@ -91,7 +91,7 @@ export const PlayerControls: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); toggleShuffle(); }}
           aria-label={isShuffle ? "Disable shuffle" : "Enable shuffle"}
-          className={`p-2 rounded-full transition-all ${
+          className={`p-2 rounded-full transition-colors duration-200 ${
             isShuffle
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
               : "text-white/40 hover:text-white active:text-white"
@@ -119,7 +119,7 @@ export const PlayerControls: React.FC = () => {
             {volume === 0 ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}
           </button>
           
-          <div className="hidden sm:block w-20 md:w-24 h-1.5 bg-white/10 rounded-full overflow-hidden relative cursor-pointer group-hover/vol:h-2 transition-all">
+          <div className="hidden sm:block w-20 md:w-24 h-1.5 bg-white/10 rounded-full overflow-hidden relative cursor-pointer group-hover/vol:h-2 transition-colors duration-200">
              <motion.div 
                layout
                className="h-full rounded-full bg-white shadow-[0_0_10px_rgba(255,255,255,0.5)]"
@@ -147,7 +147,7 @@ export const PlayerControls: React.FC = () => {
           whileTap={{ scale: 0.95 }}
           onClick={(e) => { e.stopPropagation(); toggleLoop(); }}
           aria-label={isLoop ? "Disable loop" : "Enable loop"}
-          className={`p-2 rounded-full transition-all ${
+          className={`p-2 rounded-full transition-colors duration-200 ${
             isLoop
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
               : "text-white/40 hover:text-white active:text-white"
@@ -169,7 +169,7 @@ export const PlayerControls: React.FC = () => {
             setPlaybackSpeed(speeds[(idx + 1) % speeds.length]);
           }}
           aria-label={`Playback speed: ${playbackSpeed}x`}
-          className={`px-2 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-all ${
+          className={`px-2 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold transition-colors duration-200 ${
             playbackSpeed !== 1
               ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
               : "text-white/40 hover:text-white active:text-white"

@@ -48,7 +48,7 @@ export const MusicPlayer: React.FC = () => {
   useEffect(() => {
     const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
     checkDesktop();
-    window.addEventListener("resize", checkDesktop);
+    window.addEventListener("resize", checkDesktop, { passive: true });
     return () => window.removeEventListener("resize", checkDesktop);
   }, []);
 
