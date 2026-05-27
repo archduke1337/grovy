@@ -104,6 +104,8 @@ export async function GET(request: NextRequest) {
         if (type === "artist") endpoint = `https://jiosaavn-api.gauravramyadav.workers.dev/api/artists?id=${encodeURIComponent(realId)}&song_count=20`;
       }
 
+      if (!endpoint) return Response.json([], { status: 400 });
+
       const response = await fetchWithTimeout(endpoint);
       if (!response.ok) {
         return Response.json([], { status: 502 });

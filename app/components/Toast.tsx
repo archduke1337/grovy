@@ -42,7 +42,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const toast = useCallback(
     (message: string, options?: { type?: ToastType; duration?: number; action?: { label: string; onClick: () => void } }) => {
-      const id = crypto.randomUUID();
+      const id = typeof crypto !== "undefined" && typeof crypto.randomUUID === "function" ? crypto.randomUUID() : Math.random().toString(36).slice(2);
       const duration = options?.duration ?? 4000;
       const newToast: Toast = {
         id,

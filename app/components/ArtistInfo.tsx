@@ -121,12 +121,12 @@ export const ArtistInfo: React.FC = () => {
                          {info.artist.name}
                        </h2>
                        <div className="flex justify-center sm:justify-start gap-4">
-                          {info.artist?.stats?.listeners && (
-                          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-gray-400 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                             <Users size={12} />
-                             <span>{parseInt(info.artist.stats.listeners).toLocaleString()} Listeners</span>
-                          </div>
-                          )}
+                           {info.artist?.stats?.listeners && (
+                           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/5 text-gray-400 text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
+                              <Users size={12} />
+                              <span>{Number(info.artist.stats.listeners).toLocaleString()} Listeners</span>
+                           </div>
+                           )}
                        </div>
                     </div>
                   </div>
@@ -146,7 +146,7 @@ export const ArtistInfo: React.FC = () => {
                      )}
                   </div>
 
-                  {info.artist.tags?.tag && (
+                  {Array.isArray(info.artist.tags?.tag) && info.artist.tags.tag.length > 0 && (
                     <div className="flex flex-wrap justify-center sm:justify-start gap-2 pt-2">
                        {info.artist.tags.tag.slice(0, 5).map((tag: any) => (
                          <span key={tag.name} 

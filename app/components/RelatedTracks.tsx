@@ -29,7 +29,7 @@ export const RelatedTracks: React.FC = () => {
           title: currentSong?.title,
           artist: currentSong?.artist,
         }, controller.signal);
-        if (!controller.signal.aborted) setRelated(tracks.slice(0, 7));
+        if (!controller.signal.aborted) setRelated((tracks ?? []).slice(0, 7));
       } catch (e) {
         // ignore abort errors
       } finally {

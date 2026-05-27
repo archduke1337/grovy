@@ -14,7 +14,10 @@ export interface VeromeTrack {
 
 export async function searchYouTubeMusic(query: string) {
   try {
-    const res = await fetch(`${BASE_URL}/api/search?q=${encodeURIComponent(query)}&filter=songs`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`${BASE_URL}/api/search?q=${encodeURIComponent(query)}&filter=songs`, { signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) return [];
     const data = await res.json();
     return data as VeromeTrack[];
@@ -26,7 +29,10 @@ export async function searchYouTubeMusic(query: string) {
 
 export async function getStreamUrl(videoId: string) {
   try {
-    const res = await fetch(`${BASE_URL}/api/stream?id=${videoId}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`${BASE_URL}/api/stream?id=${videoId}`, { signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
     return data;
@@ -38,7 +44,10 @@ export async function getStreamUrl(videoId: string) {
 
 export async function getLyrics(title: string, artist: string) {
   try {
-    const res = await fetch(`${BASE_URL}/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`${BASE_URL}/api/lyrics?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`, { signal: controller.signal });
+    clearTimeout(timeout);
     if (!res.ok) return null;
     const data = await res.json();
     return data;
