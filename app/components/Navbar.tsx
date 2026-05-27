@@ -189,6 +189,7 @@ export const Navbar = () => {
               <Link
                 href="https://github.com/archduke1337/grovy"
                 target="_blank"
+                rel="noopener noreferrer"
                 aria-label="GitHub"
                 className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
               >
@@ -216,6 +217,7 @@ export const Navbar = () => {
               <Link
                 href="https://github.com/archduke1337/grovy"
                 target="_blank"
+                rel="noopener noreferrer"
                 aria-label="GitHub"
                 className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
               >

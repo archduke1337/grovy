@@ -212,11 +212,11 @@ export const CommandPalette: React.FC = () => {
                       key={item.id}
                       onMouseEnter={() => setSelectedIndex(i)}
                       onClick={item.action}
-                      className={`w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-all text-left group ${
+                      className={`w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-colors transition-shadow duration-200 text-left group ${
                         selectedIndex === i ? "bg-gray-100 dark:bg-white/10" : ""
                       }`}
                     >
-                      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all ${
+                      <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-colors transition-shadow duration-200 ${
                         selectedIndex === i 
                           ? "bg-blue-500 text-white shadow-lg" 
                           : "bg-gray-100 dark:bg-white/5 text-gray-400"

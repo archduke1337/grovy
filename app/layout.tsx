@@ -258,6 +258,7 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#f5f5f7] dark:bg-black min-h-dvh overflow-x-hidden antialiased" suppressHydrationWarning>
+        <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[999] focus:p-4 focus:bg-white focus:text-black">Skip to content</a>
         <PlayerProvider>
           <ToastProvider>
           <AmbientBackground />
@@ -268,7 +269,7 @@ export default function RootLayout({
               <SmoothScroll>
                 <CommandPalette />
                 <Navbar />
-                <main className="flex-1 pt-14 sm:pt-16 md:pt-20 pb-28 sm:pb-32 safe-bottom">
+                <main id="main-content" className="flex-1 pt-14 sm:pt-16 md:pt-20 pb-28 sm:pb-32 safe-bottom">
                   {children}
                 </main>
                 <BottomPlayer />

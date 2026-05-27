@@ -64,31 +64,33 @@ function SignInForm() {
     >
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+          <label htmlFor="sign-in-email" className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
             Email
           </label>
           <input
+            id="sign-in-email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             autoComplete="email"
             required
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus:border-blue-500/60"
           />
         </div>
 
         <div className="space-y-2">
-          <label className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
+          <label htmlFor="sign-in-password" className="text-xs uppercase tracking-[0.15em] font-bold text-gray-500 dark:text-white/45">
             Password
           </label>
           <input
+            id="sign-in-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
             minLength={8}
             required
-            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white outline-none focus:border-blue-500/60"
+            className="w-full rounded-xl border border-black/10 dark:border-white/10 bg-white dark:bg-black/20 px-4 py-3 text-sm text-gray-900 dark:text-white focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none focus:border-blue-500/60"
           />
         </div>
 
