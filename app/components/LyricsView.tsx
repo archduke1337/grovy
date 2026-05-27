@@ -69,16 +69,19 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
+          <motion.div
           key="lyrics-modal"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Lyrics"
           className="fixed inset-0 z-120 bg-black/95 backdrop-blur-3xl flex flex-col items-center justify-center p-0"
-          style={{ overscrollBehavior: "contain" }}
         >
           <button 
             onClick={onClose}
+            aria-label="Close"
             className="absolute top-6 right-6 sm:top-8 sm:right-8 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all z-50 backdrop-blur-md"
           >
             <X size={24} />

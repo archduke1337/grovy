@@ -78,10 +78,10 @@ export const MusicPlayer: React.FC = () => {
       >
         {/* Mobile Header */}
         <div className="lg:hidden absolute top-6 left-0 right-0 flex justify-between px-8 z-30">
-           <button onClick={() => setShowQueueOnMobile(false)} aria-label="Player" className={`p-2 transition-all ${!showQueueOnMobile ? "text-white" : "text-white/30"}`}>
+           <button onClick={() => setShowQueueOnMobile(false)} aria-label="Player" className={`p-2 transition-colors transition-transform duration-300 ${!showQueueOnMobile ? "text-white" : "text-white/30"}`}>
                <Music size={22} />
             </button>
-            <button onClick={() => setShowQueueOnMobile(true)} aria-label="Queue" className={`p-2 transition-all ${showQueueOnMobile ? "text-white" : "text-white/30"}`}>
+            <button onClick={() => setShowQueueOnMobile(true)} aria-label="Queue" className={`p-2 transition-colors transition-transform duration-300 ${showQueueOnMobile ? "text-white" : "text-white/30"}`}>
                <LayoutList size={22} />
             </button>
         </div>
@@ -162,7 +162,7 @@ export const MusicPlayer: React.FC = () => {
                       <button 
                         onClick={() => toggleFavorite(currentSong?.id || "")} 
                         aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
-                        className={`transition-all ${favorite ? "text-pink-500 scale-110" : "text-white/40 hover:text-white"}`}
+                        className={`transition-colors transition-transform duration-300 ${favorite ? "text-pink-500 scale-110" : "text-white/40 hover:text-white"}`}
                         title="Favorite"
                       >
                         <Heart size={22} fill={favorite ? "currentColor" : "none"} />
@@ -170,7 +170,7 @@ export const MusicPlayer: React.FC = () => {
                       <button 
                         onClick={() => setIsLyricsOpen(true)} 
                         aria-label="Show lyrics"
-                        className="text-white/40 hover:text-white transition-all hover:scale-110"
+                        className="text-white/40 hover:text-white transition-colors transition-transform duration-300 hover:scale-110"
                         title="Lyrics"
                       >
                         <AlignLeft size={22} />
@@ -178,7 +178,7 @@ export const MusicPlayer: React.FC = () => {
                       <button 
                         onClick={() => currentSong && openPlaylistModal(currentSong)} 
                         aria-label="Add to playlist"
-                        className="text-white/40 hover:text-white transition-all hover:scale-110"
+                        className="text-white/40 hover:text-white transition-colors transition-transform duration-300 hover:scale-110"
                         title="Add to Playlist"
                       >
                         <Plus size={22} />
@@ -186,7 +186,7 @@ export const MusicPlayer: React.FC = () => {
                       <button 
                         onClick={() => setIsEqOpen(true)} 
                         aria-label="Equalizer"
-                        className="text-white/40 hover:text-white transition-all hover:scale-110"
+                        className="text-white/40 hover:text-white transition-colors transition-transform duration-300 hover:scale-110"
                         title="Equalizer"
                       >
                         <Settings2 size={22} />

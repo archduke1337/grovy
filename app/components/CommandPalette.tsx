@@ -179,6 +179,9 @@ export const CommandPalette: React.FC = () => {
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: -20 }}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command palette"
             className="fixed left-1/2 top-[10%] sm:top-[20%] -translate-x-1/2 w-full max-w-2xl z-[151] px-4"
           >
             <div             className="glass-effect dark:glass-effect-dark rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/20 dark:border-white/10"
@@ -195,9 +198,9 @@ export const CommandPalette: React.FC = () => {
                   placeholder="Search groovymusic globally..."
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  className="w-full bg-transparent outline-none text-lg sm:text-xl text-gray-900 dark:text-white placeholder-gray-400"
+                  className="w-full bg-transparent focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none text-lg sm:text-xl text-gray-900 dark:text-white placeholder-gray-400"
                 />
-                <button onClick={() => setCommandPaletteOpen(false)} className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white sm:hidden">
+                <button onClick={() => setCommandPaletteOpen(false)} aria-label="Close" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white sm:hidden">
                   <X size={20} />
                 </button>
               </div>
