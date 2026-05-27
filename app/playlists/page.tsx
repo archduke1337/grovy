@@ -176,14 +176,14 @@ export default function PlaylistsPage() {
       </div>
 
       {playlists.length === 0 && (
-        <motion.div variants={fadeUp} className="text-center space-y-4 pt-8">
+        <div className="text-center space-y-4 pt-8">
           <p className="text-gray-500 dark:text-white/45 font-medium">
             Create your first playlist to organize your favorite tracks.
           </p>
           <p className="text-xs text-gray-400 dark:text-white/30 font-medium">
             You can also import playlists from a JSON file using the button above.
           </p>
-        </motion.div>
+        </div>
       )}
     </motion.div>
   );

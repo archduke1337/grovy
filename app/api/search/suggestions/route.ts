@@ -1,11 +1,8 @@
 
 import { NextRequest } from "next/server";
+import { fetchWithTimeout as fetchWithTimeoutBase } from "@/app/lib/apiHelpers";
 
-function fetchWithTimeout(url: string, timeout = 5000): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeout);
-  return fetch(url, { signal: controller.signal }).finally(() => clearTimeout(id));
-}
+const fetchWithTimeout = (url: string, timeout = 5000) => fetchWithTimeoutBase(url, timeout);
 
 function normalizeSuggestion(value: unknown): string {
   if (typeof value !== "string") return "";

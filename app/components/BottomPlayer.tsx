@@ -10,7 +10,7 @@ import MiniPlayer from "./MiniPlayer";
 import NextImage from "next/image";
 
 export const BottomPlayer = () => {
-  const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek } = usePlayer();
+  const { currentSongIndex, songs, isPlaying, togglePlayPause, nextTrack, previousTrack, duration, currentTime, seek, videoMode } = usePlayer();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMiniMode, setIsMiniMode] = useState(false);
 
