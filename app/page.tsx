@@ -396,6 +396,34 @@ function HomeContent() {
     };
   }, [searchQuery]);
 
+  const addToSearchHistory = useCallback((query: string) => {
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return;
+
+    setSearchHistory((prev) => {
+      const filtered = prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
+      const updated = [trimmed, ...filtered].slice(0, 10);
+      try {
+        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
+      } catch {
+        // Ignore storage errors
+      }
+      return updated;
+    });
+  }, []);
+
+  const removeFromSearchHistory = useCallback((query: string) => {
+    setSearchHistory((prev) => {
+      const updated = prev.filter((item) => item.toLowerCase() !== query.toLowerCase());
+      try {
+        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
+      } catch {
+        // Ignore storage errors
+      }
+      return updated;
+    });
+  }, []);
+
   const runSearch = useCallback(
     async (rawQuery: string = searchQuery) => {
       const normalizedQuery = rawQuery.trim();
@@ -449,16 +477,6 @@ function HomeContent() {
     [searchQuery, addToSearchHistory]
   );
 
-  useEffect(() => {
-    const paramQuery = (searchParams.get("q") || searchParams.get("query") || "").trim();
-    if (!paramQuery || handledUrlSearchRef.current === paramQuery) return;
-
-    handledUrlSearchRef.current = paramQuery;
-    setSearchQuery(paramQuery);
-    setShowSuggestions(false);
-    void runSearch(paramQuery);
-  }, [searchParams, runSearch]);
-
   const clearSearch = useCallback(() => {
     if (searchAbortRef.current) {
       searchAbortRef.current.abort();
@@ -467,40 +485,8 @@ function HomeContent() {
     setSearchQuery("");
     setSearchResults([]);
     setSuggestions([]);
-    setShowSuggestions(false);
-    setShowSearchHistory(false);
     setSearchError("");
-    setLastSubmittedQuery("");
-    setIsLoadingSuggestions(false);
     setIsSearching(false);
-  }, []);
-
-  const addToSearchHistory = useCallback((query: string) => {
-    const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2) return;
-
-    setSearchHistory((prev) => {
-      const filtered = prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
-      const updated = [trimmed, ...filtered].slice(0, 10);
-      try {
-        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
-      } catch {
-        // Ignore storage errors
-      }
-      return updated;
-    });
-  }, []);
-
-  const removeFromSearchHistory = useCallback((query: string) => {
-    setSearchHistory((prev) => {
-      const updated = prev.filter((item) => item !== query);
-      try {
-        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
-      } catch {
-        // Ignore storage errors
-      }
-      return updated;
-    });
   }, []);
 
   const clearSearchHistory = useCallback(() => {

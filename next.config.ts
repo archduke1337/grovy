@@ -1,9 +1,5 @@
 import type { NextConfig } from "next";
 
-const withBundleAnalyzer = require('@next/bundle-analyzer')({
-  enabled: process.env.ANALYZE === 'true',
-});
-
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
@@ -84,4 +80,4 @@ const nextConfig: NextConfig = {
   staticPageGenerationTimeout: 120,
 };
 
-export default withBundleAnalyzer(nextConfig);
+export default nextConfig;

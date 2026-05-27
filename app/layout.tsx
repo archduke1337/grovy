@@ -271,8 +271,8 @@ export default function RootLayout({
       </head>
       <body className="bg-[#f5f5f7] dark:bg-black min-h-dvh overflow-x-hidden antialiased" suppressHydrationWarning>
         <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:z-[999] focus:p-4 focus:bg-white focus:text-black">Skip to content</a>
+        <ToastProvider>
         <PlayerProvider>
-          <ToastProvider>
           <AmbientBackground />
           <KeyboardShortcuts />
           <div className="flex">
@@ -288,9 +288,9 @@ export default function RootLayout({
               </SmoothScroll>
             </div>
           </div>
-          </ToastProvider>
-          <Analytics />
         </PlayerProvider>
+          <Analytics />
+        </ToastProvider>
       </body>
     </html>
   );
