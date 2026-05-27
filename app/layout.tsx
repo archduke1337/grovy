@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-page-custom-font, @next/next/google-font-preconnect */
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
-const Analytics = dynamic(() => import("@vercel/analytics/next").then(m => ({ default: m.Analytics })), { ssr: false });
+const Analytics = dynamic(() => import("@vercel/analytics/next").then(m => ({ default: m.Analytics })));
 import { PlayerProvider } from "@/app/context/PlayerContext";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
