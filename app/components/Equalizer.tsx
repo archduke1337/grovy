@@ -122,18 +122,20 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
             animate={{ scale: 1, y: 0 }}
             exit={{ scale: 0.95, y: 20 }}
             onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Equalizer"
             className="bg-zinc-950 border border-white/10 rounded-3xl w-full max-w-lg p-6 sm:p-8 space-y-6"
-            style={{ overscrollBehavior: "contain" }}
           >
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-white tracking-tight">Equalizer</h2>
               <div className="flex items-center gap-2">
-                <button onClick={reset} className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all" title="Reset">
-                  <RotateCcw size={16} />
-                </button>
-                <button onClick={onClose} className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all">
-                  <X size={18} />
-                </button>
+                <button onClick={reset} aria-label="Reset equalizer" className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all" title="Reset">
+                   <RotateCcw size={16} />
+                 </button>
+                 <button onClick={onClose} aria-label="Close" className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all">
+                   <X size={18} />
+                 </button>
               </div>
             </div>
 

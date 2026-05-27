@@ -70,7 +70,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <ToastContext.Provider value={{ toast }}>
       {children}
-      <div className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-full max-w-md px-4">
+      <div aria-live="polite" role="status" className="fixed bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2 pointer-events-none w-full max-w-md px-4">
         <AnimatePresence mode="popLayout">
           {toasts.map((t) => (
             <motion.div
@@ -94,6 +94,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 )}
                 <button
                   onClick={() => removeToast(t.id)}
+                  aria-label="Dismiss"
                   className="p-1 rounded-full hover:bg-white/10 transition-colors shrink-0"
                 >
                   <X size={14} className="text-white/40" />

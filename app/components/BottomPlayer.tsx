@@ -104,7 +104,7 @@ export const BottomPlayer = () => {
               <button
                 onClick={() => setIsMiniMode(true)}
                 aria-label="Mini player"
-                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-all"
+                className="p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors transition-shadow duration-300"
                 title="Mini player"
               >
                 <Minimize2 size={18} />
@@ -136,7 +136,7 @@ export const BottomPlayer = () => {
                      seek((x / rect.width) * duration);
                    }
                  }}>
-              <div data-progress-bar className="h-[2px] bg-white/10 group-hover/progress:h-1 group-active/progress:h-1 transition-all">
+              <div data-progress-bar className="h-[2px] bg-white/10 group-hover/progress:h-1 group-active/progress:h-1 transition-colors transition-shadow duration-300">
                 <div 
                   className="h-full relative rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.4)] transition-[width] duration-1000 ease-linear"
                   style={{ width: `${progress}%` }}
@@ -192,7 +192,7 @@ export const BottomPlayer = () => {
               <button 
                 onClick={(e) => { e.stopPropagation(); previousTrack(); }}
                 aria-label="Previous track"
-                className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-all hidden sm:block hover:scale-110 active:scale-95"
+                className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-colors transition-shadow duration-300 hidden sm:block hover:scale-110 active:scale-95"
               >
                 <SkipBack size={20} fill="currentColor" strokeWidth={0} />
               </button>
@@ -202,7 +202,7 @@ export const BottomPlayer = () => {
                 whileTap={{ scale: 0.95 }}
                 onClick={(e) => { e.stopPropagation(); togglePlayPause(); }}
                 aria-label={isPlaying ? "Pause" : "Play"}
-                className="p-2 sm:p-2.5 md:p-3 rounded-full bg-white text-black shadow-lg flex items-center justify-center shrink-0 hover:brightness-110 transition-all"
+                className="p-2 sm:p-2.5 md:p-3 rounded-full bg-white text-black shadow-lg flex items-center justify-center shrink-0 hover:brightness-110 transition-colors transition-shadow duration-300"
               >
                 {isPlaying ? <Pause size={16} fill="currentColor" /> : <Play size={16} fill="currentColor" className="ml-0.5" />}
               </motion.button>
@@ -210,13 +210,13 @@ export const BottomPlayer = () => {
               <button 
                 onClick={(e) => { e.stopPropagation(); nextTrack(); }}
                 aria-label="Next track"
-                className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-all hover:scale-110 active:scale-95"
+                className="p-1.5 sm:p-2 text-white/40 hover:text-white transition-colors transition-shadow duration-300 hover:scale-110 active:scale-95"
               >
                 <SkipForward size={20} fill="currentColor" strokeWidth={0} />
               </button>
               <button
                 onClick={(e) => { e.stopPropagation(); setIsMiniMode(true); }}
-                className="p-1.5 text-white/30 hover:text-white transition-all hidden md:block"
+                className="p-1.5 text-white/30 hover:text-white transition-colors transition-shadow duration-300 hidden md:block"
                 aria-label="Mini player"
                 title="Mini player"
               >
@@ -246,7 +246,7 @@ export const BottomPlayer = () => {
             <button 
               onClick={() => setIsExpanded(false)}
               aria-label="Close"
-              className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2.5 sm:p-3 rounded-full bg-black/20 text-white/40 hover:text-white hover:bg-white/10 transition-all z-50 backdrop-blur-md"
+              className="absolute top-4 sm:top-6 right-4 sm:right-6 p-2.5 sm:p-3 rounded-full bg-black/20 text-white/40 hover:text-white hover:bg-white/10 transition-colors transition-shadow duration-300 z-50 backdrop-blur-md"
             >
               <ChevronUp size={20} className="rotate-180" />
             </button>
