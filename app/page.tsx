@@ -126,6 +126,10 @@ const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
       whileHover={{ y: -4 }}
       whileTap={{ scale: 0.97 }}
       className="group cursor-pointer relative"
+      role="button"
+      tabIndex={0}
+      onClick={onPlay}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(); } }}
     >
       <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-linear-to-br from-slate-300 to-slate-400 dark:from-white/8 dark:to-white/2 shadow-md group-hover:shadow-2xl transition-shadow transition-transform duration-300">
         {coverSrc ? (
