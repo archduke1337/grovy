@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Middleware for auth route protection and session-aware redirects.
+ * Proxy for auth route protection and session-aware redirects.
  *
  * Protected routes:
  *   /account — requires a session cookie; redirects to sign-in if missing.
@@ -9,7 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
  * Auth pages when already signed in:
  *   /auth/sign-in, /auth/sign-up — redirect to /account if session exists.
  *
- * The middleware only checks for the *existence* of the session cookie, not
+ * The proxy only checks for the *existence* of the session cookie, not
  * its validity. The API routes validate the session server-side.
  */
 
@@ -22,7 +22,7 @@ function getSessionCookieName(): string {
   return `a_session_${projectId}`;
 }
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const cookieName = getSessionCookieName();
   const hasSession = Boolean(req.cookies.get(cookieName)?.value);
