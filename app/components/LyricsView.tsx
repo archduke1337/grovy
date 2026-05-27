@@ -82,7 +82,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
           <button 
             onClick={onClose}
             aria-label="Close"
-            className="absolute top-6 right-6 sm:top-8 sm:right-8 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all z-50 backdrop-blur-md"
+            className="absolute top-6 right-6 sm:top-8 sm:right-8 p-3 rounded-full bg-white/10 text-white hover:bg-white/20 transition-opacity transition-transform transition-colors duration-300 z-50 backdrop-blur-md"
           >
             <X size={24} />
           </button>
@@ -144,7 +144,7 @@ export const LyricsView: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
                            filter: isActive ? "blur(0px)" : "blur(1px)"
                         }}
                         transition={{ duration: 0.5 }}
-                        className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight transition-all px-2 cursor-pointer select-none"
+                        className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight leading-tight transition-opacity transition-transform transition-colors duration-300 px-2 cursor-pointer select-none"
                         style={isActive ? {
                           backgroundImage: `linear-gradient(90deg, #fff ${lineProgress}%, rgba(255,255,255,0.2) ${lineProgress}%)`,
                           WebkitBackgroundClip: "text",

@@ -299,12 +299,13 @@ export const Navbar = () => {
               >
                 {isDark ? <Sun size={16} className="group-hover:rotate-45 transition-transform" /> : <Moon size={16} className="group-hover:-rotate-12 transition-transform" />}
               </button>
-              <Link
-                href="https://github.com/archduke1337/grovy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="p-2.5 rounded-xl hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors transition-shadow duration-300 group text-black/30 dark:text-white/30 hover:text-black/60 dark:hover:text-white/60"
-              >
+                <Link
+                  href="https://github.com/archduke1337/grovy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-black/50 dark:text-white/40 text-[14px] font-semibold"
+                >
                   <Github size={18} />
                   GitHub
                 </Link>

@@ -130,10 +130,10 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-black text-white tracking-tight">Equalizer</h2>
               <div className="flex items-center gap-2">
-                <button onClick={reset} aria-label="Reset equalizer" className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all" title="Reset">
+                <button onClick={reset} aria-label="Reset equalizer" className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors duration-200" title="Reset">
                    <RotateCcw size={16} />
                  </button>
-                 <button onClick={onClose} aria-label="Close" className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-all">
+                 <button onClick={onClose} aria-label="Close" className="p-2 rounded-full hover:bg-white/10 text-white/40 hover:text-white transition-colors duration-200">
                    <X size={18} />
                  </button>
               </div>
@@ -146,7 +146,7 @@ export const Equalizer: React.FC<EqualizerProps> = ({ isOpen, onClose, audioCont
                   key={name}
                   onClick={() => applyPreset(name)}
                   aria-pressed={activePreset === name}
-                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-all ${
+                  className={`px-3 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-wider transition-colors duration-200 ${
                     activePreset === name
                       ? "bg-white text-black"
                       : "bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70"
