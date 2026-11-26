@@ -69,6 +69,15 @@ interface PlayerContextType {
   deletePlaylist: (id: string) => void;
   addToPlaylist: (playlistId: string, song: Song) => void;
   removeFromPlaylist: (playlistId: string, songId: string) => void;
+  /**
+   * Merge a parsed backup into the library. Entries already present (by
+   * playlist id and song id) are left alone, so importing the same file twice
+   * does not duplicate anything. Returns how many were added.
+   */
+  importLibrary: (input: { playlists?: Playlist[]; favorites?: Song[]; history?: Song[] }) => {
+    playlists: number;
+    favorites: number;
+  };
   isPlaylistModalOpen: boolean;
   playlistModalSong: Song | null;
   openPlaylistModal: (song: Song) => void;
@@ -1144,6 +1153,38 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setPlaylistModalSong(null);
   }, []);
 
+  /**
+   * Merge a backup into the library instead of replacing it, so importing a
+   * file never destroys what the user already has. De-duplicates playlists by
+   * id and favorites by song id.
+   */
+  const importLibrary = useCallback(
+    (input: { playlists?: Playlist[]; favorites?: Song[]; history?: Song[] }) => {
+      const incomingPlaylists = Array.isArray(input.playlists) ? input.playlists : [];
+      const incomingFavorites = Array.isArray(input.favorites) ? input.favorites : [];
+
+      let addedPlaylists = 0;
+      let addedFavorites = 0;
+
+      setPlaylists((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const fresh = incomingPlaylists.filter((p) => p && !existingIds.has(p.id));
+        addedPlaylists = fresh.length;
+        return fresh.length > 0 ? [...prev, ...fresh] : prev;
+      });
+
+      setFavorites((prev) => {
+        const existingIds = new Set(prev.map((s) => s.id));
+        const fresh = incomingFavorites.filter((s) => s && !existingIds.has(s.id));
+        addedFavorites = fresh.length;
+        return fresh.length > 0 ? [...prev, ...fresh] : prev;
+      });
+
+      return { playlists: addedPlaylists, favorites: addedFavorites };
+    },
+    []
+  );
+
   // Queue management
   const moveSongInQueue = useCallback((from: number, to: number) => {
     setSongs(prev => {
@@ -1352,6 +1393,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     deletePlaylist,
     addToPlaylist,
     removeFromPlaylist,
+    importLibrary,
     isPlaylistModalOpen,
     playlistModalSong,
     openPlaylistModal,
@@ -1379,7 +1421,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     nextTrack, previousTrack, seek, changeVolume, toggleLoop, toggleShuffle,
     toggleFavorite, isFavorite, loadSongs, setQueue, startRadio, loadRelated,
     isCommandPaletteOpen, recentlyPlayed, clearHistory,
-    playlists, createPlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist,
+    playlists, createPlaylist, deletePlaylist, addToPlaylist, removeFromPlaylist, importLibrary,
     isPlaylistModalOpen, playlistModalSong, openPlaylistModal, closePlaylistModal,
     playbackSpeed, setPlaybackSpeed, sleepTimerMinutes, setSleepTimer, sleepTimerEndTime,
     audioContextState, sourceNodeState, eqFiltersState,

@@ -88,7 +88,7 @@ export default function TermsOfService() {
         <section className="space-y-3 sm:space-y-4">
           <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white tracking-tight">5. Privacy & Data</h2>
           <p className="text-[14px] sm:text-[15px] text-gray-600 dark:text-white/40 leading-relaxed">
-            Grovy respects your privacy. There are no accounts and no sign-up: your playlists, favorites, listening history and playback preferences are stored in your own browser and never sent to us. Clearing your browser data removes them, so export a backup from the Library page if you want to keep them. Search and streaming requests are routed through Grovy API endpoints only to fetch music metadata or media from upstream providers. If the app is deployed on Vercel, privacy-focused aggregated usage metrics may also be processed through Vercel Web Analytics.
+            Grovy respects your privacy. There are no accounts and no sign-up: your playlists, favorites, listening history and playback preferences are stored in your own browser and never sent to us. Clearing your browser data removes them, so export a backup from the Library page if you want to keep them — that file contains your playlists, favorites and listening history. Search and streaming requests are routed through Grovy API endpoints only to fetch music metadata or media from upstream providers. If the app is deployed on Vercel, privacy-focused aggregated usage metrics may also be processed through Vercel Web Analytics.
           </p>
         </section>
 

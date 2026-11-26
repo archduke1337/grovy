@@ -9,9 +9,11 @@ import Image from "next/image";
 import { Button, EmptyState } from "@heroui/react";
 import { useToast } from "@/app/components/Toast";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
+import { PlaylistSchema, SongSchema } from "@/app/types/song";
+import type { Playlist, Song } from "@/app/types/song";
 
 export default function PlaylistsPage() {
-  const { playlists, createPlaylist } = usePlayer();
+  const { playlists, favorites, recentlyPlayed, createPlaylist, importLibrary } = usePlayer();
   const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState("");
@@ -25,12 +27,24 @@ export default function PlaylistsPage() {
   };
 
   const handleExportAll = () => {
-    const data = JSON.stringify({ version: 1, playlists, exportedAt: new Date().toISOString() }, null, 2);
+    // The ToS and README promise this file is a full backup, so it must cover
+    // everything the library holds — not just playlists.
+    const data = JSON.stringify(
+      {
+        version: 2,
+        exportedAt: new Date().toISOString(),
+        playlists,
+        favorites,
+        history: recentlyPlayed,
+      },
+      null,
+      2
+    );
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `grovy-playlists-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `grovy-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -43,27 +57,52 @@ export default function PlaylistsPage() {
       try {
         const parsed = JSON.parse(reader.result as string);
         if (typeof parsed !== "object" || parsed === null) {
-          toast("That file is not a Grovy playlist export.", { type: "error" });
-          return;
-        }
-        const imported = parsed.playlists || (Array.isArray(parsed) ? parsed : []);
-        if (!Array.isArray(imported) || imported.length === 0) {
-          toast("No playlists found in that file.", { type: "warning" });
+          toast("That file is not a Grovy backup.", { type: "error" });
           return;
         }
 
-        let count = 0;
-        for (const pl of imported) {
-          if (pl && typeof pl.name === "string" && pl.name.trim() && Array.isArray(pl.songs)) {
-            createPlaylist(pl.name, pl.songs);
-            count++;
-          }
+        // Accept both the v2 backup shape and v1 playlist-only exports.
+        const rawPlaylists = Array.isArray(parsed) ? parsed : parsed.playlists;
+        const playlistsIn = Array.isArray(rawPlaylists) ? rawPlaylists : [];
+
+        // Validate before anything reaches React state. Invalid entries are
+        // dropped with a count, rather than silently rendering broken data.
+        const playlists: Playlist[] = [];
+        let dropped = 0;
+        for (const entry of playlistsIn) {
+          const result = PlaylistSchema.safeParse(entry);
+          if (result.success) playlists.push(result.data);
+          else dropped++;
         }
 
-        if (count > 0) {
-          toast(`Imported ${count} playlist${count === 1 ? "" : "s"}.`, { type: "success" });
-        } else {
+        const favoritesIn = Array.isArray(parsed.favorites) ? parsed.favorites : [];
+        const favoritesValid: Song[] = [];
+        for (const entry of favoritesIn) {
+          const result = SongSchema.safeParse(entry);
+          if (result.success) favoritesValid.push(result.data);
+          else dropped++;
+        }
+
+        if (playlists.length === 0 && favoritesValid.length === 0) {
           toast("Nothing in that file could be imported.", { type: "warning" });
+          return;
+        }
+
+        const added = importLibrary({ playlists, favorites: favoritesValid });
+
+        const parts: string[] = [];
+        if (added.playlists > 0) {
+          parts.push(`${added.playlists} playlist${added.playlists === 1 ? "" : "s"}`);
+        }
+        if (added.favorites > 0) {
+          parts.push(`${added.favorites} favorite${added.favorites === 1 ? "" : "s"}`);
+        }
+
+        if (parts.length === 0) {
+          toast("Everything in that file is already in your library.", { type: "info" });
+        } else {
+          const suffix = dropped > 0 ? ` (${dropped} unreadable entr${dropped === 1 ? "y" : "ies"} skipped)` : "";
+          toast(`Imported ${parts.join(" and ")}${suffix}.`, { type: "success" });
         }
       } catch {
         toast("Couldn't read that file. It may be corrupted.", { type: "error" });

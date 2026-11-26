@@ -113,7 +113,7 @@ Playing correctly with the **Web Audio API** requires user interaction first. Cl
 
 - Grovy has no accounts, no sign-in, and no trackers.
 - Your playlists, favorites, listening history and preferences never leave the device — they are stored in this browser's `localStorage`.
-- Clearing site data removes your library. Use the export button on the Library page to keep a backup.
+- Clearing site data removes your library. Use the export button on the Library page to download a JSON backup of your playlists, favorites and listening history.
 - Search and streaming requests are proxied through Grovy API routes to upstream music providers.
 - If deployed on Vercel, aggregated site analytics may be collected via Vercel Web Analytics.
 
