@@ -43,7 +43,11 @@ function isNavigationRequest(request) {
 
 function isRuntimeAsset(url) {
   if (url.pathname.startsWith("/icons/")) return true;
-  return /\.(?:png|jpg|jpeg|svg|webp|ico|woff|woff2|mp3)$/i.test(url.pathname);
+  // Audio is deliberately excluded. Local .mp3 files are user-managed and
+  // have no content hash in their URL, so a stale-while-revalidate entry
+  // would keep serving the old file after the user replaced it, with no way
+  // to invalidate from the UI. Let the HTTP cache handle audio.
+  return /\.(?:png|jpg|jpeg|svg|webp|ico|woff|woff2)$/i.test(url.pathname);
 }
 
 async function staleWhileRevalidate(request) {
