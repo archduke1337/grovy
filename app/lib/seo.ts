@@ -2,7 +2,17 @@ export const APP_NAME = "Grovy";
 export const APP_DESCRIPTION =
   "Grovy is an open-source web music player with fast search, streaming, lyrics, and local-first playlists.";
 
-const FALLBACK_SITE_URL = "https://grovy.vercel.app";
+/**
+ * Canonical origin used when `NEXT_PUBLIC_SITE_URL` / `NEXT_PUBLIC_APP_URL` is
+ * unset — the documented default, since the README says no env vars are needed.
+ *
+ * Must match `package.json` `homepage` and the README link. Those three drifted
+ * apart before (vercel.app, archduke1337.is-a.dev, archduke.is-a.dev). If the
+ * deployment host changes, change it here and in `package.json` together —
+ * `robots.ts` and `sitemap.ts` both derive from this, so they follow
+ * automatically.
+ */
+const FALLBACK_SITE_URL = "https://grovy.archduke1337.is-a.dev";
 
 function normalizeUrl(rawUrl: string): string {
   try {
