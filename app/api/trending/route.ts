@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
+import { fetchWithTimeout, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
+import { mapSongs, toSaavnSong, toYouTubeSong } from "@/app/lib/songMapper";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,47 +26,20 @@ export async function GET(request: NextRequest) {
       fetchWithTimeout(ytTrendingEndpoint).then(res => res.json()).catch(() => ({ success: false, tracks: [] }))
     ]);
 
-    const saavnTrending = (saavnRes.success && Array.isArray(saavnRes.data?.results))
-      ? saavnRes.data.results
-      .slice(0, 30)
-      .map((song: any) => {
-        const downloadUrl = pickSaavnDownloadUrl(song);
-        if (!song?.id || !downloadUrl) return null;
-
-        return {
-          id: `saavn-${song.id}`,
-          title: song.name || song.title || "Untitled",
-          artist: pickArtist(song),
-          cover: pickCover(song),
-          duration: Number(song.duration) || 0,
-          url: `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`,
-          source: "Saavn",
-        };
-      })
-      .filter(Boolean)
+    const saavnTrending = saavnRes.success && Array.isArray(saavnRes.data?.results)
+      ? mapSongs(saavnRes.data.results.slice(0, 30), (song: any) =>
+          toSaavnSong(song, "Trending")
+        )
       : [];
 
     const ytData = Array.isArray(ytRes)
       ? ytRes
       : (ytRes?.tracks || ytRes?.results || ytRes?.data || []);
 
-    const ytTrending = (Array.isArray(ytData) ? ytData : [])
-      .slice(0, 30)
-      .map((song: any) => {
-        const videoId = song?.videoId || song?.id || song?.fallbackVideoId;
-        if (!videoId) return null;
-
-        return {
-          id: `yt-${videoId}`,
-          title: song?.title || song?.name || song?.fallbackTitle || "Untitled",
-          artist: pickArtist(song),
-          cover: pickCover(song),
-          duration: Number(song?.duration_seconds) || Number(song?.duration) || parseDuration(song?.durationText || song?.duration) || 0,
-          url: `/api/stream?id=${encodeURIComponent(videoId)}`,
-          source: "YouTube",
-        };
-      })
-      .filter(Boolean);
+    const ytTrending = mapSongs(
+      (Array.isArray(ytData) ? ytData : []).slice(0, 30),
+      (song: any) => toYouTubeSong(song, "YouTube")
+    );
 
     const combined: any[] = [];
     const seen = new Set<string>();

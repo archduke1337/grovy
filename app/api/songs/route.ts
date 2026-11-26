@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
 import { NextRequest } from "next/server";
-import { fetchWithTimeout, pickArtist, pickCover, pickSaavnDownloadUrl, parseDuration, GENRES, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
+import { fetchWithTimeout, GENRES, VALID_COUNTRIES } from "@/app/lib/apiHelpers";
+import { mapSongs, toSaavnSong, toYouTubeSong } from "@/app/lib/songMapper";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -71,44 +72,18 @@ export async function GET(request: NextRequest) {
         songsList = data;
       }
 
-      const rawSongs = songsList.filter((item: any) => item && (item.videoId || item.id || item.fallbackVideoId)).map((item: any) => {
-          if (isYT) {
-           const vid = item.videoId || item.id || item.fallbackVideoId;
-           if (!vid) return null;
-             return {
-                id: `yt-${vid}`,
-             title: item.title || item.name || item.fallbackTitle || "Untitled",
-                url: `/api/stream?id=${vid}`,
-             artist: pickArtist(item),
-             cover: pickCover(item),
-                genre: "YouTube",
-             duration: Number(item.duration) || parseDuration(item.durationText || item.duration) || 0,
-                source: "YouTube",
-             };
-          }
+      const mappedSongs = mapSongs(
+        songsList.filter(
+          (item: any) => item && (item.videoId || item.id || item.fallbackVideoId)
+        ),
+        (item: any) => (isYT ? toYouTubeSong(item, "YouTube") : toSaavnSong(item, "Unknown"))
+      );
 
-         const cover = pickCover(item);
-         const downloadUrl = pickSaavnDownloadUrl(item);
-         const artist = pickArtist(item);
-          
-          // Proxy Saavn URLs through stream endpoint for CORS support
-          const streamUrl = downloadUrl 
-            ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`
-            : "";
-          
-          return {
-            id: `saavn-${item.id}`,
-            title: item.name || item.title || "Untitled",
-            url: streamUrl,
-            artist: artist,
-            cover: cover,
-            genre: "Unknown", 
-            duration: Number(item.duration) || 0,
-            source: "Saavn",
-          };
-      }).filter((s: any) => s && s.url);
-
-      return Response.json(rawSongs, { headers: corsHeaders });
+      // Validate the id-branch payload the same way the search branch does.
+      // Returning only entries that pass keeps one bad track from failing an
+      // entire album.
+      const validSongs = mappedSongs.filter((s) => SongSchema.safeParse(s).success);
+      return Response.json(validSongs, { headers: corsHeaders });
     }
     // Remote Logic
     if (!query) {
@@ -137,74 +112,39 @@ export async function GET(request: NextRequest) {
 
     // Robust Saavn Parsing
     const saavnRaw = saavnRes.data?.results || saavnRes.data || (Array.isArray(saavnRes) ? saavnRes : []);
-    const saavnSongs = saavnRaw.map((item: any, index: number) => {
-      const cover = pickCover(item);
-      const downloadUrl = pickSaavnDownloadUrl(item);
-      const artist = pickArtist(item);
-      
-      // Create streaming URL that proxies through our endpoint for CORS support
-      let streamUrl = "";
-      if (downloadUrl) {
-        // URL encode the download URL properly for query parameter
-        streamUrl = `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`;
-      }
-      
-      return {
-        id: `saavn-${item.id}`,
-        title: item.name || item.title || "Untitled",
-        url: streamUrl,
-        artist: artist,
-        cover: cover,
-        genre: GENRES[index % GENRES.length],
-        duration: Number(item.duration) || 0,
-        source: "Saavn"
-      };
-    }).filter((s: any) => s.url && s.id); // Filter out songs without URLs
+    const saavnSongs = mapSongs(saavnRaw, (item: any, index) =>
+      toSaavnSong(item, GENRES[index % GENRES.length])
+    );
 
     // Robust YouTube Parsing — with HD thumbnail upgrade
     const ytRaw = Array.isArray(ytRes)
       ? ytRes
       : (ytRes?.tracks || ytRes?.results || ytRes?.data || ytRes?.songs || []);
-    const ytSongs = ytRaw.map((item: any) => {
-      const id = item.videoId || item.id || item.fallbackVideoId;
-      if (!id) return null;
-
-      // Get HD thumbnail — upgrade from 60x60 to 544x544
-      const cover = pickCover(item);
-
-      return {
-        id: `yt-${id}`,
-        title: item.title || item.name || item.fallbackTitle || "Untitled",
-        url: `/api/stream?id=${id}`, 
-        artist: pickArtist(item),
-        cover,
-        genre: "YouTube",
-        duration:
-          Number(item.duration_seconds) ||
-          Number(item.duration) ||
-          (item.duration_ms != null ? Number(item.duration_ms) / 1000 : 0) ||
-          parseDuration(item.durationText || item.duration) ||
-          180,
-        source: "YouTube"
-      };
-    }).filter(Boolean);
+    const ytSongs = mapSongs(ytRaw, (item: any) => toYouTubeSong(item, "YouTube"));
 
     // Interleave and filter invalid entries
-    const rawSongs = [];
+    const interleaved = [];
     const maxLen = Math.max(saavnSongs.length, ytSongs.length);
     for (let i = 0; i < maxLen; i++) {
-      if (saavnSongs[i]) rawSongs.push(saavnSongs[i]);
-      if (ytSongs[i]) rawSongs.push(ytSongs[i]);
+      if (saavnSongs[i]) interleaved.push(saavnSongs[i]);
+      if (ytSongs[i]) interleaved.push(ytSongs[i]);
     }
 
-    const cleanSongs = rawSongs.filter(s => s && s.id && s.url);
+    const cleanSongs = interleaved.filter(s => s && s.id && s.url);
     const result = z.array(SongSchema).safeParse(cleanSongs);
     
     if (!result.success) {
       console.error("Zod Validation Failed:", result.error.format());
-      // Return only the items that individually pass validation
+      // Return the items that individually pass validation. These headers must
+      // match the success path: dropping CORS headers here made a partially
+      // valid album look like a network failure to cross-origin callers.
       const validSongs = cleanSongs.filter(s => SongSchema.safeParse(s).success);
-      return Response.json(validSongs);
+      return Response.json(validSongs, {
+        headers: {
+          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+          ...corsHeaders,
+        },
+      });
     }
 
     return Response.json(result.data, {

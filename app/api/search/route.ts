@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
-import { getHDThumbnail, getBestThumbnail } from "@/app/lib/thumbnail";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
-import { fetchWithTimeout, pickArtist, parseDuration } from "@/app/lib/apiHelpers";
+import { fetchWithTimeout } from "@/app/lib/apiHelpers";
+import { mapSongs, toSaavnSong, toYouTubeSong } from "@/app/lib/songMapper";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -52,54 +52,17 @@ export async function GET(request: NextRequest) {
       fetchWithTimeout(ytEndpoint).then(res => res.json()).catch(() => [])
     ]);
 
-    // Format Saavn results as Song objects for consistency with /api/songs endpoint
-    const saavnFormatted = (saavnRes.success && saavnRes.data?.results) ? saavnRes.data.results.map((item: any) => {
-      const cover = item.image?.[item.image.length - 1]?.url || (Array.isArray(item.image) ? item.image[0]?.url : item.image);
-      const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url || (Array.isArray(item.downloadUrl) ? item.downloadUrl[0]?.url : item.downloadUrl);
-      const artist = item.artists?.primary?.map((a: any) => a.name).join(", ") || item.artist || "Unknown Artist";
-      
-      // Create streaming URL that proxies through our endpoint for CORS support
-      let url = "";
-      if (downloadUrl) {
-        url = `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`;
-      }
-
-      return {
-        id: `saavn-${item.id}`,
-        title: item.name || item.title,
-        url: url,
-        artist: artist,
-        cover: cover,
-        genre: "Unknown",
-        duration: item.duration,
-        source: "Saavn"
-      };
-    }).filter((s: any) => s.url) : [];
+    // Format upstream results with the shared mappers, so search, browse and
+    // discovery cannot drift apart in duration fallbacks or cover handling.
+    const saavnFormatted = saavnRes.success && saavnRes.data?.results
+      ? mapSongs(saavnRes.data.results, (item: any) => toSaavnSong(item, "Unknown"))
+      : [];
 
     // Format YouTube results as Song objects for consistency
-    const ytFormatted = (Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || [])).map((item: any) => {
-      const videoId = item.videoId || item.id || item.fallbackVideoId;
-      if (!videoId) return null;
-
-      const cover = getBestThumbnail(item.thumbnails) || getHDThumbnail(item.thumbnails?.[0]?.url) || item.image;
-      const artist = pickArtist(item);
-
-      return {
-        id: `yt-${videoId}`,
-        title: item.name || item.title || item.fallbackTitle || "Untitled",
-        url: `/api/stream?id=${videoId}`,
-        artist: artist,
-        cover: cover,
-        genre: "YouTube",
-        duration:
-          Number(item.duration_seconds) ||
-          Number(item.duration) ||
-          (item.duration_ms != null ? Number(item.duration_ms) / 1000 : 0) ||
-          parseDuration(item.durationText || item.duration) ||
-          180,
-        source: "YouTube"
-      };
-    }).filter(Boolean);
+    const ytFormatted = mapSongs(
+      Array.isArray(ytRes) ? ytRes : (ytRes?.results || ytRes?.data || []),
+      (item: any) => toYouTubeSong(item, "YouTube")
+    );
 
     // Interleave results
     const combined = [];

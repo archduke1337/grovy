@@ -5,8 +5,8 @@
  * parsing and fallback chain lives here instead of being duplicated.
  */
 
-import { pickArtist, pickCover, parseDuration } from "./apiHelpers";
 import { fetchWithTimeout } from "./apiHelpers";
+import { mapSongs, toSaavnSong, toYouTubeSong } from "./songMapper";
 import { SongSchema } from "@/app/types/song";
 import type { Song } from "@/app/types/song";
 
@@ -24,57 +24,6 @@ function firstArray(data: unknown): RawRecord[] {
     if (Array.isArray(record[key])) return record[key] as RawRecord[];
   }
   return [];
-}
-
-function toYouTubeSong(item: RawRecord, genre: string): Song | null {
-  const id = item.videoId ?? item.id ?? item.fallbackVideoId;
-  if (typeof id !== "string" || !id) return null;
-
-  return {
-    id: `yt-${id}`,
-    title: String(item.title ?? item.name ?? item.fallbackTitle ?? "Untitled"),
-    url: `/api/stream?id=${encodeURIComponent(id)}`,
-    artist: pickArtist(item),
-    cover: pickCover(item),
-    genre,
-    duration:
-      Number(item.duration) ||
-      parseDuration(item.durationText ?? item.duration) ||
-      0,
-    source: "YouTube",
-  };
-}
-
-function toSaavnSong(item: RawRecord, genre: string): Song | null {
-  const id = item.id;
-  if (typeof id !== "string" || !id) return null;
-
-  const downloadUrl = pickSaavnDownloadUrl(item);
-  if (!downloadUrl) return null;
-
-  return {
-    id: `saavn-${id}`,
-    title: String(item.name ?? item.title ?? "Untitled"),
-    url: `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}`,
-    artist: pickArtist(item),
-    cover: pickCover(item),
-    genre,
-    duration: Number(item.duration) || 0,
-    source: "Saavn",
-  };
-}
-
-function pickSaavnDownloadUrl(item: RawRecord): string {
-  const list = item.downloadUrl;
-
-  if (Array.isArray(list)) {
-    const last = list[list.length - 1] as RawRecord | undefined;
-    if (last && typeof last.url === "string") return last.url;
-    const first = list[0] as RawRecord | undefined;
-    if (first && typeof first.url === "string") return first.url;
-  }
-
-  return typeof list === "string" ? list : "";
 }
 
 async function fetchJson(url: string): Promise<unknown> {
@@ -117,9 +66,7 @@ export async function discoverSongs(
 
   if (videoId) {
     const data = await fetchJson(youtubeEndpoint(kind, videoId)).catch(() => null);
-    const songs = firstArray(data)
-      .map((item) => toYouTubeSong(item, genre))
-      .filter((song): song is Song => song !== null);
+    const songs = mapSongs(firstArray(data), (item) => toYouTubeSong(item, genre));
 
     if (songs.length > 0) return songs;
   }
@@ -131,9 +78,9 @@ export async function discoverSongs(
     ).catch(() => null);
 
     const payload = data as { success?: boolean; data?: unknown } | null;
-    const songs = (payload?.success ? firstArray(payload.data) : [])
-      .map((item) => toSaavnSong(item, genre))
-      .filter((song): song is Song => song !== null);
+    const songs = mapSongs(payload?.success ? firstArray(payload.data) : [], (item) =>
+      toSaavnSong(item, genre)
+    );
 
     if (songs.length > 0) return songs;
   }
@@ -143,9 +90,7 @@ export async function discoverSongs(
     if (artist) query.append("artist", artist);
 
     const data = await fetchJson(`${YT_API}/api/similar?${query}`).catch(() => null);
-    const songs = firstArray(data)
-      .map((item) => toYouTubeSong(item, genre))
-      .filter((song): song is Song => song !== null);
+    const songs = mapSongs(firstArray(data), (item) => toYouTubeSong(item, genre));
 
     if (songs.length > 0) return songs;
   }
