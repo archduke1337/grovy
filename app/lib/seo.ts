@@ -1,7 +1,6 @@
 export const APP_NAME = "Grovy";
 export const APP_DESCRIPTION =
   "Grovy is an open-source web music player with fast search, streaming, lyrics, and local-first playlists.";
-export const APP_TAGLINE = "Open-source web music player";
 
 const FALLBACK_SITE_URL = "https://grovy.vercel.app";
 

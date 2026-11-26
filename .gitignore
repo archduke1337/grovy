@@ -4,6 +4,7 @@ out
 dist
 build
 *.pem
+*.patch
 .DS_Store
 .env.local
 .env.*.local

@@ -76,35 +76,29 @@ function normalizeQuery(query: string): string {
 
 // ─── Song metadata cache ────────────────────────────────────────
 
-/** Cache a single song's metadata. */
-export async function cacheSong(song: SongRecord): Promise<void> {
-  if (!song?.id) return;
-  await cacheSongs([song]);
-}
-
 /** Cache a batch of songs, keeping the newest {@link MAX_CACHED_SONGS}. */
 export async function cacheSongs(songs: SongRecord[]): Promise<void> {
   if (!Array.isArray(songs) || songs.length === 0) return;
 
   const store = readCache<SongRecordMap>(CACHE_KEYS.songs, {});
   const now = Date.now();
+  let added = 0;
 
   for (const song of songs) {
     if (!song?.id) continue;
     store[song.id] = { ...song, _cachedAt: now };
+    added += 1;
   }
+
+  // Nothing in the batch was cacheable. Writing the (possibly empty) store back
+  // would create a junk key for a batch that carried no usable data.
+  if (added === 0) return;
 
   const entries = Object.entries(store).sort(
     (a, b) => (b[1]._cachedAt || 0) - (a[1]._cachedAt || 0)
   );
 
   writeCache(CACHE_KEYS.songs, Object.fromEntries(entries.slice(0, MAX_CACHED_SONGS)));
-}
-
-/** Retrieve a cached song by ID, or null when it is not cached. */
-export async function getCachedSong(id: string): Promise<SongRecord | null> {
-  const store = readCache<SongRecordMap>(CACHE_KEYS.songs, {});
-  return store[id] ?? null;
 }
 
 // ─── Search cache ───────────────────────────────────────────────
@@ -141,41 +135,11 @@ export async function getCachedSearch(
   return Array.isArray(entry.results) ? entry.results : null;
 }
 
-/** Remove cached searches older than `maxAge` (default 1 hour). */
-export async function evictStaleSearches(maxAge = 60 * 60 * 1000): Promise<void> {
-  const store = readCache<Record<string, SearchEntry>>(CACHE_KEYS.searches, {});
-  const cutoff = Date.now() - maxAge;
-
-  const kept = Object.fromEntries(
-    Object.entries(store).filter(([, entry]) => (entry?.timestamp || 0) >= cutoff)
-  );
-
-  writeCache(CACHE_KEYS.searches, kept);
-}
-
-/** Clear cached songs and searches. User library data is untouched. */
-export async function clearOfflineCache(): Promise<void> {
-  const storage = getStorage();
-  if (!storage) return;
-
-  try {
-    storage.removeItem(CACHE_KEYS.songs);
-    storage.removeItem(CACHE_KEYS.searches);
-  } catch {
-    /* ignore */
-  }
-}
-
 // ─── User library ───────────────────────────────────────────────
 
 /** Persist playlists. Song edits, renames and reorders are all written. */
 export async function savePlaylists(playlists: PlaylistRecord[]): Promise<void> {
   writeLibrarySection("playlists", Array.isArray(playlists) ? playlists : []);
-}
-
-/** Read playlists. */
-export async function getPlaylists(): Promise<PlaylistRecord[]> {
-  return readLibraryState().playlists;
 }
 
 /** Persist favorites. */
@@ -210,14 +174,6 @@ export async function getHistory(): Promise<HistoryRecord[]> {
 /** Clear recently played history. */
 export async function clearHistory(): Promise<void> {
   writeLibrarySection("history", []);
-}
-
-/** Replace the whole library (used by import). */
-export async function replaceLibrary(library: Partial<StoredLibrary>): Promise<void> {
-  const current = readLibraryState();
-  writeLibrarySection("playlists", library.playlists ?? current.playlists);
-  writeLibrarySection("favorites", library.favorites ?? current.favorites);
-  writeLibrarySection("history", library.history ?? current.history);
 }
 
 /**

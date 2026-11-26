@@ -3,9 +3,13 @@
  *
  * YouTube only generates `maxresdefault.jpg` for videos uploaded above a
  * certain quality, so guessing that URL produces broken images for a large
- * share of tracks. We always resolve to `hqdefault.jpg`, which exists for
- * every video, and raise the resolution by requesting a larger `hqdefault`
- * variant only where it is guaranteed.
+ * share of tracks. We always resolve to `hqdefault.jpg` (480x360), which
+ * exists for every video.
+ *
+ * `sddefault.jpg` (640x480) is a tempting upgrade, but it is *not* generated
+ * for all videos — requesting it would reintroduce the broken-image problem
+ * this module exists to avoid. If you need a bigger render, supply one from
+ * the API response (see `getBestThumbnail`) rather than guessing a size.
  */
 
 const YT_ID_PATTERN = /\/vi\/([^/?#]+)/;
@@ -67,19 +71,4 @@ export function getBestThumbnail(
   );
 
   return getHDThumbnail(sorted[0]?.url);
-}
-
-/**
- * A second, larger YouTube thumbnail to try when `getHDThumbnail` fails.
- *
- * `sqp`-signed URLs are tied to a specific size, so callers that want a
- * fallback should swap in this deterministic URL on `onError`.
- */
-export function getThumbnailFallback(url: string | undefined | null): string | undefined {
-  if (!url) return undefined;
-
-  const match = url.match(YT_ID_PATTERN);
-  if (!match) return undefined;
-
-  return `https://i.ytimg.com/vi/${match[1]}/mqdefault.jpg`;
 }

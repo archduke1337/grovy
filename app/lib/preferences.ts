@@ -23,8 +23,3 @@ export async function getGrovyPrefs(): Promise<Preferences> {
 export async function patchGrovyPrefs(patch: Preferences): Promise<Preferences> {
   return patchPreferences(patch);
 }
-
-/** Non-async variant for hot paths such as volume sliders. */
-export function patchGrovyPrefsSync(patch: Preferences): Preferences {
-  return patchPreferences(patch);
-}
