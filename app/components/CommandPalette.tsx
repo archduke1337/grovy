@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Music, X, Home, Info, Play, Github, Loader2, FileText } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
+import { useSearchRequest } from "@/app/hooks/useSearchRequest";
 import { useRouter } from "next/navigation";
 import { Song } from "../types/song";
 
@@ -17,18 +18,37 @@ interface CommandItem {
 }
 
 export const CommandPalette: React.FC = () => {
-  const { 
-    songs: localSongs, 
-    setCommandPaletteOpen, 
-    isCommandPaletteOpen: isOpen, 
-    setQueue, 
-    loadSongs 
+  const {
+    songs: localSongs,
+    setCommandPaletteOpen,
+    isCommandPaletteOpen: isOpen,
+    setQueue,
+    loadSongs,
   } = usePlayer();
-  const [query, setQuery] = useState("");
-  const [apiResults, setApiResults] = useState<Song[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
   const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Debounce timings legitimately differ between the palette and the hero box,
+  // but abort/staleness handling must not — the palette previously had no run
+  // guard, so a slow earlier request could overwrite a fast later one.
+  const {
+    query,
+    setQuery,
+    results: apiResults,
+    isSearching,
+    clear: clearSearch,
+  } = useSearchRequest<Song>({
+    fetcher: (q, signal) => loadSongs(q, signal),
+    minLength: 1,
+    debounceMs: 400,
+  });
+
+  /** Close and drop the query, so reopening starts from a clean slate. */
+  const closePalette = useCallback(() => {
+    setCommandPaletteOpen(false);
+    setSelectedIndex(0);
+    clearSearch();
+  }, [setCommandPaletteOpen, clearSearch]);
 
   const filteredItems = useMemo(() => {
     const q = query.toLowerCase();
@@ -36,10 +56,10 @@ export const CommandPalette: React.FC = () => {
     
     // 1. Navigation Actions
     const navigation = [
-      { id: "nav-home", title: "Go to Home", icon: <Home size={18} />, action: () => { router.push("/"); setCommandPaletteOpen(false); } },
-      { id: "nav-github", title: "View Source code", icon: <Github size={18} />, action: () => { window.open("https://github.com/archduke1337/grovy", "_blank"); setCommandPaletteOpen(false); } },
-      { id: "nav-opensource", title: "Open Source Credits", icon: <Info size={18} />, action: () => { router.push("/opensource"); setCommandPaletteOpen(false); } },
-      { id: "nav-tos", title: "Terms of Service", icon: <FileText size={18} />, action: () => { router.push("/tos"); setCommandPaletteOpen(false); } },
+      { id: "nav-home", title: "Go to Home", icon: <Home size={18} />, action: () => { router.push("/"); closePalette(); } },
+      { id: "nav-github", title: "View Source code", icon: <Github size={18} />, action: () => { window.open("https://github.com/archduke1337/grovy", "_blank"); closePalette(); } },
+      { id: "nav-opensource", title: "Open Source Credits", icon: <Info size={18} />, action: () => { router.push("/opensource"); closePalette(); } },
+      { id: "nav-tos", title: "Terms of Service", icon: <FileText size={18} />, action: () => { router.push("/tos"); closePalette(); } },
     ];
 
     navigation.forEach(item => {
@@ -56,7 +76,7 @@ export const CommandPalette: React.FC = () => {
         type: "Global Search",
         action: () => {
           setQueue([song, ...localSongs], 0);
-          setCommandPaletteOpen(false);
+          closePalette();
         }
       });
     });
@@ -74,7 +94,7 @@ export const CommandPalette: React.FC = () => {
               type: "In Library",
               action: () => {
                 setQueue(localSongs, idx);
-                setCommandPaletteOpen(false);
+                closePalette();
               }
             });
           }
@@ -83,7 +103,26 @@ export const CommandPalette: React.FC = () => {
     }
 
     return results;
-  }, [query, localSongs, apiResults, router, setCommandPaletteOpen, setQueue]);
+  }, [query, localSongs, apiResults, router, closePalette, setQueue]);
+
+  // Selection is clamped on read rather than synchronised in an effect: the
+  // list shrinks as you type, and writing state back from an effect here would
+  // trigger the cascading-render warning for no benefit.
+  const activeIndex =
+    filteredItems.length === 0
+      ? -1
+      : Math.min(selectedIndex, filteredItems.length - 1);
+
+  const moveSelection = useCallback(
+    (delta: number) => {
+      setSelectedIndex(() => {
+        const count = Math.max(1, filteredItems.length);
+        const from = activeIndex < 0 ? (delta > 0 ? -1 : 0) : activeIndex;
+        return (from + delta + count) % count;
+      });
+    },
+    [filteredItems.length, activeIndex]
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -92,22 +131,22 @@ export const CommandPalette: React.FC = () => {
         setCommandPaletteOpen(!isOpen);
       }
       if (e.key === "Escape") {
-        setCommandPaletteOpen(false);
+        closePalette();
       }
-      
+
       if (isOpen) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
-          setSelectedIndex(prev => (prev + 1) % Math.max(1, filteredItems.length));
+          moveSelection(1);
         }
         if (e.key === "ArrowUp") {
           e.preventDefault();
-          setSelectedIndex(prev => (prev - 1 + filteredItems.length) % Math.max(1, filteredItems.length));
+          moveSelection(-1);
         }
         if (e.key === "Enter") {
           e.preventDefault();
-          if (filteredItems[selectedIndex]) {
-            filteredItems[selectedIndex].action();
+          if (activeIndex >= 0 && filteredItems[activeIndex]) {
+            filteredItems[activeIndex].action();
           }
         }
       }
@@ -115,53 +154,11 @@ export const CommandPalette: React.FC = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, setCommandPaletteOpen, filteredItems, selectedIndex]);
+  }, [isOpen, setCommandPaletteOpen, closePalette, filteredItems, activeIndex, moveSelection]);
 
-  useEffect(() => {
-    setSelectedIndex(0);
-  }, [query]);
-
-  useEffect(() => {
-    if (selectedIndex >= filteredItems.length) {
-      setSelectedIndex(Math.max(0, filteredItems.length - 1));
-    }
-  }, [filteredItems.length, selectedIndex]);
-
-  useEffect(() => {
-    if (query.trim().length === 0) {
-      setApiResults([]);
-      return;
-    }
-
-    const controller = new AbortController();
-
-    const handler = setTimeout(async () => {
-      setIsSearching(true);
-      try {
-        const results = await loadSongs(query, controller.signal);
-        if (!controller.signal.aborted) setApiResults(results || []);
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") return;
-        if (!controller.signal.aborted) setApiResults([]);
-      } finally {
-        if (!controller.signal.aborted) setIsSearching(false);
-      }
-    }, 400);
-
-    return () => {
-      clearTimeout(handler);
-      controller.abort();
-    };
-  }, [query, loadSongs]);
-
-  // Reset state when palette closes
-  useEffect(() => {
-    if (!isOpen) {
-      setQuery("");
-      setApiResults([]);
-      setSelectedIndex(0);
-    }
-  }, [isOpen]);
+  // Nothing resets on close: `activeIndex` is derived, and `closePalette`
+  // clears the query at the point of closing. An effect that wrote state back
+  // here would just be a second, racier copy of that.
 
   return (
     <AnimatePresence>
@@ -171,8 +168,9 @@ export const CommandPalette: React.FC = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setCommandPaletteOpen(false)}
+            onClick={closePalette}
             className="fixed inset-0 bg-black/60 backdrop-blur-xl z-[150]"
+            aria-hidden="true"
           />
 
           <motion.div
@@ -200,7 +198,7 @@ export const CommandPalette: React.FC = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   className="w-full bg-transparent outline-none text-lg sm:text-xl text-gray-900 dark:text-white placeholder-gray-400"
                 />
-                <button onClick={() => setCommandPaletteOpen(false)} aria-label="Close" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white sm:hidden">
+                <button onClick={closePalette} aria-label="Close" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-white sm:hidden">
                   <X size={20} />
                 </button>
               </div>
@@ -213,18 +211,18 @@ export const CommandPalette: React.FC = () => {
                       onMouseEnter={() => setSelectedIndex(i)}
                       onClick={item.action}
                       className={`w-full flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-xl sm:rounded-2xl transition-colors transition-shadow duration-200 text-left group ${
-                        selectedIndex === i ? "bg-gray-100 dark:bg-white/10" : ""
+                        activeIndex === i ? "bg-gray-100 dark:bg-white/10" : ""
                       }`}
                     >
                       <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-colors transition-shadow duration-200 ${
-                        selectedIndex === i 
+                        activeIndex === i 
                           ? "bg-blue-500 text-white shadow-lg" 
                           : "bg-gray-100 dark:bg-white/5 text-gray-400"
                       }`}>
                         {item.icon}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className={`font-bold truncate text-[13px] sm:text-sm ${selectedIndex === i ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-white/70'}`}>
+                        <div className={`font-bold truncate text-[13px] sm:text-sm ${activeIndex === i ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-white/70'}`}>
                           {item.title}
                         </div>
                         {item.subtitle && <div className="text-[10px] sm:text-xs text-gray-400 font-medium truncate">{item.subtitle}</div>}

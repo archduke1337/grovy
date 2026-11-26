@@ -1,10 +1,9 @@
 "use client";
 
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import NextImage from "next/image";
 import { useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { Heart, Music, Play, Search, X, Clock, Trash2 } from "lucide-react";
+import { Search, X, Clock, Trash2, Music } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { getSearchSuggestions, searchSongs } from "@/app/lib/api";
 import {
@@ -13,7 +12,8 @@ import {
   readSearchHistory,
   removeSearchHistoryEntry,
 } from "@/app/lib/localStore";
-import { getHDThumbnail } from "./lib/thumbnail";
+import { TrackCard } from "./components/TrackCard";
+import { useSearchRequest } from "@/app/hooks/useSearchRequest";
 import type { Song } from "@/app/types/song";
 
 type HomeSong = Song & Record<string, unknown>;
@@ -117,83 +117,6 @@ const SectionHeading = ({ title, subtitle, icon: Icon }: SectionHeadingProps) =>
   </div>
 );
 
-type TrackCardProps = {
-  song: HomeSong;
-  onPlay: () => void;
-  onFavorite: (song: HomeSong) => void;
-  isFav: boolean;
-};
-
-const TrackCard = ({ song, onPlay, onFavorite, isFav }: TrackCardProps) => {
-  const coverSrc = song.cover ? getHDThumbnail(song.cover) || song.cover : null;
-
-  return (
-    <motion.div
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.97 }}
-      className="group cursor-pointer relative"
-      role="button"
-      tabIndex={0}
-      onClick={onPlay}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(); } }}
-    >
-      <div className="aspect-square relative rounded-2xl overflow-hidden mb-3 bg-linear-to-br from-slate-300 to-slate-400 dark:from-white/8 dark:to-white/2 shadow-md group-hover:shadow-2xl transition-shadow transition-transform duration-300">
-        {coverSrc ? (
-          <NextImage
-            src={coverSrc}
-            alt={song.title}
-            width={210}
-            height={210}
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(max-width: 640px) 45vw, (max-width: 1024px) 28vw, (max-width: 1280px) 18vw, 210px"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-linear-to-br from-sky-400/25 to-emerald-400/25 dark:from-sky-500/15 dark:to-emerald-500/15">
-            <Music size={40} className="text-white/30" />
-          </div>
-        )}
-
-        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors duration-300" />
-
-        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <motion.button
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={(event) => {
-              event.stopPropagation();
-              onPlay();
-            }}
-            aria-label="Play"
-            className="w-14 h-14 bg-sky-500 hover:bg-sky-600 rounded-full flex items-center justify-center shadow-2xl transition-colors transition-transform"
-          >
-            <Play size={22} fill="white" className="text-white ml-0.5" />
-          </motion.button>
-        </div>
-
-        <motion.button
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={(event) => {
-            event.stopPropagation();
-            onFavorite(song);
-          }}
-          aria-label={isFav ? "Remove from favorites" : "Add to favorites"}
-          className="absolute top-2 right-2 p-2 rounded-full bg-black/40 hover:bg-sky-500 transition-colors transition-opacity backdrop-blur-sm z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-          title={isFav ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Heart size={18} fill={isFav ? "currentColor" : "none"} className={isFav ? "text-sky-400" : "text-white"} />
-        </motion.button>
-      </div>
-
-      <div className="space-y-1.5">
-        <h4 className="font-bold text-gray-900 dark:text-white truncate text-sm sm:text-base leading-snug">{song.title}</h4>
-        <p className="text-gray-500 dark:text-white/50 text-xs sm:text-sm font-medium truncate">{song.artist}</p>
-      </div>
-    </motion.div>
-  );
-};
-
 const HomeSkeleton = () => (
   <div className="w-full max-w-350 mx-auto px-3 sm:px-5 md:px-8 lg:px-12 py-6 sm:py-8 space-y-8 sm:space-y-10 animate-pulse">
     <div className="h-56 sm:h-64 rounded-3xl bg-gray-200 dark:bg-white/7" />
@@ -223,25 +146,52 @@ function HomeContent() {
   const { setQueue, songs, toggleFavorite, isFavorite } = usePlayer();
 
   const [greeting, setGreeting] = useState("Hello");
-  const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<HomeSong[]>([]);
-  const [searchError, setSearchError] = useState("");
-  const [lastSubmittedQuery, setLastSubmittedQuery] = useState("");
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const [showSearchHistory, setShowSearchHistory] = useState(false);
 
   const searchBoxRef = useRef<HTMLDivElement>(null);
-  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const searchAbortRef = useRef<AbortController | null>(null);
-  const searchRunIdRef = useRef(0);
   const hasHandledSharedSongRef = useRef(false);
   const handledUrlSearchRef = useRef("");
   const songsRef = useRef(songs);
-  const searchResultsRef = useRef(searchResults);
+  const searchResultsRef = useRef<HomeSong[]>([]);
+
+  // Search history is part of the local store, so it hydrates synchronously
+  // and survives a reload without a separate storage key or parse step.
+  const addToSearchHistory = useCallback((query: string) => {
+    setSearchHistory(addSearchHistoryEntry(query));
+  }, []);
+
+  const {
+    query: searchQuery,
+    setQuery: setSearchQuery,
+    results: searchResults,
+    isSearching,
+    error: searchError,
+    submittedQuery: lastSubmittedQuery,
+    setError: setSearchError,
+    submit: runSearch,
+    clear: clearSearch,
+  } = useSearchRequest<HomeSong>({
+    fetcher: (query, signal) => searchSongs(query, signal) as Promise<HomeSong[]>,
+    minLength: 2,
+    onResults: (query, found) => {
+      // Record the query once per successful search, but only when it actually
+      // produced results — a typo that returns nothing should not clutter the
+      // history dropdown.
+      if (found.length > 0) addToSearchHistory(query);
+    },
+  });
+
+  // Clearing the box should also drop the stale suggestion list, which the
+  // hook does not own.
+  const clearSearchAndSuggestions = useCallback(() => {
+    clearSearch();
+    setSuggestions([]);
+    setIsLoadingSuggestions(false);
+  }, [clearSearch]);
 
   useEffect(() => {
     const timeGreeting = resolveTimeGreeting();
@@ -268,8 +218,6 @@ function HomeContent() {
     searchResultsRef.current = searchResults;
   }, [searchResults]);
 
-  // Search history is part of the local store, so it hydrates synchronously
-  // and survives a reload without a separate storage key or parse step.
   useEffect(() => {
     setSearchHistory(readSearchHistory());
   }, []);
@@ -347,7 +295,7 @@ function HomeContent() {
     })();
 
     return () => controller.abort();
-  }, [searchParams, setQueue]);
+  }, [searchParams, setQueue, setSearchError]);
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
@@ -359,9 +307,8 @@ function HomeContent() {
     }
 
     const controller = new AbortController();
-    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
 
-    searchTimeoutRef.current = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setIsLoadingSuggestions(true);
       try {
         const data = await getSearchSuggestions(trimmed, controller.signal);
@@ -388,94 +335,17 @@ function HomeContent() {
     }, 220);
 
     return () => {
-      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+      clearTimeout(timer);
       controller.abort();
     };
   }, [searchQuery]);
-
-  const addToSearchHistory = useCallback((query: string) => {
-    setSearchHistory(addSearchHistoryEntry(query));
-  }, []);
 
   const removeFromSearchHistory = useCallback((query: string) => {
     setSearchHistory(removeSearchHistoryEntry(query));
   }, []);
 
-  const runSearch = useCallback(
-    async (rawQuery: string = searchQuery) => {
-      const normalizedQuery = rawQuery.trim();
-      const runId = ++searchRunIdRef.current;
-
-      if (searchAbortRef.current) {
-        searchAbortRef.current.abort();
-      }
-
-      if (normalizedQuery.length < 2) {
-        setSearchResults([]);
-        setSearchError("");
-        setIsSearching(false);
-        return;
-      }
-
-      setLastSubmittedQuery(normalizedQuery);
-
-      const controller = new AbortController();
-      searchAbortRef.current = controller;
-
-      setIsSearching(true);
-      setSearchError("");
-
-      try {
-        const results = (await searchSongs(normalizedQuery, controller.signal)) as HomeSong[];
-        if (controller.signal.aborted || runId !== searchRunIdRef.current) {
-          return;
-        }
-
-        const safeResults = Array.isArray(results) ? results : [];
-        setSearchResults(safeResults);
-
-        if (safeResults.length === 0) {
-          setSearchError("");
-        } else {
-          addToSearchHistory(normalizedQuery);
-        }
-      } catch (error) {
-        if (error instanceof Error && error.name === "AbortError") return;
-        if (runId !== searchRunIdRef.current) return;
-        console.error("Search failed:", error);
-        setSearchResults([]);
-        setSearchError("Search hit a snag. Worth trying again.");
-      } finally {
-        if (runId === searchRunIdRef.current && !controller.signal.aborted) {
-          setIsSearching(false);
-        }
-      }
-    },
-    [searchQuery, addToSearchHistory]
-  );
-
-  const clearSearch = useCallback(() => {
-    if (searchAbortRef.current) {
-      searchAbortRef.current.abort();
-    }
-    searchRunIdRef.current += 1;
-    setSearchQuery("");
-    setSearchResults([]);
-    setSuggestions([]);
-    setSearchError("");
-    setIsSearching(false);
-  }, []);
-
   const clearSearchHistory = useCallback(() => {
     setSearchHistory(clearStoredSearchHistory());
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (searchAbortRef.current) {
-        searchAbortRef.current.abort();
-      }
-    };
   }, []);
 
   const visibleSearchResults = useMemo(() => searchResults.slice(0, 24), [searchResults]);
@@ -560,7 +430,7 @@ function HomeContent() {
       setSearchError("");
       void runSearch(suggestion);
     },
-    [runSearch]
+    [runSearch, setSearchQuery, setSearchError]
   );
 
   return (
@@ -598,18 +468,10 @@ function HomeContent() {
                 autoComplete="off"
                 spellCheck={false}
                 onChange={(event) => {
-                  const nextQuery = event.target.value;
-                  const nextNormalized = nextQuery.trim().toLowerCase();
-                  const submittedNormalized = lastSubmittedQuery.trim().toLowerCase();
-
-                  setSearchQuery(nextQuery);
+                  // The hook clears results itself when the query drops below
+                  // the minimum length or changes away from the submitted one.
+                  setSearchQuery(event.target.value);
                   setShowSuggestions(true);
-
-                  if (!nextNormalized || nextNormalized !== submittedNormalized) {
-                    setSearchResults([]);
-                    setSearchError("");
-                    setLastSubmittedQuery("");
-                  }
                 }}
                 onFocus={() => { setShowSuggestions(true); setShowSearchHistory(true); }}
                 onKeyDown={(event) => {
@@ -625,7 +487,7 @@ function HomeContent() {
 
               {searchQuery ? (
                 <button
-                  onClick={clearSearch}
+                  onClick={clearSearchAndSuggestions}
                   className="p-1.5 rounded-full text-gray-500 hover:text-gray-800 dark:text-white/40 dark:hover:text-white transition-colors shrink-0"
                   aria-label="Clear search"
                   title="Clear search"
