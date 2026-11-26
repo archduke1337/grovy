@@ -1,7 +1,11 @@
 /* eslint-disable @next/next/no-page-custom-font, @next/next/google-font-preconnect */
 import type { Metadata, Viewport } from "next";
 import dynamic from "next/dynamic";
-const Analytics = dynamic(() => import("@vercel/analytics/next").then(m => ({ default: m.Analytics })));
+// Only Vercel serves the analytics script; loading it anywhere else produces
+// a 404 and a CSP console error on every page view.
+const Analytics = dynamic(() =>
+  import("@vercel/analytics/next").then((m) => ({ default: m.Analytics }))
+);
 import { PlayerProvider } from "@/app/context/PlayerContext";
 import "./globals.css";
 import { Navbar } from "@/app/components/Navbar";
@@ -289,7 +293,7 @@ export default function RootLayout({
             </div>
           </div>
         </PlayerProvider>
-          <Analytics />
+          {process.env.VERCEL ? <Analytics /> : null}
         </ToastProvider>
       </body>
     </html>

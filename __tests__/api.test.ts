@@ -40,14 +40,13 @@ describe("API client", () => {
       const songs = [{ id: "1", title: "Test", url: "/test.mp3" }];
       mockFetch.mockResolvedValueOnce(jsonResponse(songs));
 
-      const result = await searchSongs("hello", "YouTube");
+      const result = await searchSongs("hello");
       expect(result).toEqual(songs);
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining("/api/songs?"),
         expect.any(Object)
       );
       const calledUrl = mockFetch.mock.calls[0][0] as string;
-      expect(calledUrl).toContain("source=YouTube");
       expect(calledUrl).toContain("query=hello");
     });
 

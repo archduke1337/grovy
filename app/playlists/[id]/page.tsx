@@ -6,6 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Play, Trash2, X, Music, Heart, Clock, Calendar, Shuffle } from "lucide-react";
 import Image from "next/image";
+import { Button, EmptyState, Tooltip } from "@heroui/react";
+import { ConfirmDialog, useConfirm } from "@/app/components/ConfirmDialog";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export default function PlaylistDetailPage() {
@@ -24,6 +26,7 @@ export default function PlaylistDetailPage() {
     songs
   } = usePlayer();
 
+  const confirm = useConfirm();
   const playlist = playlists.find((p) => p.id === (Array.isArray(id) ? id[0] : id));
 
   if (!playlist) {
@@ -36,21 +39,16 @@ export default function PlaylistDetailPage() {
           <h2 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">Playlist Not Found</h2>
           <p className="text-gray-500 dark:text-white/20 font-bold uppercase tracking-widest text-[10px]">It may have been deleted</p>
         </div>
-        <button 
-          onClick={() => router.push("/playlists")} 
-          className="text-[13px] font-black uppercase tracking-widest px-8 py-3 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black hover:scale-105 transition-all shadow-xl"
-        >
-           Back to Playlists
-        </button>
+        <Button variant="primary" onPress={() => router.push("/playlists")}>
+          Back to playlists
+        </Button>
       </div>
     );
   }
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this playlist?")) {
-      deletePlaylist(playlist.id);
-      router.push("/playlists");
-    }
+    deletePlaylist(playlist.id);
+    router.push("/playlists");
   };
 
   const handlePlay = () => {
@@ -97,9 +95,16 @@ export default function PlaylistDetailPage() {
                </div>
             )}
             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex items-center justify-center backdrop-blur-sm">
-               <button onClick={handlePlay} className="w-20 h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-110 transition-transform shadow-2xl">
+               <Button
+                 isIconOnly
+                 variant="primary"
+                 aria-label="Play playlist"
+                 className="h-20 w-20 rounded-full"
+                 onPress={handlePlay}
+                 isDisabled={playlist.songs.length === 0}
+               >
                  <Play size={32} fill="currentColor" className="ml-1" />
-               </button>
+               </Button>
             </div>
          </motion.div>
 
@@ -126,27 +131,37 @@ export default function PlaylistDetailPage() {
             </div>
             
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 sm:gap-4 pt-4">
-               <button
-                 onClick={handlePlay}
-                 className="flex items-center gap-2.5 px-6 sm:px-10 py-3.5 sm:py-4 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black uppercase text-[11px] sm:text-xs tracking-[0.15em] shadow-2xl hover:scale-105 active:scale-95 transition-all"
-               >
+               <Button variant="primary" size="lg" onPress={handlePlay} isDisabled={playlist.songs.length === 0}>
                  <Play size={18} fill="currentColor" />
-                 Play All
-               </button>
-               <button
-                 onClick={handleShuffle}
-                 className="p-4 rounded-2xl bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-white/40 hover:bg-gray-200 dark:hover:bg-zinc-800 active:scale-95 transition-all"
-                 title="Shuffle"
-               >
-                 <Shuffle size={20} />
-               </button>
-               <button
-                 onClick={handleDelete}
-                 className="p-4 rounded-2xl bg-gray-100 dark:bg-zinc-900 text-gray-600 dark:text-white/40 hover:bg-red-500/10 hover:text-red-500 transition-all active:scale-95"
-                 title="Delete Playlist"
-               >
-                 <Trash2 size={20} />
-               </button>
+                 Play all
+               </Button>
+               <Tooltip>
+                 <Tooltip.Trigger>
+                   <Button
+                     isIconOnly
+                     variant="secondary"
+                     aria-label="Shuffle playlist"
+                     isDisabled={playlist.songs.length === 0}
+                     onPress={handleShuffle}
+                   >
+                     <Shuffle size={20} />
+                   </Button>
+                 </Tooltip.Trigger>
+                 <Tooltip.Content>Shuffle</Tooltip.Content>
+               </Tooltip>
+               <Tooltip>
+                 <Tooltip.Trigger>
+                   <Button
+                     isIconOnly
+                     variant="danger-soft"
+                     aria-label="Delete playlist"
+                     onPress={confirm.open}
+                   >
+                     <Trash2 size={20} />
+                   </Button>
+                 </Tooltip.Trigger>
+                 <Tooltip.Content>Delete playlist</Tooltip.Content>
+               </Tooltip>
             </div>
          </div>
       </header>
@@ -160,21 +175,20 @@ export default function PlaylistDetailPage() {
 
         <div className="bg-white/50 dark:bg-zinc-950 rounded-[2.5rem] border border-gray-100 dark:border-zinc-800 overflow-hidden backdrop-blur-3xl shadow-2xl">
             {playlist.songs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-32 px-6 text-gray-400 space-y-6 text-center">
-              <div className="w-20 h-20 rounded-3xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center">
-                    <Music size={40} className="opacity-20" />
-                 </div>
-                 <div className="space-y-2">
-                    <p className="font-black text-xl text-gray-900 dark:text-white tracking-tight">Empty Playlist</p>
-                    <p className="text-sm font-bold text-gray-500 dark:text-white/20 uppercase tracking-widest">Discover some music to add here</p>
-                 </div>
-                 <button 
-                   onClick={() => router.push("/")} 
-                   className="px-8 py-3 rounded-2xl bg-blue-500 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 transition-all"
-                 >
-                   Explore Music
-                 </button>
-              </div>
+              <EmptyState className="flex flex-col items-center gap-5 px-6 py-24 text-center">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-default/40 text-muted">
+                  <Music size={40} />
+                </div>
+                <div className="space-y-1.5">
+                  <p className="text-xl font-black tracking-tight text-foreground">This playlist is empty</p>
+                  <p className="text-sm text-muted">
+                    Find a track you like, then add it from the song menu.
+                  </p>
+                </div>
+                <Button variant="primary" onPress={() => router.push("/")}>
+                  Explore music
+                </Button>
+              </EmptyState>
             ) : (
               <div className="divide-y divide-gray-100 dark:divide-zinc-800" style={{ contentVisibility: 'auto', containIntrinsicSize: 'auto 100px' }}>
                 {playlist.songs.map((song, i) => {
@@ -239,19 +253,31 @@ export default function PlaylistDetailPage() {
                          </div>
 
                          <div className="flex items-center gap-2 sm:gap-4 px-2">
-                             <button 
-                               onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                               className={`p-2.5 sm:p-3 rounded-2xl transition-all hover:bg-gray-100 dark:hover:bg-white/10 ${favorite ? "text-red-500" : "text-gray-300 dark:text-white/10 hover:text-red-400"}`}
-                            >
+                             <Button
+                               isIconOnly
+                               size="sm"
+                               variant="ghost"
+                               aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
+                               onPress={() => toggleFavorite(song.id)}
+                               className={favorite ? "text-red-500" : "text-muted"}
+                             >
                                <Heart size={18} fill={favorite ? "currentColor" : "none"} />
-                            </button>
-                            <button 
-                              onClick={(e) => { e.stopPropagation(); removeFromPlaylist(playlist.id, song.id); }}
-                              className="p-2.5 sm:p-3 rounded-2xl text-gray-300 dark:text-white/10 hover:text-red-500 hover:bg-red-500/10 transition-all opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
-                              title="Remove"
-                            >
-                              <X size={18} />
-                            </button>
+                             </Button>
+                             <Tooltip>
+                               <Tooltip.Trigger>
+                                 <Button
+                                   isIconOnly
+                                   size="sm"
+                                   variant="ghost"
+                                   aria-label="Remove from playlist"
+                                   onPress={() => removeFromPlaylist(playlist.id, song.id)}
+                                   className="text-muted"
+                                 >
+                                   <X size={18} />
+                                 </Button>
+                               </Tooltip.Trigger>
+                               <Tooltip.Content>Remove from playlist</Tooltip.Content>
+                             </Tooltip>
                          </div>
                      </motion.div>
                    );
@@ -260,6 +286,16 @@ export default function PlaylistDetailPage() {
             )}
          </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={confirm.isOpen}
+        onOpenChange={confirm.onOpenChange}
+        title={`Delete "${playlist.name}"?`}
+        description="This removes the playlist from this browser. The songs themselves stay available."
+        confirmLabel="Delete playlist"
+        isDanger
+        onConfirm={handleDelete}
+      />
     </motion.div>
   );
 }

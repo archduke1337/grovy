@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, RotateCcw } from "lucide-react";
-import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/preferences";
 
 interface Band {
   frequency: number;

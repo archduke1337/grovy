@@ -138,7 +138,7 @@ export const CommandPalette: React.FC = () => {
     const handler = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const results = await loadSongs(query, undefined, controller.signal);
+        const results = await loadSongs(query, controller.signal);
         if (!controller.signal.aborted) setApiResults(results || []);
       } catch (e) {
         if (e instanceof DOMException && e.name === "AbortError") return;

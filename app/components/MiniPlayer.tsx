@@ -12,6 +12,7 @@ import {
   SkipBack,
   Maximize2,
 } from "lucide-react";
+import { Button } from "@heroui/react";
 
 interface MiniPlayerProps {
   visible: boolean;
@@ -88,37 +89,48 @@ export default function MiniPlayer({ visible, onExpand }: MiniPlayerProps) {
 
           {/* Controls */}
           <div className="flex items-center gap-1">
-            <button
-              onClick={previousTrack}
-              className="p-1 text-white/60 hover:text-white transition-colors"
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={previousTrack}
               aria-label="Previous track"
+              className="h-7 w-7 min-w-0 text-white/60 hover:text-white"
             >
               <SkipBack size={14} />
-            </button>
-            <button
-              onClick={togglePlayPause}
-              className="p-1.5 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors"
+            </Button>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={togglePlayPause}
               aria-label={isPlaying ? "Pause" : "Play"}
+              className="h-8 w-8 min-w-0 rounded-full bg-white/10 text-white hover:bg-white/20"
             >
               {isPlaying ? <Pause size={14} /> : <Play size={14} className="ml-0.5" />}
-            </button>
-            <button
-              onClick={nextTrack}
-              className="p-1 text-white/60 hover:text-white transition-colors"
+            </Button>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={nextTrack}
               aria-label="Next track"
+              className="h-7 w-7 min-w-0 text-white/60 hover:text-white"
             >
               <SkipForward size={14} />
-            </button>
+            </Button>
           </div>
 
-          {/* Expand button */}
-          <button
-            onClick={onExpand}
-            className="p-1 text-white/40 hover:text-white transition-colors"
+          <Button
+            isIconOnly
+            size="sm"
+            variant="ghost"
+            onPress={onExpand}
             aria-label="Expand player"
+            className="h-7 w-7 min-w-0 text-white/40 hover:text-white"
           >
             <Maximize2 size={12} />
-          </button>
+          </Button>
         </motion.div>
       )}
     </AnimatePresence>

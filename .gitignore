@@ -19,3 +19,10 @@ yarn-error.log*
 .parcel-cache
 .turbo
 .env
+test-results
+tsconfig.tsbuildinfo
+*.tsbuildinfo
+
+# Local workspace tooling (not part of the app)
+.freecode/
+.freecode-source-ready

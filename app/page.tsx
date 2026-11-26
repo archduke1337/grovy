@@ -7,6 +7,12 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Heart, Music, Play, Search, X, Clock, Trash2 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { getSearchSuggestions, searchSongs } from "@/app/lib/api";
+import {
+  addSearchHistoryEntry,
+  clearSearchHistory as clearStoredSearchHistory,
+  readSearchHistory,
+  removeSearchHistoryEntry,
+} from "@/app/lib/localStore";
 import { getHDThumbnail } from "./lib/thumbnail";
 import type { Song } from "@/app/types/song";
 
@@ -262,19 +268,10 @@ function HomeContent() {
     searchResultsRef.current = searchResults;
   }, [searchResults]);
 
-  // Load search history from localStorage
+  // Search history is part of the local store, so it hydrates synchronously
+  // and survives a reload without a separate storage key or parse step.
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("grovy-search-history");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
-          setSearchHistory(parsed.slice(0, 10));
-        }
-      }
-    } catch {
-      // Ignore parse errors
-    }
+    setSearchHistory(readSearchHistory());
   }, []);
 
   useEffect(() => {
@@ -298,7 +295,7 @@ function HomeContent() {
       try {
         const query = [sharedTitle, sharedArtist].filter(Boolean).join(" ").trim();
         if (query) {
-          const candidates = (await searchSongs(query, undefined, controller.signal)) as HomeSong[];
+          const candidates = (await searchSongs(query, controller.signal)) as HomeSong[];
           const normalizedTitle = sharedTitle.toLowerCase();
           const normalizedArtist = sharedArtist.toLowerCase();
 
@@ -397,31 +394,11 @@ function HomeContent() {
   }, [searchQuery]);
 
   const addToSearchHistory = useCallback((query: string) => {
-    const trimmed = query.trim();
-    if (!trimmed || trimmed.length < 2) return;
-
-    setSearchHistory((prev) => {
-      const filtered = prev.filter((item) => item.toLowerCase() !== trimmed.toLowerCase());
-      const updated = [trimmed, ...filtered].slice(0, 10);
-      try {
-        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
-      } catch {
-        // Ignore storage errors
-      }
-      return updated;
-    });
+    setSearchHistory(addSearchHistoryEntry(query));
   }, []);
 
   const removeFromSearchHistory = useCallback((query: string) => {
-    setSearchHistory((prev) => {
-      const updated = prev.filter((item) => item.toLowerCase() !== query.toLowerCase());
-      try {
-        localStorage.setItem("grovy-search-history", JSON.stringify(updated));
-      } catch {
-        // Ignore storage errors
-      }
-      return updated;
-    });
+    setSearchHistory(removeSearchHistoryEntry(query));
   }, []);
 
   const runSearch = useCallback(
@@ -449,7 +426,7 @@ function HomeContent() {
       setSearchError("");
 
       try {
-        const results = (await searchSongs(normalizedQuery, undefined, controller.signal)) as HomeSong[];
+        const results = (await searchSongs(normalizedQuery, controller.signal)) as HomeSong[];
         if (controller.signal.aborted || runId !== searchRunIdRef.current) {
           return;
         }
@@ -490,12 +467,7 @@ function HomeContent() {
   }, []);
 
   const clearSearchHistory = useCallback(() => {
-    setSearchHistory([]);
-    try {
-      localStorage.removeItem("grovy-search-history");
-    } catch {
-      // Ignore storage errors
-    }
+    setSearchHistory(clearStoredSearchHistory());
   }, []);
 
   useEffect(() => {
@@ -600,7 +572,7 @@ function HomeContent() {
     >
       <motion.header
         variants={fadeUp}
-        className="relative rounded-3xl border border-gray-200/60 dark:border-white/12 bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.2),transparent_46%),radial-gradient(circle_at_85%_5%,rgba(16,185,129,0.14),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(245,245,245,0.62))] dark:bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.16),transparent_45%),radial-gradient(circle_at_85%_5%,rgba(16,185,129,0.12),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04))] backdrop-blur-2xl p-5 sm:p-7 md:p-9 overflow-visible"
+        className="relative rounded-3xl border border-gray-200/60 dark:border-white/12 bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.2),transparent_46%),radial-gradient(circle_at_85%_5%,rgba(16,185,129,0.14),transparent_40%),linear-gradient(180deg,rgba(255,255,255,0.78),rgba(245,245,245,0.62))] dark:bg-[radial-gradient(circle_at_15%_20%,rgba(56,189,248,0.16),transparent_45%),radial-gradient(circle_at_85%_5%,rgba(16,185,129,0.12),transparent_35%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.04))] backdrop-blur-2xl p-5 sm:p-7 md:p-9 overflow-hidden"
       >
         <div className="absolute -top-20 -left-20 w-48 h-48 rounded-full bg-sky-300/25 blur-3xl pointer-events-none" />
         <div className="absolute -top-16 -right-10 w-44 h-44 rounded-full bg-emerald-300/20 blur-3xl pointer-events-none" />

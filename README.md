@@ -2,7 +2,7 @@
 
 > A stunning, high-performance web music player crafted with Next.js, Tailwind CSS, and Framer Motion. Experience the vibe.
 
-![Grovy Banner](public/icons/icon.png)
+![Grovy Banner](public/icons/logo.png)
 
 ## ✨ Features
 
@@ -14,17 +14,19 @@
   - Spatial Audio (3D Soundstage) simulation
   - Real-time Audio Visualizer
 - **🔍 Smart Search**: Integrated command palette (`Cmd+K`) and global search for local and remote tracks.
-- **💾 Local & Remote Playback**: Play your own files or stream from the cloud.
+- **💾 Local & Remote Playback**: Stream from the upstream providers, or drop files in `public/songs`.
 - **🌑 Dark/Light Mode**: Seamless theme switching with persistent preferences.
 - **⚡ PWA Ready**: Installable as a native app on fast, modern devices.
-- **☁️ Appwrite Cloud Sync**: Account auth and user library sync are powered by Appwrite Auth + Databases, with cross-device continuity.
+- **🔒 Local-First Library**: Playlists, favorites, history and preferences live in your browser. No account, no sign-up, and everything still works offline.
 
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
+- **Components**: [HeroUI](https://www.heroui.com/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **State Management**: React Context + Hooks
+- **Persistence**: `localStorage` behind a small typed store
 - **Audio Processing**: Web Audio API
 - **Color Extraction**: ColorThief
 - **Icons**: Lucide React
@@ -53,26 +55,16 @@
    yarn install
    ```
 
-3. Configure environment variables:
+3. Run the development server.
 
-   ```bash
-   cp .env.example .env.local
-   ```
-
-   Then update `.env.local` with your Appwrite project values:
-
-   - `NEXT_PUBLIC_APPWRITE_ENDPOINT`
-   - `NEXT_PUBLIC_APPWRITE_PROJECT_ID`
-   - `NEXT_PUBLIC_APPWRITE_DATABASE_ID`
-   - `APPWRITE_API_KEY`
-
-4. Run the development server:
+   No environment variables or external services are required — the app is
+   local-first and only talks to the public music APIs through its own routes.
 
    ```bash
    npm run dev
    ```
 
-5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## 🎹 Keyboard Shortcuts
 
@@ -114,12 +106,19 @@ Playing correctly with the **Web Audio API** requires user interaction first. Cl
 
 ## 🛡️ Privacy Notes
 
-- Grovy does not require ad trackers.
-- Account sessions are managed with Appwrite Authentication.
-- User library and synced data are stored in Appwrite Databases. Device-specific playback values may still be cached locally during migration.
-- Search and streaming metadata requests are proxied through Grovy API routes to upstream music providers.
+- Grovy has no accounts, no sign-in, and no trackers.
+- Your playlists, favorites, listening history and preferences never leave the device — they are stored in this browser's `localStorage`.
+- Clearing site data removes your library. Use the export button on the Library page to keep a backup.
+- Search and streaming requests are proxied through Grovy API routes to upstream music providers.
 - If deployed on Vercel, aggregated site analytics may be collected via Vercel Web Analytics.
 
-## ☁️ Appwrite Migration
+## 🗂️ Project Layout
 
-- Detailed schema and auth rollout plan: `APPWRITE_MIGRATION_PLAN.md`.
+| Path | Purpose |
+| ---- | ------- |
+| `app/api/**` | Route handlers that proxy and normalise upstream music APIs |
+| `app/context/PlayerContext.tsx` | Playback engine, queue and library actions |
+| `app/lib/localStore.ts` | Typed `localStorage` store for library, preferences and history |
+| `app/lib/offlineCache.ts` | Cache layer for songs and search results |
+| `app/components/**` | UI, built on HeroUI and Tailwind |
+| `__tests__/**` | Vitest suites for the store, API client and hooks |

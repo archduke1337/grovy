@@ -1,124 +1,35 @@
-
 import { NextRequest } from "next/server";
-import { fetchWithTimeout, pickArtist, pickCover, parseDuration } from "@/app/lib/apiHelpers";
 
+import { discoverSongs, validateSongs } from "@/app/lib/discovery";
+
+export const runtime = "nodejs";
+
+/**
+ * Tracks related to a given song.
+ *
+ * Shares one implementation with `/api/songs/radio`; only the preferred
+ * upstream strategy differs.
+ */
 export async function GET(request: NextRequest) {
-  const searchParams = request.nextUrl.searchParams;
-  const videoId = searchParams.get("videoId");
-  const title = searchParams.get("title");
-  const artist = searchParams.get("artist");
-  const songId = searchParams.get("songId"); // Full song ID for Saavn suggestions
+  const params = request.nextUrl.searchParams;
+  const videoId = params.get("videoId");
+  const title = params.get("title");
 
   if (!videoId && !title) {
     return Response.json({ error: "Missing videoId or title" }, { status: 400 });
   }
 
   try {
-    let relatedSongs: any[] = [];
-
-    // Strategy 1: YouTube related endpoint (for YT songs)
-    if (videoId) {
-      try {
-        const url = `https://ytapi.gauravramyadav.workers.dev/api/related/${videoId}`;
-        const res = await fetchWithTimeout(url);
-        if (res.ok) {
-          const data = await res.json();
-          const rawData = Array.isArray(data)
-            ? data
-            : (data.data || data.tracks || data.results || data.songs || []);
-          relatedSongs = rawData
-            .map((item: any) => {
-              const id = item.videoId || item.id || item.fallbackVideoId;
-              if (!id) return null;
-
-              return {
-                id: `yt-${id}`,
-                title: item.title || item.name || item.fallbackTitle || "Untitled",
-                url: `/api/stream?id=${id}`,
-                artist: pickArtist(item),
-                cover: pickCover(item),
-                genre: "Related",
-                duration: Number(item.duration) || parseDuration(item.durationText || item.duration) || 0,
-                source: "YouTube",
-              };
-            })
-            .filter(Boolean);
-        }
-      } catch (e) {
-        console.warn("[Related] YouTube related failed, falling back");
-      }
-    }
-
-    // Strategy 2: Saavn song suggestions (for Saavn songs)
-    if (relatedSongs.length === 0 && songId && songId.startsWith("saavn-")) {
-      try {
-        const saavnId = songId.replace("saavn-", "");
-        const url = `https://jiosaavn-api.gauravramyadav.workers.dev/api/songs/${saavnId}/suggestions`;
-        const res = await fetchWithTimeout(url);
-        if (res.ok) {
-          const data = await res.json();
-          const suggestions = data.success && data.data ? (Array.isArray(data.data) ? data.data : []) : [];
-          relatedSongs = suggestions.filter((item: any) => item && item.id).map((item: any) => {
-            const cover = item.image?.[item.image.length - 1]?.url || (Array.isArray(item.image) ? item.image[0]?.url : item.image);
-            const downloadUrl = item.downloadUrl?.[item.downloadUrl.length - 1]?.url || (Array.isArray(item.downloadUrl) ? item.downloadUrl[0]?.url : item.downloadUrl);
-            const art = item.artists?.primary?.map((a: any) => a.name).join(", ") || item.artist || "Unknown Artist";
-            return {
-              id: `saavn-${item.id}`,
-              title: item.name || item.title,
-              url: downloadUrl ? `/api/stream?saavnUrl=${encodeURIComponent(downloadUrl)}` : "",
-              artist: art,
-              cover,
-              genre: "Related",
-              duration: item.duration,
-              source: "Saavn",
-            };
-          }).filter((s: any) => s.url);
-        }
-      } catch (e) {
-        console.warn("[Related] Saavn suggestions failed, trying similar");
-      }
-    }
-
-    // Strategy 3: Similar endpoint (works with title+artist for any source)
-    if (relatedSongs.length === 0 && title) {
-      try {
-        const params = new URLSearchParams({ title });
-        if (artist) params.append("artist", artist);
-        const url = `https://ytapi.gauravramyadav.workers.dev/api/similar?${params}`;
-        const res = await fetchWithTimeout(url);
-        if (res.ok) {
-          const data = await res.json();
-          const rawData = Array.isArray(data)
-            ? data
-            : (data.data || data.tracks || data.results || data.songs || []);
-          relatedSongs = rawData
-            .map((item: any) => {
-              const id = item.videoId || item.id || item.fallbackVideoId;
-              if (!id) return null;
-
-              return {
-                id: `yt-${id}`,
-                title: item.title || item.name || item.fallbackTitle || "Untitled",
-                url: `/api/stream?id=${id}`,
-                artist: pickArtist(item),
-                cover: pickCover(item),
-                genre: "Related",
-                duration: Number(item.duration) || parseDuration(item.durationText || item.duration) || 0,
-                source: "YouTube",
-              };
-            })
-            .filter(Boolean);
-        }
-      } catch (e) {
-        console.warn("[Related] Similar endpoint also failed");
-      }
-    }
-
-    return Response.json(relatedSongs, {
-      headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" }
+    const songs = await discoverSongs("related", {
+      videoId,
+      songId: params.get("songId"),
+      title,
+      artist: params.get("artist"),
     });
+
+    return Response.json(validateSongs(songs));
   } catch (error) {
-    console.error("Related API Error:", error);
-    return Response.json([], { status: 200 });
+    console.error("Related discovery failed:", error);
+    return Response.json({ error: "Failed to fetch related songs" }, { status: 502 });
   }
 }

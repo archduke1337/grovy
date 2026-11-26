@@ -4,11 +4,15 @@ import React, { useState, useRef } from "react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import { Music, Plus, PlayCircle, Folder, Download, Upload, Trash2, X, Search } from "lucide-react";
+import { Music, Plus, PlayCircle, Folder, Download, Upload } from "lucide-react";
 import Image from "next/image";
+import { Button, EmptyState } from "@heroui/react";
+import { useToast } from "@/app/components/Toast";
+import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export default function PlaylistsPage() {
-  const { playlists, colors, createPlaylist } = usePlayer();
+  const { playlists, createPlaylist } = usePlayer();
+  const { toast } = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [newName, setNewName] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -39,24 +43,30 @@ export default function PlaylistsPage() {
       try {
         const parsed = JSON.parse(reader.result as string);
         if (typeof parsed !== "object" || parsed === null) {
-          alert("Invalid playlist file format.");
+          toast("That file is not a Grovy playlist export.", { type: "error" });
           return;
         }
         const imported = parsed.playlists || (Array.isArray(parsed) ? parsed : []);
         if (!Array.isArray(imported) || imported.length === 0) {
-          alert("No playlists found in file.");
+          toast("No playlists found in that file.", { type: "warning" });
           return;
         }
+
         let count = 0;
         for (const pl of imported) {
-          if (pl.name && Array.isArray(pl.songs)) {
+          if (pl && typeof pl.name === "string" && pl.name.trim() && Array.isArray(pl.songs)) {
             createPlaylist(pl.name, pl.songs);
             count++;
           }
         }
-        if (count > 0) alert(`Imported ${count} playlist(s).`);
-      } catch (err) {
-        alert("Failed to parse playlist file.");
+
+        if (count > 0) {
+          toast(`Imported ${count} playlist${count === 1 ? "" : "s"}.`, { type: "success" });
+        } else {
+          toast("Nothing in that file could be imported.", { type: "warning" });
+        }
+      } catch {
+        toast("Couldn't read that file. It may be corrupted.", { type: "error" });
       }
     };
     reader.readAsText(file);
@@ -81,21 +91,18 @@ export default function PlaylistsPage() {
         </div>
         
         <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 w-full md:w-auto">
-          <button
-            onClick={handleExportAll}
-            disabled={playlists.length === 0}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-colors transition-shadow duration-300 disabled:opacity-20 active:scale-95"
+          <Button
+            variant="secondary"
+            isDisabled={playlists.length === 0}
+            onPress={handleExportAll}
           >
             <Download size={16} />
-            <span>Export</span>
-          </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-2xl bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/40 font-black text-[11px] sm:text-xs uppercase tracking-widest hover:bg-gray-200 dark:hover:bg-white/8 transition-colors transition-shadow duration-300 active:scale-95"
-          >
+            Export
+          </Button>
+          <Button variant="secondary" onPress={() => fileInputRef.current?.click()}>
             <Upload size={16} />
-            <span>Import</span>
-          </button>
+            Import
+          </Button>
           <input ref={fileInputRef} type="file" accept=".json" onChange={handleImport} className="hidden" />
         </div>
       </header>
@@ -126,8 +133,8 @@ export default function PlaylistsPage() {
                  />
                </div>
                <div className="flex gap-2 justify-center">
-                 <button onClick={handleCreate} className="px-4 py-2 rounded-xl bg-blue-500 text-white text-[11px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 transition-transform">Create</button>
-                 <button onClick={() => setIsCreating(false)} className="px-4 py-2 rounded-xl bg-gray-200 dark:bg-white/10 text-gray-500 dark:text-white/40 text-[11px] font-black uppercase tracking-widest hover:bg-gray-300 dark:hover:bg-white/20 transition-colors">Cancel</button>
+                 <Button size="sm" variant="primary" onPress={handleCreate}>Create</Button>
+                 <Button size="sm" variant="tertiary" onPress={() => setIsCreating(false)}>Cancel</Button>
                </div>
             </div>
           ) : (
@@ -152,7 +159,7 @@ export default function PlaylistsPage() {
                 className="group aspect-square relative rounded-4xl sm:rounded-[2.5rem] overflow-hidden shadow-xl bg-gray-100 dark:bg-white/3"
               >
                 {playlist.songs.length > 0 && playlist.songs[0].cover ? (
-                  <Image src={playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
+                  <Image src={getHDThumbnail(playlist.songs[0].cover) || playlist.songs[0].cover} alt={playlist.name} fill className="object-cover transition-transform duration-1000 group-hover:scale-110" sizes="(max-width: 640px) 50vw, 25vw" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 dark:from-white/2 dark:to-white/5">
                     <Music size={48} className="text-gray-300 dark:text-white/10" />
@@ -175,16 +182,17 @@ export default function PlaylistsPage() {
         </AnimatePresence>
       </div>
 
-      {playlists.length === 0 && (
-        <div className="text-center space-y-4 pt-8">
-          <p className="text-gray-500 dark:text-white/45 font-medium">
-            Create your first playlist to organize your favorite tracks.
+      {playlists.length === 0 ? (
+        <EmptyState className="flex flex-col items-center gap-2 pt-8 text-center">
+          <p className="text-sm font-medium text-muted">
+            Your first playlist is one click away.
           </p>
-          <p className="text-xs text-gray-400 dark:text-white/30 font-medium">
-            You can also import playlists from a JSON file using the button above.
+          <p className="text-xs text-muted">
+            Playlists live in this browser, so they work offline. You can also
+            import a JSON export.
           </p>
-        </div>
-      )}
+        </EmptyState>
+      ) : null}
     </motion.div>
   );
 }

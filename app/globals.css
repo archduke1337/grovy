@@ -1,6 +1,11 @@
 @import "tailwindcss";
+@import "@heroui/styles";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Point Tailwind at HeroUI's compiled class names so its component
+   styles are generated even though they live outside app/. */
+@source "../node_modules/@heroui/react/dist";
 
 /* ──────────────────────────────────────────────
    Design Foundations
