@@ -1218,9 +1218,22 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ignore if typing in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement).tagName)) return;
-      if ((e.target as HTMLElement).isContentEditable) return;
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // Never steal keys from a focused control. Space activates buttons and
+      // steps range inputs natively; intercepting it here cancels that, which
+      // makes every button, slider and dialog in the app unreachable by
+      // keyboard. Dialogs are included because their own key handling owns
+      // Escape, arrows and Space while they are open.
+      if (target.isContentEditable) return;
+      if (
+        target.closest(
+          'input, textarea, select, button, a[href], [role="button"], [role="slider"], [role="dialog"], [role="menu"], [aria-modal="true"]'
+        )
+      ) {
+        return;
+      }
 
       switch (e.code) {
         case "Space":
@@ -1259,6 +1272,12 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
            break;
         case "KeyL":
            toggleLoop();
+           break;
+        case "KeyS":
+           // Use the setter directly: toggleShuffle is declared below this
+           // effect, so referencing it in the dependency array would hit the
+           // temporal dead zone on first render.
+           setIsShuffle(prev => !prev);
            break;
       }
     };

@@ -68,16 +68,21 @@
 
 ## 🎹 Keyboard Shortcuts
 
-| Key        | Action         |
-| ---------- | -------------- |
-| `Space`    | Play / Pause   |
-| `→`        | Next Track     |
-| `←`        | Previous Track |
-| `↑`        | Volume Up      |
-| `↓`        | Volume Down    |
-| `Ctrl + K` | Open Search    |
-| `L`        | Toggle Loop    |
-| `S`        | Toggle Shuffle |
+Shortcuts are ignored while a text field, button, slider or dialog has focus,
+so `Space` and the arrow keys keep their normal behaviour there.
+
+| Key                | Action                    |
+| ------------------ | ------------------------- |
+| `Space`            | Play / Pause              |
+| `→` / `←`          | Seek forward / back 5s    |
+| `Ctrl + →` / `Ctrl + ←` | Next / previous track |
+| `↑` / `↓`          | Volume up / down          |
+| `M`                | Mute / unmute             |
+| `L`                | Toggle loop               |
+| `S`                | Toggle shuffle            |
+| `Ctrl + K`         | Open command palette      |
+| `?`                | Show all shortcuts        |
+| `Esc`              | Close dialog / panel      |
 
 ## 🤝 Contributing
 

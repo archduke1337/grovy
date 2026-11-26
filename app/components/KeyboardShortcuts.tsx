@@ -14,6 +14,7 @@ const SHORTCUTS = [
   { keys: ["↓"], description: "Volume down" },
   { keys: ["M"], description: "Mute / Unmute" },
   { keys: ["L"], description: "Toggle loop" },
+  { keys: ["S"], description: "Toggle shuffle" },
   { keys: ["Ctrl", "K"], description: "Command palette" },
   { keys: ["?"], description: "Keyboard shortcuts" },
   { keys: ["Esc"], description: "Close modal / panel" },
