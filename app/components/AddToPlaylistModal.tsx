@@ -1,180 +1,169 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { usePlayer } from "@/app/context/PlayerContext";
-import { X, Plus, Music, Check } from "lucide-react";
+import { Button, Modal } from "@heroui/react";
+import { Music, Plus, Check } from "lucide-react";
 import Image from "next/image";
+
+import { usePlayer } from "@/app/context/PlayerContext";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
+/**
+ * Add-to-playlist sheet.
+ *
+ * Controlled through `PlayerContext` so any song menu can open it, which is why
+ * the open state lives there rather than in a `Modal.Trigger`. The body is a
+ * HeroUI `Modal` for focus trapping, escape handling and scroll locking.
+ */
 export const AddToPlaylistModal: React.FC = () => {
-  const { 
-    isPlaylistModalOpen, 
-    closePlaylistModal, 
-    playlists, 
-    createPlaylist, 
-    addToPlaylist, 
+  const {
+    isPlaylistModalOpen,
+    closePlaylistModal,
+    playlists,
+    createPlaylist,
+    addToPlaylist,
     playlistModalSong,
-    colors 
   } = usePlayer();
 
   const [newPlaylistName, setNewPlaylistName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
-
-  if (!isPlaylistModalOpen || !playlistModalSong) return null;
 
   const handleCreate = () => {
-    if (!newPlaylistName.trim()) return;
-    createPlaylist(newPlaylistName);
-    setNewPlaylistName("");
-    setIsCreating(false);
-  };
+    const name = newPlaylistName.trim();
+    if (!name) return;
 
-  const handleAddToPlaylist = (playlistId: string) => {
-    addToPlaylist(playlistId, playlistModalSong);
+    const id = createPlaylist(name);
+    if (playlistModalSong) addToPlaylist(id, playlistModalSong);
+
+    setNewPlaylistName("");
     closePlaylistModal();
   };
 
-  const primaryColorStyle = { '--color-primary': colors.primary } as React.CSSProperties;
-
   return (
-    <AnimatePresence>
-      {isPlaylistModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 pointer-events-auto">
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={closePlaylistModal}
-            className="absolute inset-0 bg-black/70 backdrop-blur-md"
-          />
-          
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 40 }}
-            className="w-full h-full sm:h-auto sm:max-w-md bg-white dark:bg-zinc-950 sm:rounded-3xl overflow-hidden shadow-2xl relative z-10 border-0 sm:border border-gray-100 dark:border-white/10 flex flex-col sm:block"
-          >
-            <div className="p-6 sm:p-8 space-y-6 flex-1 overflow-y-auto custom-scrollbar">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight">Add to Playlist</h2>
-                <button 
-                  onClick={closePlaylistModal}
-                  className="p-2.5 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 transition-colors bg-gray-50 dark:bg-white/5"
-                >
-                  <X size={20} className="text-gray-500" />
-                </button>
-              </div>
+    <Modal isOpen={isPlaylistModalOpen} onOpenChange={(open) => !open && closePlaylistModal()}>
+      <Modal.Container placement="bottom" scroll="inside">
+        <Modal.Dialog>
+          <Modal.Header>
+            <Modal.Heading>
+              {playlistModalSong ? "Add to playlist" : "Your playlists"}
+            </Modal.Heading>
+            <Modal.CloseTrigger />
+          </Modal.Header>
 
-              <div className="bg-gray-50 dark:bg-white/5 rounded-2xl p-4 flex items-center gap-4 border border-transparent dark:border-white/5">
-                 <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 dark:bg-zinc-800 shrink-0 shadow-sm">
-                    {playlistModalSong.cover ? (
-                      <Image 
-                        src={getHDThumbnail(playlistModalSong.cover) || ""} 
-                        alt={playlistModalSong.title} 
-                        width={60}
-                        height={60}
-                        className="w-full h-full object-cover" 
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Music size={20} className="text-gray-400" /></div>
-                    )}
-                 </div>
-                 <div className="min-w-0">
-                    <h3 className="font-bold text-gray-900 dark:text-white truncate text-base">{playlistModalSong.title}</h3>
-                    <p className="text-xs text-gray-500 font-medium truncate">{playlistModalSong.artist}</p>
-                 </div>
-              </div>
-
-              <div className="space-y-3 pb-6 sm:pb-0">
-                <button
-                  onClick={() => setIsCreating(!isCreating)}
-                  className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-gray-200 dark:border-white/10 hover:border-blue-500 hover:bg-blue-500/5 transition-all group"
-                  style={primaryColorStyle}
-                >
-                  <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-white/5 flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-colors">
-                    <Plus size={20} />
-                  </div>
-                  <span className="font-bold text-gray-600 dark:text-gray-300 group-hover:text-blue-500">New Playlist</span>
-                </button>
-
-                <AnimatePresence>
-                  {isCreating && (
-                    <motion.div 
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      className="flex gap-2 overflow-hidden"
-                    >
-                      <input
-                        type="text"
-                        placeholder="Playlist Name"
-                        value={newPlaylistName}
-                        onChange={(e) => setNewPlaylistName(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                        className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-white/5 border border-transparent focus:border-blue-500 outline-none transition-all font-medium text-sm"
-                        style={primaryColorStyle}
-                        autoFocus
-                      />
-                      <button
-                        onClick={handleCreate}
-                        disabled={!newPlaylistName.trim()}
-                        className="px-6 rounded-xl text-white disabled:opacity-50 font-black uppercase text-[10px] tracking-widest shadow-lg active:scale-95 transition-transform"
-                        style={{ 
-                          backgroundColor: colors.primary 
-                        }}
-                      >
-                        Create
-                      </button>
-                    </motion.div>
+          <Modal.Body className="space-y-5">
+            {playlistModalSong ? (
+              <div className="flex items-center gap-4 rounded-2xl bg-default/40 p-3">
+                <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-default">
+                  {playlistModalSong.cover ? (
+                    <Image
+                      src={getHDThumbnail(playlistModalSong.cover) || playlistModalSong.cover}
+                      alt={playlistModalSong.title}
+                      width={60}
+                      height={60}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center">
+                      <Music size={20} className="text-muted" />
+                    </div>
                   )}
-                </AnimatePresence>
-
-                <div className="space-y-1 mt-4">
-                  {playlists.map((playlist) => {
-                    const alreadyIn = playlist.songs?.some(s => s.id === playlistModalSong.id) || false;
-                    return (
-                      <button
-                        key={playlist.id}
-                        onClick={() => handleAddToPlaylist(playlist.id)}
-                        disabled={alreadyIn}
-                        className="w-full flex items-center justify-between p-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 transition-all text-left group disabled:opacity-60 disabled:cursor-not-allowed"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-11 h-11 rounded-xl bg-gray-100 dark:bg-zinc-900 flex items-center justify-center shrink-0 shadow-sm border border-transparent dark:border-white/5">
-                             {playlist.songs.length > 0 && playlist.songs[0].cover ? (
-                               <Image 
-                                 src={getHDThumbnail(playlist.songs[0].cover) || ""} 
-                                 alt={playlist.name} 
-                                 width={44}
-                                 height={44}
-                                 className="w-full h-full object-cover rounded-xl" 
-                                 loading="lazy"
-                               />
-                             ) : (
-                               <Music size={18} className="text-gray-400" />
-                             )}
-                          </div>
-                          <div>
-                            <h4 className="font-bold text-gray-900 dark:text-white text-sm sm:text-base leading-tight">{playlist.name}</h4>
-                            <p className="text-[10px] sm:text-xs text-gray-500 font-medium uppercase tracking-wider">{playlist.songs.length} tracks</p>
-                          </div>
-                        </div>
-                        {alreadyIn && (
-                          <div className="p-1 px-2 rounded-full bg-green-500/10 text-green-500 flex items-center gap-1">
-                             <Check size={14} strokeWidth={3} />
-                             <span className="text-[9px] font-black uppercase tracking-widest hidden sm:inline">Added</span>
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="truncate font-semibold text-foreground">
+                    {playlistModalSong.title}
+                  </h3>
+                  <p className="truncate text-xs text-muted">{playlistModalSong.artist}</p>
                 </div>
               </div>
+            ) : null}
+
+            <form
+              className="flex gap-2"
+              onSubmit={(event) => {
+                event.preventDefault();
+                handleCreate();
+              }}
+            >
+              <input
+                type="text"
+                placeholder="New playlist name"
+                value={newPlaylistName}
+                onChange={(event) => setNewPlaylistName(event.target.value)}
+                aria-label="New playlist name"
+                className="min-w-0 flex-1 rounded-xl bg-default/40 px-4 py-2.5 text-sm font-medium text-foreground outline-none placeholder:text-muted focus-visible:ring-2 focus-visible:ring-focus"
+              />
+              <Button type="submit" variant="primary" isDisabled={!newPlaylistName.trim()}>
+                <Plus size={16} />
+                Create
+              </Button>
+            </form>
+
+            <div className="space-y-1">
+              {playlists.length === 0 ? (
+                <p className="px-1 py-6 text-center text-sm text-muted">
+                  No playlists yet — name one above to get started.
+                </p>
+              ) : (
+                playlists.map((playlist) => {
+                  const alreadyIn = playlist.songs.some(
+                    (song) => song.id === playlistModalSong?.id
+                  );
+
+                  return (
+                    <button
+                      key={playlist.id}
+                      type="button"
+                      onClick={() => {
+                        if (playlistModalSong) addToPlaylist(playlist.id, playlistModalSong);
+                        closePlaylistModal();
+                      }}
+                      disabled={alreadyIn}
+                      className="flex w-full items-center justify-between gap-4 rounded-2xl p-3 text-left transition-colors hover:bg-default/50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-default">
+                          {playlist.songs[0]?.cover ? (
+                            <Image
+                              src={
+                                getHDThumbnail(playlist.songs[0].cover) ||
+                                playlist.songs[0].cover
+                              }
+                              alt={playlist.name}
+                              width={44}
+                              height={44}
+                              className="h-full w-full object-cover"
+                              loading="lazy"
+                            />
+                          ) : (
+                            <Music size={18} className="text-muted" />
+                          )}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-semibold text-foreground">
+                            {playlist.name}
+                          </span>
+                          <span className="block text-[11px] font-medium text-muted">
+                            {playlist.songs.length} track
+                            {playlist.songs.length === 1 ? "" : "s"}
+                          </span>
+                        </span>
+                      </span>
+
+                      {alreadyIn ? (
+                        <span className="flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-success">
+                          <Check size={14} strokeWidth={3} />
+                          <span className="text-[10px] font-bold uppercase tracking-wide">
+                            Added
+                          </span>
+                        </span>
+                      ) : null}
+                    </button>
+                  );
+                })
+              )}
             </div>
-          </motion.div>
-        </div>
-      )}
-    </AnimatePresence>
+          </Modal.Body>
+        </Modal.Dialog>
+      </Modal.Container>
+    </Modal>
   );
 };

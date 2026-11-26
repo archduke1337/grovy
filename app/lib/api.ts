@@ -52,74 +52,48 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   }
 }
 
+// ─── Songs ───────────────────────────────────────────────
 /**
- * Search for songs across all configured sources (YouTube, Saavn, etc.).
- * Deduplicates results and falls back to cached results when offline.
+ * Search every source the `/api/songs` route aggregates.
  *
- * @param query - Search query string (optional; omit for trending)
- * @param source - Preferred source name (e.g. "youtube", "saavn")
+ * Results are cached so a repeat search (or a reload with no connection)
+ * still shows something instead of an empty grid.
+ *
+ * @param query - Search text; omit to get the default feed
  * @param signal - Optional AbortSignal to cancel the request
- * @returns Deduplicated list of Song objects
  */
 export async function searchSongs(
   query?: string,
-  source?: string,
   signal?: AbortSignal
 ): Promise<Song[]> {
   const params = new URLSearchParams();
-  if (source) params.append("source", source);
   if (query) params.append("query", query);
 
+  const cacheKey = `songs:${query || ""}`;
+
   try {
-    const songs = await request<Song[]>(`/api/songs?${params}`, { signal });
+    const songs = await request<Song[]>(
+      `/api/songs?${params.toString()}`,
+      { signal }
+    );
 
-    let mergedSongs = Array.isArray(songs) ? songs : [];
-
-    // When primary source is thin, enrich with dedicated search endpoint results.
-    if (query && mergedSongs.length < 12) {
-      try {
-        const fallbackResults = await request<Song[]>(
-          `/api/search?type=song&query=${encodeURIComponent(query)}`,
-          { signal }
-        );
-
-        if (Array.isArray(fallbackResults) && fallbackResults.length > 0) {
-          const deduped = new Map<string, Song>();
-          [...mergedSongs, ...fallbackResults].forEach((song) => {
-            if (!song?.id || !song?.title || !song?.url) return;
-            if (!deduped.has(song.id)) {
-              deduped.set(song.id, song);
-            }
-          });
-          mergedSongs = Array.from(deduped.values());
-        }
-      } catch {
-        // Keep primary results if fallback fails.
-      }
+    if (Array.isArray(songs) && songs.length > 0) {
+      // Fire and forget: caching must never delay playback.
+      cacheSongs(songs).catch(() => {});
+      cacheSearchResults(cacheKey, songs).catch(() => {});
     }
 
-    // Cache results in background
-    if (query && mergedSongs.length > 0) {
-      cacheSongs(mergedSongs).catch(() => {});
-      cacheSearchResults(`songs:${query}:${source || ""}`, mergedSongs).catch(() => {});
-    }
-    return mergedSongs;
-  } catch (e) {
-    // Attempt offline fallback
-    if (query && typeof window !== "undefined") {
-      const cached = await getCachedSearch(`songs:${query}:${source || ""}`).catch(() => null);
+    return Array.isArray(songs) ? songs : [];
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") throw error;
+
+    if (typeof window !== "undefined") {
+      const cached = await getCachedSearch(cacheKey).catch(() => null);
       if (cached) return cached as Song[];
     }
-    throw e;
-  }
-}
 
-export async function getSongsByEntity(
-  type: string,
-  id: string,
-  signal?: AbortSignal
-): Promise<Song[]> {
-  return request<Song[]>(`/api/songs?type=${type}&id=${id}`, { signal });
+    throw error;
+  }
 }
 
 /**
@@ -243,24 +217,6 @@ export async function getLyrics(
   );
 }
 
-/**
- * Fetch track metadata (album, duration, etc.) by title and artist.
- *
- * @param title - Song title
- * @param artist - Artist name
- * @param signal - Optional AbortSignal to cancel the request
- * @returns Track metadata object
- */
-export async function getTrackInfo(
-  title: string,
-  artist: string,
-  signal?: AbortSignal
-): Promise<any> {
-  return request(
-    `/api/track/info?title=${encodeURIComponent(title)}&artist=${encodeURIComponent(artist)}`,
-    { signal }
-  );
-}
 
 /**
  * Fetch artist biography, stats, and tag information.
@@ -279,27 +235,3 @@ export async function getArtistInfo(
   );
 }
 
-// ─── Trending & Charts ────────────────────────────────────────────
-/**
- * Fetch trending songs across all sources.
- *
- * @param signal - Optional AbortSignal to cancel the request
- * @returns Array of trending Song objects
- */
-export async function getTrendingSongs(signal?: AbortSignal): Promise<any[]> {
-  return request<any[]>(`/api/trending`, { signal });
-}
-
-/**
- * Fetch chart/playlist data by chart ID.
- *
- * @param chartId - Chart identifier (default: "songs")
- * @param signal - Optional AbortSignal to cancel the request
- * @returns Array of Song objects in the chart
- */
-export async function getCharts(
-  chartId: string = "songs",
-  signal?: AbortSignal
-): Promise<any[]> {
-  return request<any[]>(`/api/charts?id=${chartId}`, { signal });
-}

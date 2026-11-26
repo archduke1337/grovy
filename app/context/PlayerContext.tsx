@@ -13,19 +13,15 @@ import React, {
 import { Song, Playlist } from "@/app/types/song";
 import { searchSongs, getRadioSongs, getRelatedSongs } from "@/app/lib/api";
 import { 
-  getPlaylists, 
-  savePlaylists, 
-  getFavorites, 
-  saveFavorites, 
-  getHistory, 
+  savePlaylists,
+  saveFavorites,
   addToHistory,
   clearHistory as clearHistoryFromCache,
   subscribeLibraryRealtime,
 } from "@/app/lib/offlineCache";
-import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/preferences";
+import { readLibraryState } from "@/app/lib/localStore";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
-import { useAuth } from "@/app/hooks/useAuth";
-import { SignInPrompt } from "@/app/components/SignInPrompt";
 import { useToast } from "@/app/components/Toast";
 import Hls from "hls.js";
 
@@ -46,7 +42,6 @@ interface PlayerContextType {
   isShuffle: boolean;
   favorites: Song[];
   colors: Colors;
-  isAuthenticated: boolean;
   play: () => void;
   pause: () => void;
   togglePlayPause: () => void;
@@ -59,7 +54,7 @@ interface PlayerContextType {
   toggleShuffle: () => void;
   toggleFavorite: (idOrSong: string | Song) => void;
   isFavorite: (id: string) => boolean;
-  loadSongs: (query?: string, source?: string, signal?: AbortSignal) => Promise<Song[]>;
+  loadSongs: (query?: string, signal?: AbortSignal) => Promise<Song[]>;
   setQueue: (newSongs: Song[], index: number) => void;
   startRadio: (songId: string, opts?: { title?: string; artist?: string }) => Promise<void>;
   loadRelated: (songId: string, opts?: { title?: string; artist?: string }, signal?: AbortSignal) => Promise<Song[]>;
@@ -142,17 +137,7 @@ YouTubeHiddenPlayer.displayName = "YouTubeHiddenPlayer";
 export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { authenticated: isAuthenticated } = useAuth();
   const { toast } = useToast();
-  const [showSignInPrompt, setShowSignInPrompt] = useState(false);
-  const [signInMessage, setSignInMessage] = useState("");
-
-  const requireAuth = useCallback((action: string): boolean => {
-    if (isAuthenticated) return true;
-    setSignInMessage(`Sign in to ${action} and sync across devices.`);
-    setShowSignInPrompt(true);
-    return false;
-  }, [isAuthenticated]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hlsRef = useRef<Hls | null>(null);
   const ytPlayerRef = useRef<any>(null);
@@ -180,7 +165,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [colors, setColors] = useState<Colors>(DEFAULT_COLORS);
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const libraryLoadedRef = useRef(false);
+  // Flips only *after* stored state has been applied to React state, so the
+  // persist effects below can never write the pre-hydration empty arrays.
+  const [isLibraryHydrated, setIsLibraryHydrated] = useState(false);
   const [isPlaylistModalOpen, setIsPlaylistModalOpen] = useState(false);
   const [playlistModalSong, setPlaylistModalSong] = useState<Song | null>(null);
 
@@ -210,27 +197,11 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Hydrate persisted state from Appwrite-backed storage.
+    // Hydrate persisted playback state from local storage. Library data
+    // (playlists, favorites, history) is loaded by its own effect below.
     (async () => {
       try {
-        const [hist, favs, savedPlaylists, prefs] = await Promise.all([
-          getHistory(),
-          getFavorites(),
-          getPlaylists(),
-          getGrovyPrefs(),
-        ]);
-
-        if (hist.length > 0) {
-          setRecentlyPlayed(hist);
-        }
-
-        if (favs.length > 0) {
-          setFavorites(favs);
-        }
-
-        if (savedPlaylists.length > 0) {
-          setPlaylists(savedPlaylists);
-        }
+        const prefs = await getGrovyPrefs();
 
         const savedQueue = prefs.queue as { songs?: Song[]; index?: number } | undefined;
         if (savedQueue && Array.isArray(savedQueue.songs) && savedQueue.songs.length > 0) {
@@ -247,7 +218,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
           setVideoModeState(true);
           videoModeRef.current = true;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn("[PlayerContext] Could not restore saved playback state:", e);
+      }
     })();
 
     // Define the YT initialization function, but delay loading until needed.
@@ -275,8 +248,10 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
             event.target.setVolume(volumeRef.current * 100);
             // Request highest available quality for best audio
             try {
-              event.target.setPlaybackQuality('hd1080');
-      } catch (e) { console.warn("[PlayerContext] Hydration failed:", e); }
+              event.target.setPlaybackQuality("hd1080");
+            } catch {
+              // Quality hint is best-effort; some videos ignore it.
+            }
           },
           onStateChange: (event: any) => {
             // Only process YT state changes when the current song is a YouTube song.
@@ -898,7 +873,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     addToHistory(song);
   }, [currentSongIndex, songs]);
 
-  // Realtime sync for playlists and favorites across tabs/devices.
+  // Hydrate the library from local storage, then keep open tabs in sync.
+  // Writes are gated on `isLibraryHydrated` so the empty initial state can
+  // never overwrite stored playlists or favorites before hydration finishes.
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -907,55 +884,42 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     let isMounted = true;
     let unsubscribe: (() => void) | null = null;
 
-    const refreshLibraryState = async () => {
-      try {
-        const [favs, savedPlaylists] = await Promise.all([
-          getFavorites(),
-          getPlaylists(),
-        ]);
+    const refreshLibraryState = () => {
+      if (!isMounted) return;
 
-        if (!isMounted) {
-          return;
-        }
-
-        setFavorites(Array.isArray(favs) ? favs : []);
-        setPlaylists(Array.isArray(savedPlaylists) ? savedPlaylists : []);
-      } catch {
-        // Keep current state if realtime refresh fails.
-      }
+      const library = readLibraryState();
+      setFavorites(Array.isArray(library.favorites) ? library.favorites : []);
+      setPlaylists(Array.isArray(library.playlists) ? library.playlists : []);
     };
 
-    // Initial fetch: load library from DB before allowing any writes
-    (async () => {
-      await refreshLibraryState();
-      if (isMounted) {
-        libraryLoadedRef.current = true;
-      }
+    refreshLibraryState();
+    setIsLibraryHydrated(true);
 
-      unsubscribe = await subscribeLibraryRealtime(() => {
-        void refreshLibraryState();
-      });
-    })();
+    void subscribeLibraryRealtime(() => {
+      refreshLibraryState();
+    }).then((off) => {
+      if (isMounted) unsubscribe = off;
+      else off();
+    });
 
     return () => {
       isMounted = false;
-      if (unsubscribe) {
-        unsubscribe();
-      }
+      unsubscribe?.();
     };
   }, []);
 
-  // Sync Favorites to Appwrite-backed cache (only after initial load)
+  // Persist favorites once the library has hydrated.
   useEffect(() => {
-    if (!libraryLoadedRef.current) return;
+    if (!isLibraryHydrated) return;
     saveFavorites(favorites);
-  }, [favorites]);
+  }, [isLibraryHydrated, favorites]);
 
-  // Sync Playlists to Appwrite-backed cache (only after initial load)
+  // Persist playlists once the library has hydrated. Full-playlist writes mean
+  // adding, removing or reordering songs inside a playlist is always stored.
   useEffect(() => {
-    if (!libraryLoadedRef.current) return;
+    if (!isLibraryHydrated) return;
     savePlaylists(playlists);
-  }, [playlists]);
+  }, [isLibraryHydrated, playlists]);
 
   // Sync Play/Pause Global Action
   useEffect(() => {
@@ -976,9 +940,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }, [isPlaying, songs, currentSongIndex]);
 
-  const loadSongs = useCallback(async (query?: string, source?: string, signal?: AbortSignal): Promise<Song[]> => {
+  const loadSongs = useCallback(async (query?: string, signal?: AbortSignal): Promise<Song[]> => {
     try {
-      return await searchSongs(query, source, signal);
+      return await searchSongs(query, signal);
     } catch (e) {
       if (e instanceof DOMException && e.name === "AbortError") return [];
       console.error("loadSongs error:", e);
@@ -986,7 +950,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         type: "error",
         action: {
           label: "Retry",
-          onClick: () => { void loadSongs(query, source); },
+          onClick: () => { void loadSongs(query); },
         },
       });
       return [];
@@ -1036,7 +1000,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, [toast]);
 
   const createPlaylist = useCallback((name: string, initialSongs?: Song[]): string => {
-    if (!requireAuth("create playlists")) return "";
     const newPlaylist: Playlist = {
       id: crypto.randomUUID(),
       name,
@@ -1045,15 +1008,13 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     };
     setPlaylists(prev => [...prev, newPlaylist]);
     return newPlaylist.id;
-  }, [requireAuth]);
+  }, []);
 
   const deletePlaylist = useCallback((id: string) => {
-    if (!requireAuth("manage playlists")) return;
     setPlaylists(prev => prev.filter(p => p.id !== id));
-  }, [requireAuth]);
+  }, []);
 
   const addToPlaylist = useCallback((playlistId: string, song: Song) => {
-    if (!requireAuth("add songs to playlists")) return;
     setPlaylists(prev => prev.map(p => {
       if (p.id === playlistId) {
         if (p.songs.some(s => s.id === song.id)) return p;
@@ -1061,23 +1022,21 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       }
       return p;
     }));
-  }, [requireAuth]);
+  }, []);
 
   const removeFromPlaylist = useCallback((playlistId: string, songId: string) => {
-    if (!requireAuth("manage playlists")) return;
     setPlaylists(prev => prev.map(p => {
       if (p.id === playlistId) {
         return { ...p, songs: p.songs.filter(s => s.id !== songId) };
       }
       return p;
     }));
-  }, [requireAuth]);
+  }, []);
 
   const openPlaylistModal = useCallback((song: Song) => {
-    if (!requireAuth("add to playlists")) return;
     setPlaylistModalSong(song);
     setIsPlaylistModalOpen(true);
-  }, [requireAuth]);
+  }, []);
 
   const closePlaylistModal = useCallback(() => {
     setIsPlaylistModalOpen(false);
@@ -1218,7 +1177,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const toggleShuffle = useCallback(() => setIsShuffle(p => !p), []);
   const toggleFavorite = useCallback((idOrSong: string | Song) => {
-    if (!requireAuth("save favorites")) return;
     const id = typeof idOrSong === 'string' ? idOrSong : idOrSong.id;
     setFavorites(prev => {
       // If already favorited, remove it
@@ -1240,7 +1198,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       // This shouldn't happen but prevents data loss
       return prev;
     });
-  }, [recentlyPlayed, requireAuth]);
+  }, [recentlyPlayed]);
   const isFavorite = useCallback((id: string) => favorites.some(s => s.id === id), [favorites]);
   const clearHistory = useCallback(() => {
     setRecentlyPlayed([]);
@@ -1258,7 +1216,6 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     isShuffle,
     favorites,
     colors,
-    isAuthenticated,
     play,
     pause,
     togglePlayPause,
@@ -1307,7 +1264,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setVideoMode,
   }), [
     songs, currentSongIndex, isPlaying, currentTime, duration, volume,
-    isLoop, isShuffle, favorites, colors, isAuthenticated, play, pause, togglePlayPause,
+    isLoop, isShuffle, favorites, colors, play, pause, togglePlayPause,
     nextTrack, previousTrack, seek, changeVolume, toggleLoop, toggleShuffle,
     toggleFavorite, isFavorite, loadSongs, setQueue, startRadio, loadRelated,
     isCommandPaletteOpen, recentlyPlayed, clearHistory,
@@ -1339,18 +1296,17 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <PlayerContext.Provider value={value}>
       <YouTubeHiddenPlayer videoMode={videoMode} />
-      <div style={{ display: 'contents', 
-          // @ts-ignore
-          '--player-primary': colors.primary, 
-          '--player-secondary': colors.secondary 
-      }}>
+      <div
+        style={
+          {
+            display: "contents",
+            "--player-primary": colors.primary,
+            "--player-secondary": colors.secondary,
+          } as React.CSSProperties
+        }
+      >
         {children}
       </div>
-      <SignInPrompt
-        isOpen={showSignInPrompt}
-        onClose={() => setShowSignInPrompt(false)}
-        message={signInMessage}
-      />
     </PlayerContext.Provider>
   );
 };

@@ -15,7 +15,17 @@ import {
 } from "lucide-react";
 import { usePlayer } from "@/app/context/PlayerContext";
 import { motion } from "framer-motion";
+import { Button, Tooltip } from "@heroui/react";
 import { SleepTimerButton, SleepTimerModal } from "@/app/components/SleepTimer";
+
+/**
+ * Toggle buttons in the glass capsule sit on a dark surface, so they use the
+ * player's own white-on-dark palette rather than the app's semantic tokens.
+ */
+const toggleClass = (isActive: boolean) =>
+  isActive
+    ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
+    : "text-white/50 hover:text-white";
 
 export const PlayerControls: React.FC = () => {
   const {
@@ -89,38 +99,44 @@ export const PlayerControls: React.FC = () => {
 
       {/* Secondary controls - Glass Capsule (responsive wrapping) */}
       <div className="flex items-center justify-center flex-wrap gap-3 sm:gap-4 md:gap-6 px-4 sm:px-6 md:px-8 py-2.5 sm:py-3 rounded-2xl sm:rounded-full bg-white/5 backdrop-blur-xl border border-white/10 shadow-lg max-w-full">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={(e) => { e.stopPropagation(); toggleShuffle(); }}
-          aria-label={isShuffle ? "Disable shuffle" : "Enable shuffle"}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            isShuffle
-              ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-              : "text-white/40 hover:text-white active:text-white"
-          }`}
-        >
-          <Shuffle size={18} className="sm:w-5 sm:h-5" />
-        </motion.button>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={toggleShuffle}
+              aria-label={isShuffle ? "Disable shuffle" : "Enable shuffle"}
+              aria-pressed={isShuffle}
+              className={toggleClass(isShuffle)}
+            >
+              <Shuffle size={18} />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>{isShuffle ? "Shuffle on" : "Shuffle off"}</Tooltip.Content>
+        </Tooltip>
 
         <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />
 
         {/* Volume - icon toggles mute on mobile, full slider on desktop */}
         <div className="flex items-center gap-2 sm:gap-4 group/vol">
-          <button 
-             onClick={() => {
-               if (volume === 0) {
-                 setVolume(prevVolumeRef.current || 0.8);
-               } else {
-                 prevVolumeRef.current = volume;
-                 setVolume(0);
-               }
-             }}
-             aria-label={volume === 0 ? "Unmute" : "Mute"}
-             className="text-white/60 hover:text-white active:text-white transition-colors p-1"
+          <Button
+            isIconOnly
+            size="sm"
+            variant="ghost"
+            onPress={() => {
+              if (volume === 0) {
+                setVolume(prevVolumeRef.current || 0.8);
+              } else {
+                prevVolumeRef.current = volume;
+                setVolume(0);
+              }
+            }}
+            aria-label={volume === 0 ? "Unmute" : "Mute"}
+            className="text-white/70 hover:text-white"
           >
-            {volume === 0 ? <VolumeX size={18} className="sm:w-5 sm:h-5" /> : <Volume2 size={18} className="sm:w-5 sm:h-5" />}
-          </button>
+            {volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
+          </Button>
           
           <div className="hidden sm:block w-20 md:w-24 h-1.5 bg-white/10 rounded-full overflow-hidden relative cursor-pointer group-hover/vol:h-2 transition-colors duration-200">
              <motion.div 
@@ -145,60 +161,64 @@ export const PlayerControls: React.FC = () => {
 
         <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />
 
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={(e) => { e.stopPropagation(); toggleLoop(); }}
-          aria-label={isLoop ? "Disable loop" : "Enable loop"}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            isLoop
-              ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-              : "text-white/40 hover:text-white active:text-white"
-          }`}
-        >
-          {isLoop ? <Repeat1 size={18} className="sm:w-5 sm:h-5" /> : <Repeat size={18} className="sm:w-5 sm:h-5" />}
-        </motion.button>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={toggleLoop}
+              aria-label={isLoop ? "Disable loop" : "Enable loop"}
+              aria-pressed={isLoop}
+              className={toggleClass(isLoop)}
+            >
+              {isLoop ? <Repeat1 size={18} /> : <Repeat size={18} />}
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>{isLoop ? "Loop on" : "Loop off"}</Tooltip.Content>
+        </Tooltip>
 
         <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />
 
         {/* Playback Speed */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={(e) => {
-            e.stopPropagation();
-            const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
-            const idx = speeds.indexOf(playbackSpeed);
-            setPlaybackSpeed(speeds[(idx + 1) % speeds.length]);
-          }}
-          aria-label={`Playback speed: ${playbackSpeed}x`}
-          className={`px-2 py-1 rounded-full text-[11px] sm:text-xs font-mono font-bold tabular-nums transition-colors duration-200 ${
-            playbackSpeed !== 1
-              ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-              : "text-white/40 hover:text-white active:text-white"
-          }`}
-          title={`Playback speed: ${playbackSpeed}x`}
-        >
-          {playbackSpeed}x
-        </motion.button>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <Button
+              size="sm"
+              variant="ghost"
+              onPress={() => {
+                const speeds = [0.5, 0.75, 1, 1.25, 1.5, 2];
+                const idx = speeds.indexOf(playbackSpeed);
+                setPlaybackSpeed(speeds[(idx + 1) % speeds.length]);
+              }}
+              aria-label={`Playback speed: ${playbackSpeed}x`}
+              className={`${toggleClass(playbackSpeed !== 1)} px-2 font-mono tabular-nums`}
+            >
+              {playbackSpeed}x
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>Playback speed</Tooltip.Content>
+        </Tooltip>
 
         <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />
 
         {/* Video Mode Toggle */}
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={(e) => { e.stopPropagation(); setVideoMode(!videoMode); }}
-          aria-label={videoMode ? "Disable video mode" : "Enable video mode"}
-          className={`p-2 rounded-full transition-colors duration-200 ${
-            videoMode
-              ? "text-white bg-white/10 shadow-[0_0_15px_rgba(255,255,255,0.2)]"
-              : "text-white/40 hover:text-white active:text-white"
-          }`}
-          title={videoMode ? "Video mode on" : "Video mode off"}
-        >
-          <Monitor size={18} className="sm:w-5 sm:h-5" />
-        </motion.button>
+        <Tooltip>
+          <Tooltip.Trigger>
+            <Button
+              isIconOnly
+              size="sm"
+              variant="ghost"
+              onPress={() => setVideoMode(!videoMode)}
+              aria-label={videoMode ? "Disable video mode" : "Enable video mode"}
+              aria-pressed={videoMode}
+              className={toggleClass(videoMode)}
+            >
+              <Monitor size={18} />
+            </Button>
+          </Tooltip.Trigger>
+          <Tooltip.Content>{videoMode ? "Video mode on" : "Video mode off"}</Tooltip.Content>
+        </Tooltip>
 
         <div className="w-px h-5 sm:h-6 bg-white/10 hidden sm:block" />
 

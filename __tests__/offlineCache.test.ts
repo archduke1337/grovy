@@ -1,11 +1,30 @@
 /**
- * Unit tests for the offline cache helper.
- * Run with: npx vitest run __tests__/offlineCache.test.ts
+ * Unit tests for the local library store.
+ * Run with: npm test
+ *
+ * These cover the persistence behaviour that used to be lost: song edits,
+ * renames and reorders inside an existing playlist must be written.
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
 
 import {
+  readLibraryState,
+  writeLibrarySection,
+  writeLibraryState,
+  readPreferences,
+  patchPreferences,
+  resetLocalStoreForTests,
+} from "../app/lib/localStore";
+
+import {
+  savePlaylists,
+  getPlaylists,
+  saveFavorites,
+  getFavorites,
+  addToHistory,
+  getHistory,
+  clearHistory,
   cacheSong,
   cacheSongs,
   getCachedSong,
@@ -14,65 +33,240 @@ import {
   clearOfflineCache,
 } from "../app/lib/offlineCache";
 
-describe("offlineCache", () => {
+const song = (id: string, title = `Song ${id}`) => ({
+  id,
+  title,
+  url: `/api/stream?id=${id}`,
+  artist: "Artist",
+  genre: "Pop",
+  duration: 120,
+  source: "Saavn",
+});
+
+describe("localStore library", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetLocalStoreForTests();
+  });
+
+  it("starts empty", () => {
+    const library = readLibraryState();
+    expect(library.playlists).toEqual([]);
+    expect(library.favorites).toEqual([]);
+    expect(library.history).toEqual([]);
+  });
+
+  it("persists playlists across a fresh read", async () => {
+    await savePlaylists([
+      { id: "p1", name: "Road Trip", songs: [song("a")], createdAt: 1 },
+    ]);
+
+    resetLocalStoreForTests();
+    const playlists = await getPlaylists();
+    expect(playlists).toHaveLength(1);
+    expect(playlists[0].name).toBe("Road Trip");
+  });
+
+  it("saves songs added to an existing playlist", async () => {
+    await savePlaylists([{ id: "p1", name: "Mix", songs: [song("a")], createdAt: 1 }]);
+
+    // Same playlist ID, extra song — the old ID-only comparison dropped this.
+    await savePlaylists([
+      { id: "p1", name: "Mix", songs: [song("a"), song("b")], createdAt: 1 },
+    ]);
+
+    resetLocalStoreForTests();
+    const playlists = await getPlaylists();
+    expect(playlists[0].songs.map((s) => s.id)).toEqual(["a", "b"]);
+  });
+
+  it("saves a playlist rename", async () => {
+    await savePlaylists([{ id: "p1", name: "Old name", songs: [], createdAt: 1 }]);
+    await savePlaylists([{ id: "p1", name: "New name", songs: [], createdAt: 1 }]);
+
+    resetLocalStoreForTests();
+    expect((await getPlaylists())[0].name).toBe("New name");
+  });
+
+  it("saves a reordered playlist", async () => {
+    await savePlaylists([
+      { id: "p1", name: "Mix", songs: [song("a"), song("b")], createdAt: 1 },
+    ]);
+    await savePlaylists([
+      { id: "p1", name: "Mix", songs: [song("b"), song("a")], createdAt: 1 },
+    ]);
+
+    resetLocalStoreForTests();
+    expect((await getPlaylists())[0].songs.map((s) => s.id)).toEqual(["b", "a"]);
+  });
+
+  it("keeps favorites and playlists independent", async () => {
+    await saveFavorites([song("f1")]);
+    await savePlaylists([{ id: "p1", name: "Mix", songs: [], createdAt: 1 }]);
+
+    expect(await getFavorites()).toHaveLength(1);
+    expect(await getPlaylists()).toHaveLength(1);
+  });
+
+  it("replaces history entries instead of duplicating them", async () => {
+    await addToHistory(song("h1"));
+    await addToHistory(song("h2"));
+    await addToHistory(song("h1"));
+
+    const history = await getHistory();
+    expect(history.map((h) => h.id)).toEqual(["h1", "h2"]);
+  });
+
+  it("clears history only", async () => {
+    await addToHistory(song("h1"));
+    await saveFavorites([song("f1")]);
+    await clearHistory();
+
+    expect(await getHistory()).toEqual([]);
+    expect(await getFavorites()).toHaveLength(1);
+  });
+
+  it("ignores writes for songs without an id", async () => {
+    await addToHistory({ id: "", title: "Nameless", url: "/x", genre: "Pop" } as never);
+    expect(await getHistory()).toEqual([]);
+  });
+
+  it("survives corrupt stored JSON", () => {
+    window.localStorage.setItem("grovy:library", "{not json");
+    resetLocalStoreForTests();
+
+    expect(readLibraryState().playlists).toEqual([]);
+  });
+
+  it("re-reads storage after a change made in another tab", () => {
+    writeLibrarySection("favorites", [song("f1")]);
+    resetLocalStoreForTests();
+
+    // Simulate another tab writing: the raw value changes behind our back.
+    window.localStorage.setItem(
+      "grovy:library",
+      JSON.stringify({ playlists: [], favorites: [song("f2")], history: [] })
+    );
+
+    // The storage listener in `subscribeLibrary` clears the memory copy.
+    window.dispatchEvent(new StorageEvent("storage", { key: "grovy:library" }));
+    resetLocalStoreForTests();
+
+    expect(readLibraryState().favorites.map((f) => f.id)).toEqual(["f2"]);
+  });
+
+  it("does not dispatch a same-tab event that would loop with its own writer", () => {
+    let fired = 0;
+    const listener = () => {
+      fired += 1;
+    };
+    window.addEventListener("storage", listener);
+    writeLibrarySection("favorites", [song("f3")]);
+    window.removeEventListener("storage", listener);
+
+    expect(fired).toBe(0);
+  });
+});
+
+describe("localStore preferences", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetLocalStoreForTests();
+  });
+
+  it("merges patches", () => {
+    patchPreferences({ volume: 0.5 });
+    patchPreferences({ theme: "light" });
+
+    expect(readPreferences()).toEqual({ volume: 0.5, theme: "light" });
+  });
+
+  it("persists across a fresh read", () => {
+    patchPreferences({ playbackSpeed: 1.5 });
+    resetLocalStoreForTests();
+
+    expect(readPreferences().playbackSpeed).toBe(1.5);
+  });
+});
+
+describe("song and search caches", () => {
   beforeEach(async () => {
+    window.localStorage.clear();
+    resetLocalStoreForTests();
     await clearOfflineCache();
   });
 
-  it("should cache and retrieve a single song", async () => {
-    const song = { id: "test-1", title: "Test Song", url: "/test.mp3" };
-    await cacheSong(song);
+  it("caches and retrieves a single song", async () => {
+    await cacheSong(song("test-1", "Test Song"));
     const result = await getCachedSong("test-1");
-    expect(result).toBeTruthy();
-    expect(result.title).toBe("Test Song");
-    expect(result._cachedAt).toBeTypeOf("number");
+    expect(result?.title).toBe("Test Song");
   });
 
-  it("should cache multiple songs", async () => {
-    const songs = [
-      { id: "s1", title: "Song 1", url: "/s1.mp3" },
-      { id: "s2", title: "Song 2", url: "/s2.mp3" },
-    ];
-    await cacheSongs(songs);
-    const r1 = await getCachedSong("s1");
-    const r2 = await getCachedSong("s2");
-    expect(r1?.title).toBe("Song 1");
-    expect(r2?.title).toBe("Song 2");
+  it("caches multiple songs", async () => {
+    await cacheSongs([song("s1", "Song 1"), song("s2", "Song 2")]);
+    expect((await getCachedSong("s1"))?.title).toBe("Song 1");
+    expect((await getCachedSong("s2"))?.title).toBe("Song 2");
   });
 
-  it("should return null for non-existent song", async () => {
-    const result = await getCachedSong("nonexistent");
-    expect(result).toBeNull();
+  it("returns null for an unknown song", async () => {
+    expect(await getCachedSong("nonexistent")).toBeNull();
   });
 
-  it("should cache and retrieve search results", async () => {
+  it("caches and retrieves search results", async () => {
     const results = [{ id: "r1", name: "Result 1" }];
     await cacheSearchResults("test query", results);
-    const cached = await getCachedSearch("test query");
-    expect(cached).toEqual(results);
+    expect(await getCachedSearch("test query")).toEqual(results);
   });
 
-  it("should normalize search query (lowercase + trim)", async () => {
+  it("normalizes the search query", async () => {
     await cacheSearchResults("  Hello World  ", [{ id: "1" }]);
-    const cached = await getCachedSearch("hello world");
-    expect(cached).toBeTruthy();
-    expect(cached).toHaveLength(1);
+    expect(await getCachedSearch("hello world")).toHaveLength(1);
   });
 
-  it("should return null for stale search results", async () => {
+  it("expires stale search results", async () => {
     await cacheSearchResults("old query", [{ id: "1" }]);
-    // Wait a tiny bit so timestamp is in the past
     await new Promise((r) => setTimeout(r, 10));
-    // Stale after 1ms
-    const cached = await getCachedSearch("old query", 1);
-    expect(cached).toBeNull();
+    expect(await getCachedSearch("old query", 1)).toBeNull();
   });
 
-  it("should clear all caches", async () => {
-    await cacheSong({ id: "c1", title: "Clear Me", url: "/c.mp3" });
+  it("clears caches but keeps the library", async () => {
+    await saveFavorites([song("keep")]);
+    await cacheSong(song("c1", "Clear Me"));
     await cacheSearchResults("clear", [{ id: "c1" }]);
+
     await clearOfflineCache();
+
     expect(await getCachedSong("c1")).toBeNull();
     expect(await getCachedSearch("clear")).toBeNull();
+    expect(await getFavorites()).toHaveLength(1);
+  });
+
+  it("caps the number of cached searches", async () => {
+    for (let i = 0; i < 45; i += 1) {
+      await cacheSearchResults(`query ${i}`, [{ id: String(i) }]);
+    }
+
+    const raw = window.localStorage.getItem("grovy:cache-searches");
+    expect(Object.keys(JSON.parse(raw || "{}")).length).toBeLessThanOrEqual(40);
+  });
+});
+
+describe("writeLibraryState", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    resetLocalStoreForTests();
+  });
+
+  it("stores a complete library snapshot", () => {
+    writeLibraryState({
+      playlists: [{ id: "p1", name: "P", songs: [], createdAt: 1 }],
+      favorites: [song("f1")],
+      history: [{ ...song("h1"), timestamp: 1 }],
+    });
+
+    const library = readLibraryState();
+    expect(library.playlists).toHaveLength(1);
+    expect(library.favorites).toHaveLength(1);
+    expect(library.history).toHaveLength(1);
   });
 });

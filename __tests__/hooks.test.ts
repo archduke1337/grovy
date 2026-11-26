@@ -21,7 +21,7 @@ const { prefStore, getGrovyPrefsMock, patchGrovyPrefsMock } = vi.hoisted(() => {
   };
 });
 
-vi.mock("../app/lib/appwrite/prefsClient", () => ({
+vi.mock("../app/lib/preferences", () => ({
   getGrovyPrefs: getGrovyPrefsMock,
   patchGrovyPrefs: patchGrovyPrefsMock,
 }));

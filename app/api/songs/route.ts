@@ -1,4 +1,3 @@
-import { list } from "@vercel/blob";
 import { z } from "zod";
 import { SongSchema } from "@/app/types/song";
 import { NextRequest } from "next/server";
@@ -16,7 +15,6 @@ export async function OPTIONS() {
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const source = searchParams.get("source");
   const query = searchParams.get("query");
   const type = searchParams.get("type"); // 'album', 'playlist', 'artist'
   const id = searchParams.get("id");
@@ -112,87 +110,9 @@ export async function GET(request: NextRequest) {
 
       return Response.json(rawSongs, { headers: corsHeaders });
     }
-    if (source === "local") {
-      const fs = require('fs');
-      const path = require('path');
-      let localSongs: any[] = [];
-
-      // 1. Try Local Manifest (Production-safe, works with LFS/Git)
-      try {
-        const manifestPath = path.join(process.cwd(), 'public', 'songs.json');
-        if (fs.existsSync(manifestPath)) {
-          console.debug("Reading local songs from manifest...");
-          const content = fs.readFileSync(manifestPath, 'utf-8');
-          localSongs = JSON.parse(content);
-        }
-      } catch (e) {
-        console.warn("Manifest read failed (skipping):", e);
-      }
-
-      // 2. Try Vercel Blob Storage if manifest empty or not found
-      if (localSongs.length === 0) {
-        try {
-          if (process.env.BLOB_READ_WRITE_TOKEN) {
-            const { blobs } = await list({ prefix: 'songs/', limit: 200 });
-            const audioBlobs = blobs.filter(blob => 
-              /\.(mp3|wav|m4a|ogg)$/i.test(blob.pathname)
-            );
-
-            if (audioBlobs.length > 0) {
-              localSongs = audioBlobs.map((blob, index) => ({
-                id: blob.url,
-                title: blob.pathname.split('/').pop()?.replace(/\.[^/.]+$/, "").replace(/[-_]/g, " ") || "Unknown Title",
-                url: blob.url,
-                artist: "My Cloud Library",
-                cover: undefined, 
-                genre: "Personal",
-                duration: 0
-              }));
-            }
-          }
-        } catch (error) {
-          console.warn("Vercel Blob list failed:", error);
-        }
-      }
-
-      // 3. Last Resort: Direct FS
-      if (localSongs.length === 0) {
-        try {
-          const songsDir = path.join(process.cwd(), 'public', 'songs');
-          if (fs.existsSync(songsDir)) {
-            const files = fs.readdirSync(songsDir);
-            localSongs = files
-              .filter((file: string) => /\.(mp3|wav|ogg|m4a)$/i.test(file))
-              .map((file: string, index: number) => ({
-                 id: `local-${index}`,
-                 title: file.replace(/\.(mp3|wav|ogg|m4a)$/i, "").replace(/[-_]/g, " "),
-                 url: `/songs/${file}`,
-                 artist: "Local Track",
-                 cover: undefined,
-                 genre: "Local",
-                 duration: 0
-              }));
-          }
-        } catch (e) {
-          console.error("Local file read error:", e);
-        }
-      }
-
-      // Filter by query if provided
-      if (query && query.toLowerCase() !== "trending") {
-        const q = query.toLowerCase();
-        localSongs = localSongs.filter(s => 
-          s.title.toLowerCase().includes(q) || 
-          s.artist.toLowerCase().includes(q)
-        );
-      }
-
-      return Response.json(localSongs, { headers: corsHeaders });
-    }
-
     // Remote Logic
     if (!query) {
-      return Response.json([]);
+      return Response.json([], { headers: corsHeaders });
     }
 
     const rawCountry = searchParams.get("country") || "IN";

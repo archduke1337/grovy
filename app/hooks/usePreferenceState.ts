@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/appwrite/prefsClient";
+
+import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/preferences";
 
 /**
- * Hook that manages state persisted in Appwrite user preferences.
- * On mount, hydrates from the stored preference (if any) using `initialValue` as fallback.
- * Writes are patched to preferences in the background.
+ * Hook that manages a state value persisted in local preferences.
+ * Hydrates from storage on mount using `initialValue` as fallback, and writes
+ * changes back in the background.
  *
  * @param key - Preference key to read/write
  * @param initialValue - Default value when no stored preference exists
@@ -35,7 +36,7 @@ export function usePreferenceState<T>(
           setState(prefs[key] as T);
         }
       } catch {
-        // Keep initial value when preference fetch fails.
+        // Keep initial value when preference read fails.
       }
     })();
 
@@ -46,11 +47,13 @@ export function usePreferenceState<T>(
 
   const setPersistedState = useCallback(
     (value: T | ((prev: T) => T)) => {
-      const nextValue = typeof value === "function"
-        ? (value as (prev: T) => T)(stateRef.current)
-        : value;
+      const nextValue =
+        typeof value === "function"
+          ? (value as (prev: T) => T)(stateRef.current)
+          : value;
+
       setState(nextValue);
-      void patchGrovyPrefs({ [key]: nextValue as unknown });
+      void patchGrovyPrefs({ [key]: nextValue as never });
     },
     [key]
   );

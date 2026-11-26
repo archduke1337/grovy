@@ -6,11 +6,12 @@ import { usePlayer } from "@/app/context/PlayerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Play, Music, Trash2, Shuffle, Search } from "lucide-react";
 import Image from "next/image";
+import { Button, EmptyState } from "@heroui/react";
 import { getHDThumbnail } from "@/app/lib/thumbnail";
 
 export default function FavoritesPage() {
   const router = useRouter();
-  const { favorites, setQueue, toggleFavorite, isAuthenticated } = usePlayer();
+  const { favorites, setQueue, toggleFavorite } = usePlayer();
 
   const handlePlayAll = () => {
     if (favorites.length > 0) {
@@ -116,28 +117,23 @@ export default function FavoritesPage() {
           </AnimatePresence>
         </div>
       ) : (
-        <div className="py-20 sm:py-32 text-center space-y-8">
-           <div className="w-24 h-24 mx-auto rounded-4xl bg-gray-100 dark:bg-white/3 flex items-center justify-center text-gray-300 dark:text-white/10 shadow-inner">
-              <Heart size={48} />
-           </div>
-           <div className="space-y-3">
-              <p className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight">
-                {isAuthenticated ? "No favorites yet" : "Sign in to save favorites"}
-              </p>
-              <p className="text-gray-400 dark:text-white/30 font-bold max-w-sm mx-auto">
-                {isAuthenticated
-                  ? "Your favorite tracks will appear here. Search for music, tap the heart icon on any song, and build your personal collection."
-                  : "Create an account to save your favorite songs and sync them across devices."}
-              </p>
-           </div>
-           <button 
-             onClick={() => router.push(isAuthenticated ? "/" : "/auth/sign-in")}
-             className="flex items-center gap-2.5 mx-auto px-8 py-3.5 rounded-2xl bg-gray-900 dark:bg-white text-white dark:text-black font-black text-[14px] hover:scale-105 active:scale-95 transition-all shadow-xl"
-           >
-             <Search size={18} />
-             {isAuthenticated ? "Discover Music" : "Sign In"}
-           </button>
-        </div>
+        <EmptyState className="flex flex-col items-center gap-6 py-20 sm:py-32 text-center">
+          <div className="flex h-24 w-24 items-center justify-center rounded-[2rem] bg-default/40 text-muted">
+            <Heart size={44} />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
+              No favorites yet
+            </h2>
+            <p className="mx-auto max-w-sm text-sm text-muted">
+              Search for music, tap the heart on any song, and build your personal collection.
+            </p>
+          </div>
+          <Button variant="primary" onPress={() => router.push("/")}>
+            <Search size={18} />
+            Discover music
+          </Button>
+        </EmptyState>
       )}
     </motion.div>
   );
