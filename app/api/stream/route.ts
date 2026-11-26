@@ -31,16 +31,45 @@ function isAllowedSaavnUrl(url: URL): boolean {
   });
 }
 
-// CORS preflight handler
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, OPTIONS",
-  "Access-Control-Allow-Headers": "Range, Content-Type",
-};
-
-export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: corsHeaders });
+/**
+ * CORS headers for the stream route.
+ *
+ * The player is same-origin, so the only reason to send any
+ * `Access-Control-Allow-Origin` at all is that the audio element is created
+ * with `crossOrigin`, which makes it a CORS request. Echoing the calling
+ * origin keeps that working without advertising the route as a public CDN to
+ * every other site on the internet.
+ */
+function streamCorsHeaders(request: NextRequest): Record<string, string> {
+  const origin = request.headers.get("origin");
+  return {
+    ...(origin ? { "Access-Control-Allow-Origin": origin } : {}),
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Range, Content-Type",
+    Vary: "Origin",
+  };
 }
+
+/**
+ * Error response for the stream route.
+ *
+ * Errors are never cacheable. Without an explicit `no-store` a rejection can be
+ * held by a browser or edge cache and replayed for a request that would now
+ * succeed — e.g. a bad `id` before a retry with a good one.
+ */
+function streamError(message: string, status: number): Response {
+  return Response.json(
+    { error: message },
+    { status, headers: { "Cache-Control": "no-store" } }
+  );
+}
+
+export async function OPTIONS(request: NextRequest) {
+  return new Response(null, { status: 204, headers: streamCorsHeaders(request) });
+}
+
+/** A YouTube video id is exactly 11 URL-safe base64 characters. */
+const YOUTUBE_ID_PATTERN = /^[A-Za-z0-9_-]{11}$/;
 
 export async function GET(request: NextRequest) {
   const id = request.nextUrl.searchParams.get("id");
@@ -48,7 +77,22 @@ export async function GET(request: NextRequest) {
   const quality = request.nextUrl.searchParams.get("quality") || "high";
   
   if (!id && !saavnUrl) {
-    return Response.json({ error: "Missing id or saavnUrl" }, { status: 400 });
+    return streamError("Missing id or saavnUrl", 400);
+  }
+
+  // Reject anything that is not a well-formed video id before doing any
+  // upstream work. Without this the route relays whatever id it is handed,
+  // which makes it usable as a generic proxy rather than a player endpoint.
+  if (id && !YOUTUBE_ID_PATTERN.test(id)) {
+    return streamError("Invalid video id", 400);
+  }
+
+  // Only same-origin callers need this route. Browsers always send
+  // Sec-Fetch-Site on cross-origin requests; direct navigations send
+  // "none". Anything else is an embedded third party using us as a CDN.
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (fetchSite && fetchSite !== "same-origin" && fetchSite !== "none") {
+    return streamError("Cross-origin streaming is not allowed", 403);
   }
 
   // ═══ HANDLE SAAVN DIRECT DOWNLOAD ═══
@@ -56,7 +100,7 @@ export async function GET(request: NextRequest) {
     try {
       const parsedSaavnUrl = parseSaavnUrl(saavnUrl);
       if (!parsedSaavnUrl || !isAllowedSaavnUrl(parsedSaavnUrl)) {
-        return Response.json({ error: "Invalid saavnUrl host" }, { status: 400 });
+        return streamError("Invalid saavnUrl host", 400);
       }
 
       parsedSaavnUrl.username = "";
@@ -79,15 +123,13 @@ export async function GET(request: NextRequest) {
 
       if (!res.ok && res.status !== 206) {
         console.error(`[StreamAPI] Saavn fetch failed: ${res.status}`);
-        return Response.json({ error: `Saavn return ${res.status}` }, { status: 502 });
+        return streamError(`Saavn return ${res.status}`, 502);
       }
 
       const contentType = res.headers.get("Content-Type") || "audio/mpeg";
       const responseHeaders: Record<string, string> = {
         "Content-Type": contentType,
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, OPTIONS",
-        "Access-Control-Allow-Headers": "Range, Content-Type",
+        ...streamCorsHeaders(request),
         "Accept-Ranges": "bytes",
         "Cache-Control": "public, max-age=3600",
       };
@@ -104,13 +146,13 @@ export async function GET(request: NextRequest) {
       });
     } catch (error) {
       console.error("[StreamAPI] Saavn proxy error:", error);
-      return Response.json({ error: "Saavn streaming failed" }, { status: 502 });
+      return streamError("Saavn streaming failed", 502);
     }
   }
 
   // ═══ HANDLE YOUTUBE VIDEO ═══
   if (!id) {
-    return Response.json({ error: "Missing id" }, { status: 400 });
+    return streamError("Missing id", 400);
   }
 
   try {
@@ -118,7 +160,7 @@ export async function GET(request: NextRequest) {
     const metaTimeout = setTimeout(() => controller.abort(), 8000);
     const metaRes = await fetch(`https://ytapi.gauravramyadav.workers.dev/api/stream?id=${encodeURIComponent(id)}`, { signal: controller.signal });
     clearTimeout(metaTimeout);
-    if (!metaRes.ok) return Response.json({ error: "Meta API Down" }, { status: 502 });
+    if (!metaRes.ok) return streamError("Meta API Down", 502);
 
     const data = await metaRes.json();
     const sources = data.streamingUrls || data.streams || (data.url ? [data] : []);
@@ -187,7 +229,7 @@ export async function GET(request: NextRequest) {
       if (s.directUrl && isValidStreamUrl(s.directUrl)) candidates.push(resolveUrl(s.directUrl));
     }
 
-    if (candidates.length === 0) return Response.json({ error: "No streams" }, { status: 404 });
+    if (candidates.length === 0) return streamError("No streams", 404);
 
     const rangeHeader = request.headers.get("Range") || "bytes=0-";
 
@@ -212,7 +254,7 @@ export async function GET(request: NextRequest) {
           
           const responseHeaders: Record<string, string> = {
                "Content-Type": contentType.includes("audio") ? contentType : "audio/webm",
-               "Access-Control-Allow-Origin": "*",
+               ...streamCorsHeaders(request),
                "Accept-Ranges": "bytes",
                "Cache-Control": "public, max-age=3600"
           };
@@ -250,7 +292,7 @@ export async function GET(request: NextRequest) {
       if (proxyRes.ok || proxyRes.status === 206) {
         const proxyHeaders: Record<string, string> = {
           "Content-Type": proxyRes.headers.get("Content-Type") || "audio/webm",
-          "Access-Control-Allow-Origin": "*",
+          ...streamCorsHeaders(request),
           "Accept-Ranges": "bytes",
           "Cache-Control": "public, max-age=3600",
         };
@@ -261,11 +303,11 @@ export async function GET(request: NextRequest) {
         return new Response(proxyRes.body, { status: proxyRes.status, headers: proxyHeaders });
       }
     } catch { /* proxy fallback also failed */ }
-    return Response.json({ error: "Playback unavailable" }, { status: 500 });
+    return streamError("Playback unavailable", 500);
 
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : String(error);
     console.error(`[StreamAPI] Critical Error:`, message);
-    return Response.json({ error: "Playback unavailable" }, { status: 500 });
+    return streamError("Playback unavailable", 500);
   }
 }

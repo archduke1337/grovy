@@ -67,17 +67,16 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
         ],
       },
-      // Media proxies are cached briefly so seeking within a track hits the
-      // browser/edge cache instead of the upstream provider.
-      {
-        source: "/api/stream",
-        headers: [{ key: "Cache-Control", value: "public, max-age=3600" }],
-      },
-      // Everything else under /api is dynamic and must not be cached.
-      {
-        source: "/api/:path*",
-        headers: [{ key: "Cache-Control", value: "no-store, must-revalidate" }],
-      },
+      // No /api cache rules at all. Next already marks dynamic route handlers
+      // as uncacheable, and a rule here would override the per-route
+      // Cache-Control headers the handlers set themselves (the last matching
+      // rule wins). Route handlers own their cache policy.
+      //
+      // In particular there used to be a `/api/stream` rule pinning
+      // `public, max-age=3600`. That also stamped the route's 400/403
+      // rejections as publicly cacheable, so an edge cache could keep serving
+      // a stale rejection after the caller became valid. The stream route now
+      // sets `max-age` on successful media and `no-store` on every error.
     ];
   },
   staticPageGenerationTimeout: 120,
