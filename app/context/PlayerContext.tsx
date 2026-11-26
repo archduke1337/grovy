@@ -12,15 +12,17 @@ import React, {
 
 import { Song, Playlist } from "@/app/types/song";
 import { searchSongs, getRadioSongs, getRelatedSongs } from "@/app/lib/api";
-import { 
+import {
   savePlaylists,
   saveFavorites,
   addToHistory,
+  getHistory,
   clearHistory as clearHistoryFromCache,
   subscribeLibraryRealtime,
 } from "@/app/lib/offlineCache";
 import { getGrovyPrefs, patchGrovyPrefs } from "@/app/lib/preferences";
-import { readLibraryState } from "@/app/lib/localStore";
+import { readLibraryState, readQueue, writeQueue } from "@/app/lib/localStore";
+import { moveIndex, nextIndex, previousIndex, removeIndex } from "@/app/lib/queue";
 import { useMediaSession } from "@/app/hooks/useMediaSession";
 import { useToast } from "@/app/components/Toast";
 import Hls from "hls.js";
@@ -98,6 +100,28 @@ const DEFAULT_COLORS: Colors = {
 };
 
 const PlayerContext = createContext<PlayerContextType | undefined>(undefined);
+
+/**
+ * Cheap content signatures used to decide whether a persist effect has real
+ * work to do. Comparing ids only — not the whole song objects — keeps this
+ * O(n) with no deep equality on every render, while still changing whenever an
+ * add, remove or reorder happens.
+ */
+function songListSignature(songs: readonly Song[]): string {
+  let signature = "";
+  for (const song of songs) signature += `${song.id}\u0000`;
+  return signature;
+}
+
+function playlistListSignature(playlists: readonly Playlist[]): string {
+  let signature = "";
+  for (const playlist of playlists) {
+    signature += `${playlist.id}[`;
+    for (const song of playlist.songs) signature += `${song.id},`;
+    signature += `]${playlist.name}\u0000`;
+  }
+  return signature;
+}
 
 declare global {
   interface Window {
@@ -203,10 +227,28 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const prefs = await getGrovyPrefs();
 
-        const savedQueue = prefs.queue as { songs?: Song[]; index?: number } | undefined;
-        if (savedQueue && Array.isArray(savedQueue.songs) && savedQueue.songs.length > 0) {
-          setSongs(savedQueue.songs);
-          setCurrentSongIndex(Math.min(savedQueue.index || 0, savedQueue.songs.length - 1));
+        // Queue lives in its own storage key now. Fall back to the old
+        // `preferences.queue` location once, so an upgrade does not silently
+        // drop the queue of an existing user.
+        const persistedQueue = readQueue();
+        const legacyQueue = prefs.queue as { songs?: Song[]; index?: number } | undefined;
+        const restoredQueue =
+          persistedQueue ??
+          (legacyQueue && Array.isArray(legacyQueue.songs) && legacyQueue.songs.length > 0
+            ? { songs: legacyQueue.songs, index: legacyQueue.index ?? 0 }
+            : null);
+
+        if (restoredQueue && restoredQueue.songs.length > 0) {
+          setSongs(restoredQueue.songs);
+          setCurrentSongIndex(
+            Math.min(restoredQueue.index || 0, restoredQueue.songs.length - 1)
+          );
+          // Complete the migration: write to the new key and remove the old
+          // value so `preferences` stops carrying the queue.
+          if (!persistedQueue) {
+            writeQueue({ songs: restoredQueue.songs, index: restoredQueue.index || 0 });
+            void patchGrovyPrefs({ queue: null });
+          }
         }
 
         const savedSpeed = Number(prefs.playbackSpeed);
@@ -630,12 +672,34 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     if (ytPlayerRef.current?.setPlaybackRate) ytPlayerRef.current.setPlaybackRate(playbackSpeed);
   }, [songs, currentSongIndex, playbackSpeed]);
 
-  // Persist queue to user preferences
+  // Persist the queue to its own key.
+  //
+  // Only rewrite when the song list actually changes: the index moves on every
+  // track transition, and serialising the whole queue each time was pure write
+  // amplification. The index is saved alongside the list, and again when the
+  // page is hidden, so resuming lands on the right track without a write per
+  // skip.
   useEffect(() => {
-    if (songs.length > 0) {
-      void patchGrovyPrefs({ queue: { songs, index: currentSongIndex } });
-    }
-  }, [songs, currentSongIndex]);
+    if (songs.length === 0) return;
+    writeQueue({ songs, index: currentSongIndex });
+    // `currentSongIndex` is deliberately read but not depended on; see above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [songs]);
+
+  // Capture the current index when the page is hidden, so resuming lands on
+  // the track the user was actually on without writing on every skip.
+  useEffect(() => {
+    const persistIndex = () => {
+      if (songsRef.current.length === 0) return;
+      writeQueue({ songs: songsRef.current, index: currentSongIndexRef.current });
+    };
+    window.addEventListener("pagehide", persistIndex);
+    document.addEventListener("visibilitychange", persistIndex);
+    return () => {
+      window.removeEventListener("pagehide", persistIndex);
+      document.removeEventListener("visibilitychange", persistIndex);
+    };
+  }, []);
 
   const seek = useCallback((time: number) => {
     if (!songs[currentSongIndex]) return;
@@ -653,15 +717,18 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const nextTrack = useCallback(() => {
     if (songs.length === 0) return;
     if (audioContextRef.current?.state === "suspended") audioContextRef.current.resume();
-    setCurrentSongIndex((prev) => {
-      if (isShuffle && songs.length > 1) {
-        let next;
-        let attempts = 0;
-        do { next = Math.floor(Math.random() * songs.length); attempts++; } while (next === prev && attempts < songs.length);
-        return next;
-      }
-      return (prev + 1) % songs.length;
-    });
+
+    // A single-track queue has nowhere to advance to. Wrapping onto the same
+    // index leaves source effects keyed on song identity untouched, so the
+    // audio element is never reloaded — and setPlaying(true) below would then
+    // report playback that is not happening. Stop instead.
+    const skip = nextIndex(currentSongIndexRef.current, songs.length, { shuffle: isShuffle });
+    if (skip.exhausted || skip.index === null) {
+      setIsPlaying(false);
+      return;
+    }
+
+    setCurrentSongIndex(skip.index);
     setIsPlaying(true);
   }, [songs.length, isShuffle]);
 
@@ -674,10 +741,20 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const previousTrack = useCallback(() => {
     if (songs.length === 0) return;
     if (audioContextRef.current?.state === "suspended") audioContextRef.current.resume();
-    if (currentTimeRef.current > 3) {
-       seek(0);
+
+    const prev = previousIndex(
+      currentSongIndexRef.current,
+      songs.length,
+      currentTimeRef.current
+    );
+    if (prev.index === null) return;
+
+    // A "previous" inside the first few seconds of the same track means
+    // restart; anything else is a real track change.
+    if (prev.index === currentSongIndexRef.current) {
+      seek(0);
     } else {
-       setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+      setCurrentSongIndex(prev.index);
     }
     setIsPlaying(true);
   }, [songs.length, seek]);
@@ -867,7 +944,9 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setRecentlyPlayed((prev) => {
       const filtered = prev.filter((s) => s.id !== song.id);
-      const updated = [song, ...filtered].slice(0, 20);
+      // Match the 50-entry cap used for persistence so a restored history is
+      // not immediately halved the first time a track plays.
+      const updated = [song, ...filtered].slice(0, 50);
       return updated;
     });
     addToHistory(song);
@@ -890,6 +969,16 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const library = readLibraryState();
       setFavorites(Array.isArray(library.favorites) ? library.favorites : []);
       setPlaylists(Array.isArray(library.playlists) ? library.playlists : []);
+
+      // Restore listening history. `addToHistory` persists a timestamped copy;
+      // the player only needs the Song fields, so drop the timestamp on the way
+      // in. Without this, history is written on every track change and never
+      // read, so "Recently Played" is empty after every reload.
+      const history = Array.isArray(library.history) ? library.history : [];
+      const restored = [...history]
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+        .map(({ timestamp: _timestamp, ...song }) => song);
+      setRecentlyPlayed(restored);
     };
 
     refreshLibraryState();
@@ -909,16 +998,28 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // Persist favorites once the library has hydrated.
+  //
+  // Skip the write when the content is unchanged. A library change in another
+  // tab arrives here as a *new array reference* holding the same data, so
+  // without this every cross-tab edit would be written straight back.
+  const lastSavedFavoritesRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLibraryHydrated) return;
-    saveFavorites(favorites);
+    const signature = songListSignature(favorites);
+    if (signature === lastSavedFavoritesRef.current) return;
+    lastSavedFavoritesRef.current = signature;
+    void saveFavorites(favorites);
   }, [isLibraryHydrated, favorites]);
 
   // Persist playlists once the library has hydrated. Full-playlist writes mean
   // adding, removing or reordering songs inside a playlist is always stored.
+  const lastSavedPlaylistsRef = useRef<string | null>(null);
   useEffect(() => {
     if (!isLibraryHydrated) return;
-    savePlaylists(playlists);
+    const signature = playlistListSignature(playlists);
+    if (signature === lastSavedPlaylistsRef.current) return;
+    lastSavedPlaylistsRef.current = signature;
+    void savePlaylists(playlists);
   }, [isLibraryHydrated, playlists]);
 
   // Sync Play/Pause Global Action
@@ -1050,13 +1151,8 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       const updated = [...prev];
       const [moved] = updated.splice(from, 1);
       updated.splice(to, 0, moved);
-      // Adjust currentSongIndex to keep the currently playing song correct
-      setCurrentSongIndex(prevIdx => {
-        if (prevIdx === from) return to;
-        if (from < prevIdx && to >= prevIdx) return prevIdx - 1;
-        if (from > prevIdx && to <= prevIdx) return prevIdx + 1;
-        return prevIdx;
-      });
+      // Keep the currently playing song correct (see lib/queue.ts).
+      setCurrentSongIndex(prevIdx => moveIndex(prevIdx, from, to, prev.length));
       return updated;
     });
   }, []);
@@ -1065,11 +1161,7 @@ export const PlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setSongs(prev => {
       if (prev.length <= 1) return prev;
       const updated = prev.filter((_, i) => i !== index);
-      setCurrentSongIndex(prevIdx => {
-        if (index < prevIdx) return prevIdx - 1;
-        if (index === prevIdx) return Math.min(prevIdx, updated.length - 1);
-        return prevIdx;
-      });
+      setCurrentSongIndex(prevIdx => removeIndex(prevIdx, index, prev.length).index);
       return updated;
     });
   }, []);

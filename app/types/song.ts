@@ -13,10 +13,13 @@ export const SongSchema = z.object({
 
 export type Song = z.infer<typeof SongSchema>;
 
-export interface Playlist {
-  id: string;
-  name: string;
-  songs: Song[];
-  createdAt: number;
-  cover?: string;
-}
+/** A saved playlist. Songs inside are validated on read (see localStore). */
+export const PlaylistSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  songs: z.array(SongSchema),
+  createdAt: z.number(),
+  cover: z.string().optional(),
+});
+
+export interface Playlist extends z.infer<typeof PlaylistSchema> {}

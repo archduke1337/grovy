@@ -10,6 +10,7 @@
  * degrade to in-memory state instead of breaking playback.
  */
 
+import { PlaylistSchema, SongSchema } from "@/app/types/song";
 import type { Playlist, Song } from "@/app/types/song";
 
 const STORAGE_PREFIX = "grovy:";
@@ -18,7 +19,19 @@ export const STORAGE_KEYS = {
   library: "library",
   preferences: "preferences",
   searchHistory: "search-history",
+  queue: "queue",
 } as const;
+
+/**
+ * The persisted playback queue. Kept in its own key rather than inside
+ * `preferences` because it is the only unbounded value the app stores: sharing
+ * a key with theme/volume/EQ meant one oversized queue could exhaust the
+ * origin quota and silently take the user's settings down with it.
+ */
+export interface PersistedQueue {
+  songs: Song[];
+  index: number;
+}
 
 export type PreferenceValue = string | number | boolean | null | object;
 
@@ -50,6 +63,7 @@ const EMPTY_LIBRARY: StoredLibrary = {
 let memoryLibrary: StoredLibrary = clone(EMPTY_LIBRARY);
 let memoryPreferences: Preferences = {};
 let memorySearchHistory: string[] = [];
+let memoryQueue: PersistedQueue | null = null;
 let hydrated = false;
 
 /** Keep recent searches short enough to stay useful in the dropdown. */
@@ -104,10 +118,53 @@ function readLibrary(storage: Storage): StoredLibrary {
   const raw = readJson<Partial<StoredLibrary>>(storage, STORAGE_KEYS.library, EMPTY_LIBRARY);
 
   return {
-    playlists: Array.isArray(raw?.playlists) ? (raw.playlists as PlaylistRecord[]) : [],
-    favorites: Array.isArray(raw?.favorites) ? (raw.favorites as SongRecord[]) : [],
-    history: Array.isArray(raw?.history) ? (raw.history as HistoryRecord[]) : [],
+    playlists: sanitizePlaylists(raw?.playlists),
+    favorites: sanitizeSongs(raw?.favorites),
+    history: sanitizeHistory(raw?.history),
   };
+}
+
+/**
+ * Validate persisted collections against their schemas.
+ *
+ * `localStorage` is user-editable and import files are arbitrary JSON, so an
+ * array being an array proves nothing. Invalid entries are dropped rather than
+ * failing the whole read: losing one bad song beats rendering an empty library
+ * (or crashing the page) with no way for the user to recover.
+ */
+function sanitizeSongs(value: unknown): SongRecord[] {
+  if (!Array.isArray(value)) return [];
+  const valid: SongRecord[] = [];
+  for (const entry of value) {
+    const parsed = SongSchema.safeParse(entry);
+    if (parsed.success) valid.push(parsed.data);
+  }
+  return valid;
+}
+
+function sanitizePlaylists(value: unknown): PlaylistRecord[] {
+  if (!Array.isArray(value)) return [];
+  const valid: PlaylistRecord[] = [];
+  for (const entry of value) {
+    const parsed = PlaylistSchema.safeParse(entry);
+    if (parsed.success) valid.push(parsed.data);
+  }
+  return valid;
+}
+
+function sanitizeHistory(value: unknown): HistoryRecord[] {
+  if (!Array.isArray(value)) return [];
+  const valid: HistoryRecord[] = [];
+  for (const entry of value) {
+    const parsed = SongSchema.safeParse(entry);
+    if (!parsed.success) continue;
+    const timestamp =
+      entry && typeof entry === "object" && typeof (entry as { timestamp?: unknown }).timestamp === "number"
+        ? (entry as { timestamp: number }).timestamp
+        : 0;
+    valid.push({ ...parsed.data, timestamp });
+  }
+  return valid;
 }
 
 function ensureHydrated(): void {
@@ -125,6 +182,20 @@ function ensureHydrated(): void {
   memorySearchHistory = Array.isArray(storedHistory)
     ? storedHistory.filter((item): item is string => typeof item === "string").slice(0, MAX_SEARCH_HISTORY)
     : [];
+
+  // Queue lives in its own key. Entries are validated like library songs so a
+  // corrupt or hand-edited value cannot reach playback unvalidated.
+  const storedQueue = readJson<PersistedQueue | null>(storage, STORAGE_KEYS.queue, null);
+  if (storedQueue && Array.isArray(storedQueue.songs)) {
+    const songs = sanitizeSongs(storedQueue.songs).slice(0, MAX_PERSISTED_QUEUE);
+    if (songs.length > 0) {
+      const rawIndex = Number(storedQueue.index);
+      memoryQueue = {
+        songs,
+        index: Number.isFinite(rawIndex) ? Math.max(0, Math.min(rawIndex, songs.length - 1)) : 0,
+      };
+    }
+  }
 }
 
 /**
@@ -136,6 +207,7 @@ export function resetLocalStoreForTests(): void {
   memoryLibrary = clone(EMPTY_LIBRARY);
   memoryPreferences = {};
   memorySearchHistory = [];
+  memoryQueue = null;
 }
 
 // ─── Library ────────────────────────────────────────────────────
@@ -200,6 +272,29 @@ export function readPreference<T>(key: string, fallback: T): T {
   return Object.prototype.hasOwnProperty.call(memoryPreferences, key)
     ? (memoryPreferences[key] as T)
     : fallback;
+}
+
+// ─── Queue ──────────────────────────────────────────────────────
+
+/**
+ * Upper bound on persisted queue length. A queue longer than this is still
+ * playable in memory; only the persisted copy is trimmed. This keeps the
+ * stored value bounded so it can never crowd out the rest of the origin quota.
+ */
+export const MAX_PERSISTED_QUEUE = 200;
+
+export function readQueue(): PersistedQueue | null {
+  ensureHydrated();
+  return memoryQueue ? { songs: [...memoryQueue.songs], index: memoryQueue.index } : null;
+}
+
+export function writeQueue(queue: PersistedQueue): void {
+  ensureHydrated();
+  const songs = Array.isArray(queue.songs) ? queue.songs.slice(0, MAX_PERSISTED_QUEUE) : [];
+  const index = Number.isFinite(queue.index) ? Math.max(0, Math.min(queue.index, Math.max(songs.length - 1, 0))) : 0;
+
+  memoryQueue = { songs, index };
+  writeJson(getStorage(), STORAGE_KEYS.queue, { songs, index });
 }
 
 // ─── Search history ─────────────────────────────────────────────
