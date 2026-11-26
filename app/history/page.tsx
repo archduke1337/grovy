@@ -52,27 +52,33 @@ export default function HistoryPage() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ delay: i * 0.02 }}
                 whileHover={{ y: -8 }}
-                onClick={() => setQueue(recentlyPlayed, i)}
-                className="group cursor-pointer space-y-3"
+                className="group space-y-3"
               >
-                <div className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-100 dark:bg-white/5 shadow-lg group-hover:shadow-2xl transition-all duration-500">
-                  {song.cover ? (
-                    <Image src={getHDThumbnail(song.cover) || ""} alt={song.title} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <Music size={40} className="text-gray-300 dark:text-white/10" />
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
-                    <div className="w-12 h-12 bg-white/95 dark:bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 shadow-2xl scale-90 group-hover:scale-100">
-                      <Play size={18} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                <button
+                  type="button"
+                  onClick={() => setQueue(recentlyPlayed, i)}
+                  aria-label={`Play ${song.title}${song.artist ? ` by ${song.artist}` : ""}`}
+                  className="block w-full text-left cursor-pointer rounded-2xl sm:rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
+                >
+                  <div className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden bg-gray-100 dark:bg-white/5 shadow-lg group-hover:shadow-2xl transition-all duration-500">
+                    {song.cover ? (
+                      <Image src={getHDThumbnail(song.cover) || ""} alt="" fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Music size={40} className="text-gray-300 dark:text-white/10" aria-hidden="true" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center" aria-hidden="true">
+                      <div className="w-12 h-12 bg-white/95 dark:bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 shadow-2xl scale-90 group-hover:scale-100">
+                        <Play size={18} fill="currentColor" className="text-black dark:text-white ml-0.5" />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="px-1 space-y-0.5">
-                  <h3 className="font-bold text-[14px] sm:text-[15px] text-gray-900 dark:text-white truncate tracking-tight">{song.title}</h3>
-                  <p className="text-[12px] sm:text-[13px] text-gray-400 dark:text-white/30 font-semibold truncate">{song.artist}</p>
-                </div>
+                  <div className="px-1 space-y-0.5">
+                    <h3 className="font-bold text-[14px] sm:text-[15px] text-gray-900 dark:text-white truncate tracking-tight">{song.title}</h3>
+                    <p className="text-[12px] sm:text-[13px] text-gray-400 dark:text-white/30 font-semibold truncate">{song.artist}</p>
+                  </div>
+                </button>
               </motion.div>
             ))}
           </AnimatePresence>

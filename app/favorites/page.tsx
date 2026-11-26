@@ -82,23 +82,25 @@ export default function FavoritesPage() {
                 whileHover={{ y: -8 }}
                 className="group relative"
               >
-                <div 
+                <button
+                  type="button"
                   onClick={() => setQueue(favorites, i)}
-                  className="aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/5 shadow-lg group-hover:shadow-2xl transition-all duration-500 cursor-pointer"
+                  aria-label={`Play ${song.title}${song.artist ? ` by ${song.artist}` : ""}`}
+                  className="block w-full aspect-square relative rounded-2xl sm:rounded-3xl overflow-hidden mb-3 bg-gray-100 dark:bg-white/5 shadow-lg group-hover:shadow-2xl transition-all duration-500 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-black"
                 >
                   {song.cover ? (
-                    <Image src={getHDThumbnail(song.cover) || ""} alt={song.title} fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
+                    <Image src={getHDThumbnail(song.cover) || ""} alt="" fill className="object-cover transition-transform duration-700 ease-out group-hover:scale-110" />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center">
-                      <Music size={40} className="text-gray-300 dark:text-white/10" />
+                      <Music size={40} className="text-gray-300 dark:text-white/10" aria-hidden="true" />
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-500 flex items-center justify-center" aria-hidden="true">
                     <div className="w-12 h-12 bg-white/95 dark:bg-white/10 backdrop-blur-2xl rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-500 shadow-2xl scale-90 group-hover:scale-100">
                       <Play size={18} fill="currentColor" className="text-black dark:text-white ml-0.5" />
                     </div>
                   </div>
-                </div>
+                </button>
 
                 <div className="px-1 space-y-0.5">
                   <h3 className="font-bold text-[14px] sm:text-[15px] text-gray-900 dark:text-white truncate tracking-tight">{song.title}</h3>
@@ -107,10 +109,12 @@ export default function FavoritesPage() {
 
                 {/* Remove from favorites button */}
                 <button
-                  onClick={(e) => { e.stopPropagation(); toggleFavorite(song.id); }}
-                  className="absolute top-2 right-2 p-2 rounded-xl bg-black/40 backdrop-blur-md text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all hover:bg-red-500"
+                  type="button"
+                  onClick={() => toggleFavorite(song.id)}
+                  aria-label={`Remove ${song.title} from favorites`}
+                  className="absolute top-2 right-2 p-2 rounded-xl bg-black/40 backdrop-blur-md text-white opacity-100 sm:opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 transition-all hover:bg-red-500"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={14} aria-hidden="true" />
                 </button>
               </motion.div>
             ))}
