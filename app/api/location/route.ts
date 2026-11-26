@@ -45,23 +45,25 @@ function formatLabel(city: string, country: string): string {
   return "";
 }
 
-// NOTE: Platform-set headers (cf-connecting-ip) are trusted because they are
-// set by Cloudflare/Vercel and cannot be spoofed by clients. Client-sent headers
-// like x-forwarded-for and x-real-ip are less trusted and only used as fallback.
+// Platform-set headers (cf-connecting-ip, x-vercel-*) are trusted because they
+// are set by Cloudflare/Vercel at the edge. `x-forwarded-for` is never read
+// here: on a deployment without those platforms a client controls it, and the
+// caller of this function is a third-party lookup, not a rate limiter.
 function getClientIp(request: NextRequest): string {
-  const platformIp = pickFirstHeader(request.headers, [
-    "cf-connecting-ip",
-    "x-real-ip",
-  ]);
-  if (platformIp) return platformIp;
+  return pickFirstHeader(request.headers, ["cf-connecting-ip", "x-real-ip"]);
+}
 
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  if (forwardedFor) {
-    const first = forwardedFor.split(",")[0]?.trim() || "";
-    if (first) return first;
-  }
-
-  return "";
+/**
+ * Only trust an IP-derived location when the request actually came through an
+ * edge that sets reliable client-IP headers. Self-hosted deployments and plain
+ * `next start` have neither, and there the header is client-controlled, so an
+ * anonymous caller could make us issue one third-party lookup per request with
+ * an IP of their choosing (burning the deployment's shared ipapi.co quota).
+ */
+function canTrustClientIp(request: NextRequest): boolean {
+  if (process.env.ALLOW_IP_LOOKUP === "1") return true;
+  if (process.env.VERCEL === "1" || process.env.CF_PAGES === "1") return true;
+  return Boolean(request.headers.get("cf-connecting-ip"));
 }
 
 function isPrivateOrLocalIp(ip: string): boolean {
@@ -146,7 +148,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const ipLookup = await lookupByIp(getClientIp(request));
+  const ipLookup = canTrustClientIp(request) ? await lookupByIp(getClientIp(request)) : null;
   if (ipLookup) {
     return Response.json(ipLookup, {
       headers: { "Cache-Control": "private, max-age=300" },
