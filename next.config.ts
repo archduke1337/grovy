@@ -10,6 +10,13 @@ const isDev = process.env.NODE_ENV !== "production";
  * the location route calls on the server. Nothing else is reachable.
  *
  * `script-src` needs `'unsafe-eval'` only in development for React Refresh.
+ *
+ * HONEST LIMITATION: `'unsafe-inline'` is required by four inline scripts in
+ * `app/layout.tsx` (theme observer, service-worker registration, three
+ * JSON-LD blocks). It means this directive does NOT mitigate script injection
+ * — an injected inline script would execute. The other directives (object-src,
+ * base-uri, form-action) are real controls; script-src is not. Do not treat
+ * this policy as XSS protection without adding a nonce or hashes first.
  */
 const contentSecurityPolicy = [
   "default-src 'self'",

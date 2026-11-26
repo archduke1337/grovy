@@ -25,6 +25,19 @@ const OG_IMAGE_URL = absoluteUrl("/opengraph-image");
 const TWITTER_IMAGE_URL = absoluteUrl("/twitter-image");
 const GOOGLE_SITE_VERIFICATION = process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
 
+/**
+ * Serialise structured data for an inline `<script>`.
+ *
+ * `JSON.stringify` does not escape `</script>`, so a value containing that
+ * sequence would terminate the script tag early. Our payloads are built from
+ * static constants today, but `'unsafe-inline'` is required in script-src for
+ * these blocks, which means the CSP will not catch it if a future field ever
+ * becomes user-influenced. Escaping `<` costs nothing and closes that path.
+ */
+function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, "\\u003c");
+}
+
 export const metadata: Metadata = {
   applicationName: APP_NAME,
   title: {
@@ -232,20 +245,20 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(websiteSchema),
+            __html: serializeJsonLd(websiteSchema),
           }}
         />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(webApplicationSchema),
+            __html: serializeJsonLd(webApplicationSchema),
           }}
         />
 
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify(organizationSchema),
+            __html: serializeJsonLd(organizationSchema),
           }}
         />
         
