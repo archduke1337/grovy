@@ -35,6 +35,8 @@
   },
   "dependencies": {
     "@heroui/react": "^3.2.8",
+    "@react-aria/ssr": "^3.10.1",
+    "@react-aria/utils": "^3.34.1",
     "@vercel/analytics": "^1.6.1",
     "colorthief": "^2.6.0",
     "framer-motion": "^11.5.6",
